@@ -5,163 +5,219 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>فحص رقم الواتساب</title>
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        * {
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 20px;
         }
+        
         .container {
             background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            max-width: 450px;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 400px;
             width: 100%;
             text-align: center;
+            animation: slideUp 0.5s ease-out;
         }
-        h1 {
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 24px;
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        input {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            margin-bottom: 15px;
-            box-sizing: border-box;
-            direction: ltr;
-            text-align: center;
-        }
-        input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        .method-select {
+        
+        .logo {
+            font-size: 48px;
             margin-bottom: 20px;
         }
-        .method-select label {
-            display: block;
-            margin: 10px 0;
-            cursor: pointer;
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            transition: all 0.3s;
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+            font-weight: 600;
         }
-        .method-select input[type="radio"]:checked + span {
-            background: #667eea;
-            color: white;
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
         }
-        .method-select input[type="radio"] {
-            display: none;
+        
+        .input-group {
+            position: relative;
+            margin-bottom: 25px;
         }
-        button {
-            background: #25D366;
+        
+        input {
+            width: 100%;
+            padding: 18px 20px;
+            border: 2px solid #e1e1e1;
+            border-radius: 12px;
+            font-size: 16px;
+            direction: ltr;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #25D366;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.1);
+        }
+        
+        .check-btn {
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
             color: white;
             border: none;
-            padding: 15px 30px;
-            border-radius: 8px;
+            padding: 18px 30px;
+            border-radius: 12px;
             font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
             width: 100%;
-            transition: background 0.3s;
-            margin-bottom: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
         }
-        button:hover {
-            background: #1da851;
+        
+        .check-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
         }
-        button:disabled {
+        
+        .check-btn:active {
+            transform: translateY(0);
+        }
+        
+        .check-btn:disabled {
             background: #ccc;
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
-        .whatsapp-btn {
-            background: #25D366;
-            color: white;
-            text-decoration: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            display: inline-block;
-            margin-top: 10px;
-            transition: background 0.3s;
-        }
-        .whatsapp-btn:hover {
-            background: #1da851;
-        }
-        .result {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 8px;
-            display: none;
-        }
-        .success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
+        
         .loading {
             display: none;
-            margin-top: 10px;
+            margin: 20px 0;
         }
+        
         .spinner {
+            width: 40px;
+            height: 40px;
             border: 4px solid #f3f3f3;
             border-top: 4px solid #25D366;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
             animation: spin 1s linear infinite;
-            margin: 0 auto;
+            margin: 0 auto 15px;
         }
+        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        .status-icon {
-            font-size: 24px;
-            margin-bottom: 10px;
+        
+        .result {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 12px;
+            display: none;
+            animation: fadeIn 0.3s ease-out;
         }
-        .note {
-            background: #fff3cd;
-            color: #856404;
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 20px;
-            font-size: 14px;
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status-icon {
+            font-size: 32px;
+            margin-bottom: 15px;
+            display: block;
+        }
+        
+        .phone-display {
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+            direction: ltr;
+        }
+        
+        .whatsapp-btn {
+            background: #25D366;
+            color: white;
+            text-decoration: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            display: inline-block;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .whatsapp-btn:hover {
+            background: #128C7E;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+        }
+        
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-size: 12px;
+            color: #999;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔍 فحص رقم الواتساب</h1>
-        <p>أدخل رقم الهاتف المصري للتحقق من وجوده على الواتساب</p>
+        <div class="logo">📱</div>
+        <h1>فحص رقم الواتساب</h1>
+        <p class="subtitle">أدخل رقم الهاتف المصري للتحقق من وجوده على الواتساب</p>
         
-        <input type="tel" id="phoneNumber" placeholder="مثال: 01012345678" maxlength="15">
-        
-        <div class="method-select">
-            <p><strong>اختر طريقة الفحص:</strong></p>
-            <label>
-                <input type="radio" name="method" value="simple" checked>
-                <span>🚀 فحص سريع (مُوصى به)</span>
-            </label>
-            <label>
-                <input type="radio" name="method" value="selenium">
-                <span>🔍 فحص متقدم (أبطأ لكن أدق)</span>
-            </label>
+        <div class="input-group">
+            <input type="tel" 
+                   id="phoneNumber" 
+                   placeholder="مثال: 01012345678" 
+                   maxlength="15"
+                   autocomplete="tel">
         </div>
         
-        <button onclick="checkNumber()">فحص الرقم</button>
+        <button class="check-btn" onclick="checkNumber()">
+            🔍 فحص الرقم
+        </button>
         
         <div class="loading" id="loading">
             <div class="spinner"></div>
@@ -170,22 +226,20 @@
         
         <div class="result" id="result"></div>
         
-        <div class="note">
-            <strong>ملاحظة:</strong> الفحص المتقدم يحتاج Chrome مثبت على السيرفر. 
-            استخدم الفحص السريع للحصول على نتائج فورية مجانية.
+        <div class="footer">
+            <p>⚡ فحص سريع ومجاني تماماً</p>
         </div>
     </div>
 
     <script>
         function checkNumber() {
             const phoneNumber = document.getElementById('phoneNumber').value.trim();
-            const method = document.querySelector('input[name="method"]:checked').value;
             const loadingDiv = document.getElementById('loading');
             const resultDiv = document.getElementById('result');
-            const button = document.querySelector('button');
+            const button = document.querySelector('.check-btn');
             
             if (!phoneNumber) {
-                showResult('من فضلك أدخل رقم الهاتف', 'error');
+                showResult('❌', 'من فضلك أدخل رقم الهاتف', '', 'error');
                 return;
             }
             
@@ -193,6 +247,7 @@
             loadingDiv.style.display = 'block';
             resultDiv.style.display = 'none';
             button.disabled = true;
+            button.textContent = 'جاري الفحص...';
             
             fetch('/check', {
                 method: 'POST',
@@ -200,49 +255,82 @@
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    phone_number: phoneNumber,
-                    method: method
+                    phone_number: phoneNumber
                 })
             })
             .then(response => response.json())
             .then(data => {
                 loadingDiv.style.display = 'none';
                 button.disabled = false;
+                button.textContent = '🔍 فحص الرقم';
                 
                 if (data.success) {
-                    let message = `<div class="status-icon">${data.exists ? '✅' : '❌'}</div>`;
-                    message += `<strong>الرقم:</strong> ${data.phone_number}<br>`;
-                    message += `<strong>الحالة:</strong> ${data.exists ? '✅ الرقم موجود على الواتساب' : '❌ الرقم غير موجود على الواتساب'}<br>`;
-                    message += `<em>${data.message}</em>`;
+                    const icon = data.exists ? '✅' : '❌';
+                    const status = data.exists ? 'موجود على الواتساب' : 'غير موجود على الواتساب';
+                    const type = data.exists ? 'success' : 'error';
                     
+                    let extraContent = '';
                     if (data.exists && data.whatsapp_link) {
-                        message += `<br><a href="${data.whatsapp_link}" target="_blank" class="whatsapp-btn">💬 فتح في الواتساب</a>`;
+                        extraContent = `<a href="${data.whatsapp_link}" target="_blank" class="whatsapp-btn">💬 فتح في الواتساب</a>`;
                     }
                     
-                    showResult(message, data.exists ? 'success' : 'error');
+                    showResult(icon, status, data.phone_number, type, data.message, extraContent);
                 } else {
-                    showResult(`<div class="status-icon">❌</div>${data.message}`, 'error');
+                    showResult('❌', data.message, '', 'error');
                 }
             })
             .catch(error => {
                 loadingDiv.style.display = 'none';
                 button.disabled = false;
-                showResult('حدث خطأ في الاتصال', 'error');
+                button.textContent = '🔍 فحص الرقم';
+                showResult('❌', 'حدث خطأ في الاتصال', '', 'error');
             });
         }
         
-        function showResult(message, type) {
+        function showResult(icon, message, phone, type, details = '', extra = '') {
             const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = message;
+            
+            let html = `<div class="status-icon">${icon}</div>`;
+            
+            if (phone) {
+                html += `<div class="phone-display">${phone}</div>`;
+            }
+            
+            html += `<strong>${message}</strong>`;
+            
+            if (details) {
+                html += `<br><small><em>${details}</em></small>`;
+            }
+            
+            if (extra) {
+                html += `<br>${extra}`;
+            }
+            
+            resultDiv.innerHTML = html;
             resultDiv.className = `result ${type}`;
             resultDiv.style.display = 'block';
         }
         
-        // السماح بالضغط على Enter
+        // Enter key support
         document.getElementById('phoneNumber').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 checkNumber();
             }
+        });
+        
+        // Auto-format phone number
+        document.getElementById('phoneNumber').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/[^\d]/g, '');
+            if (value.startsWith('20')) {
+                value = value.substring(2);
+            }
+            if (value.startsWith('0')) {
+                value = value.substring(1);
+            }
+            if (value.length > 10) {
+                value = value.substring(0, 10);
+            }
+            e.target.value = value;
         });
     </script>
 </body>
