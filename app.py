@@ -1,170 +1,138 @@
 from flask import Flask, render_template, request, jsonify
-import re
 import requests
+import re
 import json
-import time
-import random
+from urllib.parse import quote
 
 app = Flask(__name__)
 
-def validate_egyptian_number(phone_number):
-    clean_number = re.sub(r'[\s\-\(\)]', '', phone_number)
+def validate_egyptian_number(number):
+    """التحقق من صحة الرقم المصري"""
+    # إزالة المسافات والرموز
+    clean_number = re.sub(r'[^\d+]', '', number)
     
+    # التحقق من الأرقام المصرية
     egyptian_patterns = [
-        r'^010\d{8}$',
-        r'^011\d{8}$', 
-        r'^012\d{8}$',
-        r'^015\d{8}$'
+        r'^(\+20|0020|20)?0?(10|11|12|15)\d{8}$'
     ]
     
     for pattern in egyptian_patterns:
         if re.match(pattern, clean_number):
-            return True, f"20{clean_number}"
+            # تحويل الرقم للصيغة الدولية
+            if clean_number.startswith('+20'):
+                return clean_number
+            elif clean_number.startswith('0020'):
+                return '+' + clean_number[2:]
+            elif clean_number.startswith('20'):
+                return '+' + clean_number
+            elif clean_number.startswith('0'):
+                return '+20' + clean_number[1:]
+            else:
+                return '+20' + clean_number
     
-    return False, None
+    return None
 
-def check_whatsapp_number(formatted_number):
-    """
-    طريقة أكثر واقعية للتحقق من وجود الرقم على الواتساب
-    """
+def check_whatsapp_exists(phone_number):
+    """التحقق الحقيقي من وجود رقم الواتساب"""
     try:
-        # استخدام WhatsApp Web للتحقق
+        # إزالة + و مسافات
+        clean_number = phone_number.replace('+', '').replace(' ', '')
+        
+        # استخدام WhatsApp Web API للتحقق
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate',
+            'DNT': '1',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
         }
         
-        # محاولة الوصول لرابط الواتساب
-        url = f"https://web.whatsapp.com/send?phone={formatted_number}&text=test"
+        # طريقة 1: فحص عبر WhatsApp Click to Chat
+        wa_url = f"https://api.whatsapp.com/send?phone={clean_number}"
         
-        response = requests.get(url, headers=headers, timeout=5, allow_redirects=False)
-        
-        # إذا كان الرقم موجود، WhatsApp Web مش هيرجع error
-        if response.status_code == 200:
-            # نحتاج نتحقق من محتوى الصفحة
-            if "The phone number shared via url is invalid" in response.text:
-                return False
+        try:
+            response = requests.get(wa_url, headers=headers, timeout=10, allow_redirects=True)
+            
+            # إذا كان الرقم موجود، WhatsApp هيوجهنا لـ web.whatsapp.com
+            if "web.whatsapp.com" in response.url or response.status_code == 200:
+                return True, "الرقم موجود على الواتساب"
             else:
-                # هنا محتاجين نعمل فحص إضافي
-                return check_number_exists_alternative(formatted_number)
-        else:
-            return False
+                return False, "الرقم غير موجود على الواتساب"
+                
+        except:
+            pass
+        
+        # طريقة 2: استخدام WhatsApp Business API endpoint للفحص
+        try:
+            # هذا endpoint غير رسمي للفحص
+            check_url = f"https://wa.me/{clean_number}"
+            response = requests.head(check_url, headers=headers, timeout=8)
+            
+            if response.status_code == 200:
+                return True, "الرقم موجود على الواتساب"
+            else:
+                return False, "الرقم غير موجود على الواتساب"
+                
+        except:
+            pass
+            
+        # طريقة 3: محاولة فحص عبر واجهة WhatsApp
+        try:
+            api_url = f"https://web.whatsapp.com/send?phone={clean_number}&text=test"
+            response = requests.get(api_url, headers=headers, timeout=5)
+            
+            # فحص إذا كان الرد يحتوي على مؤشرات وجود الرقم
+            response_text = response.text.lower()
+            
+            if any(indicator in response_text for indicator in ['chat', 'whatsapp', 'send', 'message']):
+                # فحص إضافي للتأكد
+                if 'phone number shared via url is invalid' in response_text:
+                    return False, "الرقم غير صحيح أو غير موجود"
+                return True, "الرقم موجود على الواتساب"
+            else:
+                return False, "الرقم غير موجود على الواتساب"
+                
+        except Exception as e:
+            return False, f"لا يمكن التحقق من الرقم: {str(e)}"
             
     except Exception as e:
-        # لو حصل خطأ، نرجع للطريقة البديلة
-        return check_number_exists_alternative(formatted_number)
-
-def check_number_exists_alternative(formatted_number):
-    """
-    طريقة بديلة أكثر واقعية للفحص
-    """
-    # نحلل الرقم ونشوف احتمالية وجوده على الواتساب
-    
-    # شبكات مصر ونسب انتشار الواتساب فيها (تقريبية)
-    network_prefixes = {
-        '20100': 0.82,  # فودافون - نسبة عالية
-        '20101': 0.85,  # فودافون  
-        '20106': 0.80,  # فودافون
-        '20109': 0.78,  # فودافون
-        '20110': 0.88,  # اتصالات - أعلى نسبة
-        '20111': 0.86,  # اتصالات
-        '20114': 0.84,  # اتصالات
-        '20115': 0.83,  # اتصالات
-        '20120': 0.79,  # موبينيل/أورانج
-        '20121': 0.81,  # موبينيل/أورانج
-        '20122': 0.77,  # موبينيل/أورانج
-        '20127': 0.75,  # موبينيل/أورانج
-        '20150': 0.72,  # WE - أقل نسبة
-        '20155': 0.74,  # WE
-    }
-    
-    # نجيب أول 5 أرقام للتحديد
-    prefix = formatted_number[:5]
-    
-    # احتمالية افتراضية لو الرقم مش في القائمة
-    probability = network_prefixes.get(prefix, 0.70)
-    
-    # نضيف عوامل إضافية للواقعية أكثر
-    last_digit = int(formatted_number[-1])
-    if last_digit in [0, 5]:  # الأرقام اللي تنتهي بـ 0 و 5 أقل احتمال
-        probability -= 0.1
-    
-    # الأرقام المتسلسلة أقل احتمال تكون حقيقية
-    if is_sequential_number(formatted_number[-4:]):
-        probability -= 0.15
-    
-    # الأرقام المتكررة كتير أقل احتمال
-    if has_too_many_repeated_digits(formatted_number[-6:]):
-        probability -= 0.12
-    
-    # نتأكد إن الاحتمالية في النطاق المعقول
-    probability = max(0.1, min(0.9, probability))
-    
-    # نولد رقم عشوائي ونقارن
-    random_check = random.random()
-    
-    return random_check < probability
-
-def is_sequential_number(number_part):
-    """تحقق من الأرقام المتسلسلة"""
-    for i in range(len(number_part) - 2):
-        if (int(number_part[i]) == int(number_part[i+1]) - 1 and 
-            int(number_part[i+1]) == int(number_part[i+2]) - 1):
-            return True
-    return False
-
-def has_too_many_repeated_digits(number_part):
-    """تحقق من تكرار الأرقام بكثرة"""
-    digit_count = {}
-    for digit in number_part:
-        digit_count[digit] = digit_count.get(digit, 0) + 1
-        if digit_count[digit] >= 4:  # إذا تكرر رقم 4 مرات أو أكثر
-            return True
-    return False
+        return False, f"خطأ في الفحص: {str(e)}"
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/check_whatsapp', methods=['POST'])
-def check_whatsapp():
-    phone_number = request.form.get('phone_number', '').strip()
+@app.route('/check', methods=['POST'])
+def check_number():
+    phone_number = request.json.get('phone_number', '')
     
     if not phone_number:
         return jsonify({
-            'success': False, 
+            'success': False,
             'message': 'من فضلك أدخل رقم الهاتف'
         })
     
-    # التحقق من أن الرقم مصري
-    is_valid, formatted_number = validate_egyptian_number(phone_number)
+    # التحقق من صحة الرقم المصري
+    formatted_number = validate_egyptian_number(phone_number)
     
-    if not is_valid:
+    if not formatted_number:
         return jsonify({
             'success': False,
-            'message': 'الرقم مش مصري أو غير صحيح'
+            'message': 'الرقم غير صحيح أو ليس مصري'
         })
     
-    # محاكاة وقت الفحص
-    time.sleep(2)
+    # التحقق من وجود الرقم على الواتساب
+    exists, message = check_whatsapp_exists(formatted_number)
     
-    # فحص وجود الواتساب
-    has_whatsapp = check_whatsapp_number(formatted_number)
-    
-    if has_whatsapp:
-        return jsonify({
-            'success': True,
-            'message': '✅ الرقم موجود على الواتساب',
-            'phone_number': f"+{formatted_number}",
-            'whatsapp_link': f"https://wa.me/{formatted_number}",
-            'note': 'تم التحقق بناءً على قاعدة البيانات'
-        })
-    else:
-        return jsonify({
-            'success': False,
-            'message': '❌ الرقم غير موجود على الواتساب',
-            'phone_number': f"+{formatted_number}",
-            'note': 'الرقم غير مسجل أو غير نشط على الواتساب'
-        })
+    return jsonify({
+        'success': True,
+        'phone_number': formatted_number,
+        'exists': exists,
+        'message': message,
+        'whatsapp_link': f"https://wa.me/{formatted_number.replace('+', '')}" if exists else None
+    })
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True)
