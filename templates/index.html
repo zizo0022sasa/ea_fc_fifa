@@ -20,7 +20,7 @@
             padding: 30px;
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            max-width: 400px;
+            max-width: 450px;
             width: 100%;
             text-align: center;
         }
@@ -35,7 +35,7 @@
             border: 2px solid #ddd;
             border-radius: 8px;
             font-size: 16px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             box-sizing: border-box;
             direction: ltr;
             text-align: center;
@@ -43,6 +43,25 @@
         input:focus {
             outline: none;
             border-color: #667eea;
+        }
+        .method-select {
+            margin-bottom: 20px;
+        }
+        .method-select label {
+            display: block;
+            margin: 10px 0;
+            cursor: pointer;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .method-select input[type="radio"]:checked + span {
+            background: #667eea;
+            color: white;
+        }
+        .method-select input[type="radio"] {
+            display: none;
         }
         button {
             background: #25D366;
@@ -113,6 +132,14 @@
             font-size: 24px;
             margin-bottom: 10px;
         }
+        .note {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -121,19 +148,38 @@
         <p>أدخل رقم الهاتف المصري للتحقق من وجوده على الواتساب</p>
         
         <input type="tel" id="phoneNumber" placeholder="مثال: 01012345678" maxlength="15">
+        
+        <div class="method-select">
+            <p><strong>اختر طريقة الفحص:</strong></p>
+            <label>
+                <input type="radio" name="method" value="simple" checked>
+                <span>🚀 فحص سريع (مُوصى به)</span>
+            </label>
+            <label>
+                <input type="radio" name="method" value="selenium">
+                <span>🔍 فحص متقدم (أبطأ لكن أدق)</span>
+            </label>
+        </div>
+        
         <button onclick="checkNumber()">فحص الرقم</button>
         
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <p>جاري الفحص الحقيقي...</p>
+            <p>جاري الفحص...</p>
         </div>
         
         <div class="result" id="result"></div>
+        
+        <div class="note">
+            <strong>ملاحظة:</strong> الفحص المتقدم يحتاج Chrome مثبت على السيرفر. 
+            استخدم الفحص السريع للحصول على نتائج فورية مجانية.
+        </div>
     </div>
 
     <script>
         function checkNumber() {
             const phoneNumber = document.getElementById('phoneNumber').value.trim();
+            const method = document.querySelector('input[name="method"]:checked').value;
             const loadingDiv = document.getElementById('loading');
             const resultDiv = document.getElementById('result');
             const button = document.querySelector('button');
@@ -154,7 +200,8 @@
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    phone_number: phoneNumber
+                    phone_number: phoneNumber,
+                    method: method
                 })
             })
             .then(response => response.json())
@@ -165,7 +212,7 @@
                 if (data.success) {
                     let message = `<div class="status-icon">${data.exists ? '✅' : '❌'}</div>`;
                     message += `<strong>الرقم:</strong> ${data.phone_number}<br>`;
-                    message += `<strong>الحالة:</strong> ${data.exists ? 'موجود على الواتساب' : 'غير موجود على الواتساب'}<br>`;
+                    message += `<strong>الحالة:</strong> ${data.exists ? '✅ الرقم موجود على الواتساب' : '❌ الرقم غير موجود على الواتساب'}<br>`;
                     message += `<em>${data.message}</em>`;
                     
                     if (data.exists && data.whatsapp_link) {
