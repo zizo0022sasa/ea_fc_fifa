@@ -1,1 +1,174 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فحص أرقام الواتساب المصرية</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: #25D366;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #20ba5a;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        .whatsapp-link {
+            margin-top: 10px;
+        }
+        .whatsapp-link a {
+            display: inline-block;
+            background: #25D366;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            color: #666;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 فحص الواتساب المصري</h1>
+        <form id="phoneForm">
+            <input type="text" 
+                   id="phoneNumber" 
+                   placeholder="أدخل رقم الموبايل المصري (مثال: 01012345678)"
+                   maxlength="11">
+            <button type="submit" id="submitBtn">تحقق من الواتساب</button>
+        </form>
+        <div class="loading" id="loading">⏳ جاري التحقق من الرقم...</div>
+        <div id="result" class="result"></div>
+    </div>
 
+    <script>
+        document.getElementById('phoneForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const phoneNumber = document.getElementById('phoneNumber').value;
+            const resultDiv = document.getElementById('result');
+            const loadingDiv = document.getElementById('loading');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            if (!phoneNumber.trim()) {
+                showResult('من فضلك أدخل رقم الهاتف', false);
+                return;
+            }
+            
+            // إظهار التحميل
+            loadingDiv.style.display = 'block';
+            resultDiv.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'جاري التحقق...';
+            
+            try {
+                const response = await fetch('/check_whatsapp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'phone_number=' + encodeURIComponent(phoneNumber)
+                });
+                
+                const data = await response.json();
+                
+                let resultHTML = data.message;
+                if (data.phone_number) {
+                    resultHTML += `<br><strong>الرقم:</strong> ${data.phone_number}`;
+                }
+                
+                if (data.whatsapp_link) {
+                    resultHTML += `<div class="whatsapp-link">
+                        <a href="${data.whatsapp_link}" target="_blank">💬 فتح في الواتساب</a>
+                    </div>`;
+                }
+                
+                showResult(resultHTML, data.success);
+                
+            } catch (error) {
+                showResult('حدث خطأ في الاتصال، حاول تاني', false);
+            } finally {
+                // إخفاء التحميل
+                loadingDiv.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'تحقق من الواتساب';
+            }
+        });
+        
+        function showResult(message, isSuccess) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = message;
+            resultDiv.className = 'result ' + (isSuccess ? 'success' : 'error');
+            resultDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
