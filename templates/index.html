@@ -1,278 +1,177 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html dir="rtl" lang="ar">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>فحص أرقام الواتساب المصرية</title>
+    <title>فحص رقم الواتساب</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
         }
-        
         .container {
             background: white;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            max-width: 450px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 400px;
             width: 100%;
             text-align: center;
         }
-        
-        .header {
-            margin-bottom: 30px;
-        }
-        
         h1 {
             color: #333;
-            font-size: 28px;
-            margin-bottom: 10px;
+            margin-bottom: 30px;
+            font-size: 24px;
         }
-        
-        .subtitle {
-            color: #666;
-            font-size: 14px;
-        }
-        
-        .form-group {
-            margin-bottom: 25px;
-        }
-        
-        input[type="text"] {
+        input {
             width: 100%;
-            padding: 18px;
-            border: 2px solid #e1e5e9;
-            border-radius: 12px;
-            font-size: 18px;
-            text-align: center;
-            transition: border-color 0.3s;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
             direction: ltr;
+            text-align: center;
         }
-        
-        input[type="text"]:focus {
+        input:focus {
             outline: none;
-            border-color: #25D366;
+            border-color: #667eea;
         }
-        
-        .check-btn {
-            width: 100%;
-            padding: 18px;
+        button {
             background: #25D366;
             color: white;
             border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: bold;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
             cursor: pointer;
-            transition: all 0.3s;
-            position: relative;
+            width: 100%;
+            transition: background 0.3s;
         }
-        
-        .check-btn:hover {
-            background: #20ba5a;
-            transform: translateY(-2px);
+        button:hover {
+            background: #1da851;
         }
-        
-        .check-btn:disabled {
+        button:disabled {
             background: #ccc;
             cursor: not-allowed;
-            transform: none;
         }
-        
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
         .loading {
             display: none;
-            margin-top: 20px;
-            color: #666;
+            margin-top: 10px;
         }
-        
         .spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #25D366;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #25D366;
             border-radius: 50%;
+            width: 30px;
+            height: 30px;
             animation: spin 1s linear infinite;
-            margin-left: 10px;
+            margin: 0 auto;
         }
-        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
-        }
-        
-        .result {
-            margin-top: 25px;
-            padding: 20px;
-            border-radius: 12px;
-            display: none;
-            animation: fadeIn 0.5s;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .result.success {
-            background: #d1f2d1;
-            border: 2px solid #4caf50;
-            color: #2e7d2e;
-        }
-        
-        .result.error {
-            background: #f8d7da;
-            border: 2px solid #dc3545;
-            color: #721c24;
-        }
-        
-        .whatsapp-btn {
-            display: inline-block;
-            background: #25D366;
-            color: white;
-            padding: 12px 25px;
-            text-decoration: none;
-            border-radius: 8px;
-            margin-top: 15px;
-            transition: background 0.3s;
-            font-weight: bold;
-        }
-        
-        .whatsapp-btn:hover {
-            background: #20ba5a;
-        }
-        
-        .phone-display {
-            font-family: 'Courier New', monospace;
-            font-size: 16px;
-            margin: 10px 0;
-            padding: 8px;
-            background: rgba(255,255,255,0.5);
-            border-radius: 6px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>📱 فحص الواتساب</h1>
-            <p class="subtitle">تحقق من وجود الأرقام المصرية على الواتساب</p>
-        </div>
+        <h1>🔍 فحص رقم الواتساب</h1>
+        <p>أدخل رقم الهاتف المصري للتحقق من وجوده على الواتساب</p>
         
-        <form id="phoneForm">
-            <div class="form-group">
-                <input type="text" 
-                       id="phoneNumber" 
-                       placeholder="01012345678"
-                       maxlength="11"
-                       autocomplete="off">
-            </div>
-            <button type="submit" class="check-btn" id="submitBtn">
-                🔍 فحص الرقم
-            </button>
-        </form>
+        <input type="tel" id="phoneNumber" placeholder="مثال: 01012345678" maxlength="15">
+        <button onclick="checkNumber()">فحص الرقم</button>
         
         <div class="loading" id="loading">
-            جاري التحقق من الرقم<span class="spinner"></span>
+            <div class="spinner"></div>
+            <p>جاري الفحص...</p>
         </div>
         
-        <div id="result" class="result"></div>
+        <div class="result" id="result"></div>
     </div>
 
     <script>
-        const form = document.getElementById('phoneForm');
-        const phoneInput = document.getElementById('phoneNumber');
-        const submitBtn = document.getElementById('submitBtn');
-        const loading = document.getElementById('loading');
-        const result = document.getElementById('result');
-
-        // تنسيق الرقم أثناء الكتابة
-        phoneInput.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length > 11) value = value.slice(0, 11);
-            e.target.value = value;
-        });
-
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const phoneNumber = phoneInput.value.trim();
+        function checkNumber() {
+            const phoneNumber = document.getElementById('phoneNumber').value.trim();
+            const loadingDiv = document.getElementById('loading');
+            const resultDiv = document.getElementById('result');
+            const button = document.querySelector('button');
             
             if (!phoneNumber) {
-                showResult('من فضلك أدخل رقم الهاتف', false);
+                showResult('من فضلك أدخل رقم الهاتف', 'error');
                 return;
             }
             
-            if (phoneNumber.length !== 11) {
-                showResult('رقم الهاتف يجب أن يكون 11 رقم', false);
-                return;
-            }
+            // إظهار التحميل
+            loadingDiv.style.display = 'block';
+            resultDiv.style.display = 'none';
+            button.disabled = true;
             
-            // بدء التحميل
-            startLoading();
-            
-            try {
-                const response = await fetch('/check_whatsapp', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `phone_number=${encodeURIComponent(phoneNumber)}`
-                });
+            fetch('/check', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phone_number: phoneNumber
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingDiv.style.display = 'none';
+                button.disabled = false;
                 
-                const data = await response.json();
-                
-                let resultHTML = `<div style="font-size: 18px; margin-bottom: 10px;">${data.message}</div>`;
-                
-                if (data.phone_number) {
-                    resultHTML += `<div class="phone-display">الرقم: ${data.phone_number}</div>`;
+                if (data.success) {
+                    const status = data.exists ? '✅ موجود' : '❌ غير موجود';
+                    const message = `الرقم: ${data.phone_number}<br>الحالة: ${status}<br>${data.message}`;
+                    showResult(message, data.exists ? 'success' : 'error');
+                } else {
+                    showResult(data.message, 'error');
                 }
-                
-                if (data.whatsapp_link) {
-                    resultHTML += `<a href="${data.whatsapp_link}" target="_blank" class="whatsapp-btn">
-                        💬 فتح في الواتساب
-                    </a>`;
-                }
-                
-                showResult(resultHTML, data.success);
-                
-            } catch (error) {
-                showResult('حدث خطأ في الشبكة، حاول مرة أخرى', false);
-            } finally {
-                stopLoading();
+            })
+            .catch(error => {
+                loadingDiv.style.display = 'none';
+                button.disabled = false;
+                showResult('حدث خطأ في الاتصال', 'error');
+            });
+        }
+        
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = message;
+            resultDiv.className = `result ${type}`;
+            resultDiv.style.display = 'block';
+        }
+        
+        // السماح بالضغط على Enter
+        document.getElementById('phoneNumber').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkNumber();
             }
         });
-        
-        function startLoading() {
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'جاري الفحص...';
-            loading.style.display = 'block';
-            result.style.display = 'none';
-        }
-        
-        function stopLoading() {
-            submitBtn.disabled = false;
-            submitBtn.textContent = '🔍 فحص الرقم';
-            loading.style.display = 'none';
-        }
-        
-        function showResult(message, isSuccess) {
-            result.innerHTML = message;
-            result.className = `result ${isSuccess ? 'success' : 'error'}`;
-            result.style.display = 'block';
-        }
     </script>
 </body>
 </html>
