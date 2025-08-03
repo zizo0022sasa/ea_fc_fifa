@@ -102,105 +102,119 @@ def anti_spam_check(ip_address, user_agent):
 # 🔥 دالة جديدة لإدارة العروض - تحط هنا بعد anti_spam_check
 def get_offers():
     """
-    🔥 مركز التحكم في العروض - غير من هنا بس!
-    =====================================
+    🔥 مركز التحكم في العروض المحددة - غير من هنا بس!
+    ========================================================
     
-    📝 إزاي تستعمل النظام:
-    1. فعل/قفل العرض: غير OFFER_ACTIVE من True ل False
-    2. اختار نوع الحسابات: اكتب "Full" أو "Primary" أو "Secondary" 
-    3. غير نسبة الخصم: اكتب الرقم اللي عايزه (مثال: 25 يعني 25%)
-    4. اختار الألعاب: حط أسماء الألعاب اللي عايز العرض عليها
+    📝 إزاي تستعمل النظام الجديد:
+    1. اختار اللعبة المحددة
+    2. اختار نوع الحساب المحدد  
+    3. حط نسبة الخصم
+    4. فعل/قفل العرض
+    
+    🎯 العروض المتاحة حالياً:
+    - Arabic Standard + Primary = خصم 30%
+    - English Ultimate + Secondary = خصم 25% 
+    - Xbox Ultimate + Full = خصم 35%
     """
     
-    # 🎮 إعدادات العرض الرئيسية - غير الأرقام دي بس!
-    # ======================================================
-    OFFER_ACTIVE = True              # True = العرض شغال | False = العرض مقفول
-    DISCOUNT_PERCENTAGE = 25         # نسبة الخصم (مثال: 20 يعني 20%)
-    OFFER_TITLE = "🔥 عرض البرق - خصم 25%"  # عنوان العرض
+    # 🎮 إعدادات العروض المحددة
+    # =============================
+    OFFERS_ACTIVE = True  # True = كل العروض شغالة | False = كل العروض مقفولة
     
-    # 🎯 اختيار أنواع الحسابات المشمولة في العرض
-    # ============================================
-    # ممكن تحط واحد أو أكتر من الأنواع دي:
-    # "Full" = الحساب الكامل
-    # "Primary" = البرايمري  
-    # "Secondary" = السكندري
+    # 🔥 العرض الأول: Arabic Standard + Primary فقط
+    OFFER_1_ACTIVE = True                    # True = العرض شغال | False = مقفول
+    OFFER_1_GAME = "FC26_AR_Standard"        # اللعبة المحددة
+    OFFER_1_ACCOUNT = "Primary"              # نوع الحساب المحدد
+    OFFER_1_DISCOUNT = 30                    # نسبة الخصم
     
-    ELIGIBLE_ACCOUNT_TYPES = [
-        "Full",        # ✅ الحساب الكامل
-        "Primary",     # ✅ البرايمري
-        "Secondary"    # ✅ السكندري
-    ]
+    # ⚡ العرض الثاني: English Ultimate + Secondary فقط  
+    OFFER_2_ACTIVE = True                    # True = العرض شغال | False = مقفول
+    OFFER_2_GAME = "FC26_EN_Ultimate"        # اللعبة المحددة
+    OFFER_2_ACCOUNT = "Secondary"            # نوع الحساب المحدد
+    OFFER_2_DISCOUNT = 25                    # نسبة الخصم
     
-    # 🎮 اختيار الألعاب المشمولة في العرض  
-    # ====================================
-    # الأسماء الموجودة في النظام:
-    # "FC26_EN_Standard"   = الإنجليزي عادي
-    # "FC26_EN_Ultimate"   = الإنجليزي التميت
-    # "FC26_AR_Standard"   = العربي عادي  
-    # "FC26_AR_Ultimate"   = العربي التميت
-    # "FC26_XBOX_Standard" = Xbox عادي
-    # "FC26_XBOX_Ultimate" = Xbox التميت
-    # "FC26_PC_Standard"   = PC شهر
-    # "FC26_PC_Ultimate"   = PC سنة
-    # "FC26_STEAM_Standard" = Steam عادي
-    # "FC26_STEAM_Ultimate" = Steam التميت
+    # 🚀 العرض الثالث: Xbox Ultimate + Full فقط
+    OFFER_3_ACTIVE = True                    # True = العرض شغال | False = مقفول
+    OFFER_3_GAME = "FC26_XBOX_Ultimate"      # اللعبة المحددة
+    OFFER_3_ACCOUNT = "Full"                 # نوع الحساب المحدد
+    OFFER_3_DISCOUNT = 35                    # نسبة الخصم
     
-    ELIGIBLE_GAMES = [
-        "FC26_EN_Standard",    # ✅ الإنجليزي عادي
-        "FC26_AR_Standard",    # ✅ العربي عادي
-        "FC26_STEAM_Standard"  # ✅ Steam عادي
-    ]
-    
-    # 📅 إعدادات إضافية للعرض
+    # 📅 إعدادات العرض المنبثق
     # ========================
-    OFFER_END_DATE = "2025-02-15 23:59:59"  # تاريخ انتهاء العرض
-    OFFER_DESCRIPTION = "خصم حصري على مجموعة مختارة من الألعاب لفترة محدودة!"
-    
-    # 🔄 إعدادات العرض المنبثق
-    # =========================
-    SHOW_POPUP = True                    # True = يظهر البوب اب | False = مايظهرش
-    POPUP_FREQUENCY = "once_per_session" # "once_per_day" | "once_per_session" | "always"
+    SHOW_POPUP = True                        # True = يظهر البوب اب | False = مايظهرش
+    POPUP_TITLE = "🔥 عروض حصرية - خصومات مميزة!"
+    POPUP_DESCRIPTION = "عروض محدودة على منتجات مختارة بعناية!"
     
     # ⚠️ لا تغير الكود اللي تحت ده - ده بيطبق الإعدادات اللي فوق
     # ===============================================================
     
+    # تجميع العروض النشطة
+    active_offers = []
+    eligible_games = []
+    
+    if OFFERS_ACTIVE and OFFER_1_ACTIVE:
+        active_offers.append({
+            "game": OFFER_1_GAME,
+            "account": OFFER_1_ACCOUNT, 
+            "discount": OFFER_1_DISCOUNT
+        })
+        if OFFER_1_GAME not in eligible_games:
+            eligible_games.append(OFFER_1_GAME)
+    
+    if OFFERS_ACTIVE and OFFER_2_ACTIVE:
+        active_offers.append({
+            "game": OFFER_2_GAME,
+            "account": OFFER_2_ACCOUNT,
+            "discount": OFFER_2_DISCOUNT
+        })
+        if OFFER_2_GAME not in eligible_games:
+            eligible_games.append(OFFER_2_GAME)
+    
+    if OFFERS_ACTIVE and OFFER_3_ACTIVE:
+        active_offers.append({
+            "game": OFFER_3_GAME,
+            "account": OFFER_3_ACCOUNT,
+            "discount": OFFER_3_DISCOUNT
+        })
+        if OFFER_3_GAME not in eligible_games:
+            eligible_games.append(OFFER_3_GAME)
+    
     return {
         "active_offer": {
-            "id": f"flash_sale_{DISCOUNT_PERCENTAGE}percent_2025",
-            "title": OFFER_TITLE,
-            "description": OFFER_DESCRIPTION,
-            "discount_percentage": DISCOUNT_PERCENTAGE,
-            "valid_until": OFFER_END_DATE,
-            "eligible_games": ELIGIBLE_GAMES,
-            "eligible_account_types": ELIGIBLE_ACCOUNT_TYPES,
-            "show_popup": SHOW_POPUP and OFFER_ACTIVE,
-            "popup_frequency": POPUP_FREQUENCY
-        } if OFFER_ACTIVE else None,
-        "offer_cards": ELIGIBLE_GAMES if OFFER_ACTIVE else []
+            "id": f"targeted_offers_2025",
+            "title": POPUP_TITLE,
+            "description": POPUP_DESCRIPTION,
+            "offers_list": active_offers,
+            "show_popup": SHOW_POPUP and OFFERS_ACTIVE and len(active_offers) > 0,
+            "popup_frequency": "once_per_session"
+        } if active_offers else None,
+        "offer_cards": eligible_games if active_offers else []
     }
 
-# 🔥 دالة تطبيق الخصم على الأسعار - حط الدالة دي بعد get_offers مباشرة
+# 🔥 دالة تطبيق الخصم المحدد - حط الدالة دي بعد get_offers مباشرة
 def apply_offer_discount(prices, offers):
-    """تطبيق الخصومات على الأسعار حسب نوع الحساب"""
-    if not offers.get("active_offer"):
+    """تطبيق الخصومات على منتجات محددة بدقة"""
+    if not offers.get("active_offer") or not offers["active_offer"].get("offers_list"):
         return prices
     
-    offer = offers["active_offer"]
-    discount = offer["discount_percentage"] / 100
-    eligible_account_types = offer.get("eligible_account_types", [])
+    offers_list = offers["active_offer"]["offers_list"]
     
-    for game_id in offer["eligible_games"]:
+    for offer in offers_list:
+        game_id = offer["game"]
+        target_account = offer["account"]
+        discount_percent = offer["discount"]
+        discount = discount_percent / 100
+        
         if game_id in prices["games"]:
             for platform_id, platform in prices["games"][game_id]["platforms"].items():
-                for account_id, account in platform["accounts"].items():
-                    # تطبيق الخصم بس على أنواع الحسابات المحددة
-                    if account_id in eligible_account_types:
-                        original_price = account["price"]
-                        if original_price > 0:  # تجنب الأسعار المجانية
-                            discounted_price = int(original_price * (1 - discount))
-                            account["original_price"] = original_price
-                            account["price"] = discounted_price
-                            account["discount_percentage"] = offer["discount_percentage"]
+                if target_account in platform["accounts"]:
+                    account = platform["accounts"][target_account]
+                    original_price = account["price"]
+                    if original_price > 0:  # تجنب الأسعار المجانية
+                        discounted_price = int(original_price * (1 - discount))
+                        account["original_price"] = original_price
+                        account["price"] = discounted_price
+                        account["discount_percentage"] = discount_percent
     
     return prices
 
