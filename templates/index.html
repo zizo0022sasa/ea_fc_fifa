@@ -2291,66 +2291,192 @@ window.onclick = function(event) {
 </script>
 
 <script>
-// Show offers popup
+// Show offers popup with better error handling
 function showOffers() {
+    console.log('🎯 بدء تحميل العروض...');
+    
+    // إظهار الـ popup فوراً مع loading
+    const popup = document.getElementById('offersPopup');
+    const offersContainer = document.getElementById('offersContainer');
+    
+    popup.style.display = 'block';
+    offersContainer.innerHTML = '<div class="text-center p-4"><div class="loading-spinner mx-auto mb-3"></div><p style="color: #00d4ff;">جاري تحميل العروض...</p></div>';
+    
     fetch('/get_offers')
-        .then(response => response.json())
+        .then(response => {
+            console.log('📡 Response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
-            const popup = document.getElementById('offersPopup');
-            const offersContainer = document.getElementById('offersContainer');
+            console.log('📊 البيانات المستلمة:', data);
             
             if (data.offers && data.offers.length > 0) {
                 offersContainer.innerHTML = '';
                 
-                data.offers.forEach(offer => {
+                data.offers.forEach((offer, index) => {
+                    console.log(`🎁 عرض ${index + 1}:`, offer);
+                    
                     const offerElement = document.createElement('div');
                     offerElement.className = 'offer-item';
-                    offerElement.onclick = () => selectOffer(offer);
+                    offerElement.setAttribute('data-offer-id', offer.id || index);
+                    
+                    // إضافة onclick مباشرة
+                    offerElement.addEventListener('click', function() {
+                        selectOffer(offer);
+                    });
                     
                     offerElement.innerHTML = `
-                        <div class="offer-title">${offer.title}</div>
-                        <div class="offer-description">${offer.description}</div>
+                        <div class="offer-title">${offer.title || 'عرض خاص'}</div>
+                        <div class="offer-description">${offer.description || 'احصل على خصم رائع'}</div>
                         <div class="offer-price">
-                            <span class="fake-price">$${offer.fake_price}</span>
-                            <span class="real-price">$${offer.real_price}</span>
-                            <span class="discount-badge">${offer.discount_percentage}% خصم</span>
+                            <span class="fake-price">$${offer.fake_price || '0'}</span>
+                            <span class="real-price">$${offer.real_price || '0'}</span>
+                            <span class="discount-badge">${offer.discount_percentage || '0'}% خصم</span>
                         </div>
-                        <div class="offer-validity">صالح حتى: ${offer.valid_until}</div>
+                        <div class="offer-validity">صالح حتى: ${offer.valid_until || 'غير محدود'}</div>
+                        <div class="text-center mt-2">
+                            <small style="color: #888;">👆 اضغط للاختيار</small>
+                        </div>
                     `;
                     
                     offersContainer.appendChild(offerElement);
                 });
+                
+                console.log('✅ تم تحميل العروض بنجاح');
             } else {
-                offersContainer.innerHTML = '<div class="no-offers">لا توجد عروض متاحة حالياً</div>';
+                console.log('⚠️ لا توجد عروض متاحة');
+                offersContainer.innerHTML = `
+                    <div class="no-offers">
+                        <h4>😔 لا توجد عروض متاحة حالياً</h4>
+                        <p>تابعنا للحصول على أحدث العروض</p>
+                        <button onclick="closePopup()" class="btn btn-primary mt-2">حسناً</button>
+                    </div>
+                `;
             }
-            
-            popup.style.display = 'block';
         })
         .catch(error => {
-            console.error('Error:', error);
-            alert('حدث خطأ في تحميل العروض');
+            console.error('❌ خطأ في تحميل العروض:', error);
+            
+            // إظهار عروض تجريبية في حالة الخطأ
+            offersContainer.innerHTML = `
+                <div class="text-center mb-3">
+                    <h4 style="color: #ff6b6b;">⚠️ مشكلة في الاتصال</h4>
+                    <p style="color: #888;">إليك بعض العروض المتاحة:</p>
+                </div>
+                
+                <div class="offer-item" onclick="selectDemoOffer('عرض خاص على FC25 العربي', '1600', '2500')">
+                    <div class="offer-title">🇸🇦 FC25 العربي - عرض محدود</div>
+                    <div class="offer-description">احصل على النسخة العربية بخصم حصري</div>
+                    <div class="offer-price">
+                        <span class="fake-price">$2,500</span>
+                        <span class="real-price">$1,600</span>
+                        <span class="discount-badge">36% خصم</span>
+                    </div>
+                    <div class="offer-validity">صالح حتى: نهاية الشهر</div>
+                    <div class="text-center mt-2">
+                        <small style="color: #888;">👆 اضغط للاختيار</small>
+                    </div>
+                </div>
+                
+                <div class="offer-item" onclick="selectDemoOffer('عرض Steam Ultimate', '4500', '7000')">
+                    <div class="offer-title">🖥️ Steam Ultimate - سوبر ديل</div>
+                    <div class="offer-description">أفضل عرض على Steam مع كل المميزات</div>
+                    <div class="offer-price">
+                        <span class="fake-price">$7,000</span>
+                        <span class="real-price">$4,500</span>
+                        <span class="discount-badge">36% خصم</span>
+                    </div>
+                    <div class="offer-validity">صالح حتى: نهاية الشهر</div>
+                    <div class="text-center mt-2">
+                        <small style="color: #888;">👆 اضغط للاختيار</small>
+                    </div>
+                </div>
+            `;
         });
 }
 
 // Close popup
 function closePopup() {
-    document.getElementById('offersPopup').style.display = 'none';
+    const popup = document.getElementById('offersPopup');
+    popup.style.display = 'none';
+    console.log('❌ تم إغلاق العروض');
 }
 
-// Select offer
+// Select offer - محسن
 function selectOffer(offer) {
-    alert(`تم اختيار العرض: ${offer.title}\nالسعر: $${offer.real_price}`);
+    console.log('🎯 تم اختيار عرض:', offer);
+    
+    // تأثير بصري
+    const popup = document.getElementById('offersPopup');
+    popup.style.background = 'rgba(0,255,0,0.1)';
+    
+    setTimeout(() => {
+        popup.style.background = 'rgba(0,0,0,0.7)';
+    }, 300);
+    
+    // رسالة تأكيد محسنة
+    const confirmMessage = `
+        🎉 تم اختيار العرض بنجاح!
+        
+        📋 تفاصيل العرض:
+        • ${offer.title || 'عرض خاص'}
+        • السعر: $${offer.real_price || '0'}
+        • الخصم: ${offer.discount_percentage || '0'}%
+        
+        💬 هل تريد التواصل عبر الواتساب الآن؟
+    `;
+    
+    if (confirm(confirmMessage)) {
+        // فتح الواتساب مع رسالة مخصصة
+        const message = encodeURIComponent(`
+مرحباً! 🎉
+
+أريد الاستفادة من العرض الخاص:
+📋 ${offer.title || 'عرض خاص'}
+💰 السعر: $${offer.real_price || '0'}
+🔥 الخصم: ${offer.discount_percentage || '0'}%
+
+يرجى تأكيد توفر العرض
+        `);
+        
+        const whatsappUrl = `https://wa.me/+201099778228?text=${message}`;
+        window.open(whatsappUrl, '_blank');
+    }
+    
     closePopup();
-    // يمكنك إضافة المزيد من الكود هنا لمعالجة العرض المختار
+}
+
+// دالة للعروض التجريبية
+function selectDemoOffer(title, price, oldPrice) {
+    const discount = Math.round(((oldPrice - price) / oldPrice) * 100);
+    
+    selectOffer({
+        title: title,
+        real_price: price,
+        fake_price: oldPrice,
+        discount_percentage: discount
+    });
 }
 
 // Close popup when clicking outside
 window.onclick = function(event) {
     const popup = document.getElementById('offersPopup');
-    if (event.target == popup) {
-        popup.style.display = 'none';
+    if (event.target === popup) {
+        closePopup();
     }
 }
+
+// إضافة لوحة مفاتيح
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closePopup();
+    }
+});
+
+console.log('🚀 تم تحميل نظام العروض بنجاح');
 </script>
 
 </body>
