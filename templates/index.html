@@ -1197,25 +1197,75 @@
     </style>
 </head>
 <body>
-    <!-- 🔥 العرض المنبثق -->
-    {% if offers and offers.active_offer and offers.active_offer.show_popup %}
-    <div class="offer-overlay" id="offerOverlay">
-        <div class="offer-modal">
-            <button class="offer-close" onclick="closeOfferModal()">&times;</button>
-            <h2 class="offer-title">{{ offers.active_offer.title }}</h2>
-            <p class="offer-description">{{ offers.active_offer.description }}</p>
-            
-            <div class="offer-buttons">
-                <button class="btn-offer-accept" onclick="acceptOffer()">
-                    🔥 أريد الاستفادة من العرض
-                </button>
-                <button class="btn-offer-decline" onclick="declineOffer()">
-                    👀 أريد رؤية باقي المنتجات
-                </button>
+<!-- 🔥 العرض المنبثق الذكي -->
+{% if offers and offers.active_offer and offers.active_offer.show_popup %}
+<div class="offer-overlay" id="offerOverlay">
+    <div class="offer-modal smart-offers-modal">
+        <button class="offer-close" onclick="closeOfferModal()">&times;</button>
+        <h2 class="offer-title">{{ offers.active_offer.title }}</h2>
+        <p class="offer-description">{{ offers.active_offer.description }}</p>
+        
+        <!-- عرض قائمة العروض المتاحة -->
+        {% if offers.active_offer.offers_list %}
+        <div class="offers-showcase">
+            <h3 class="offers-list-title">🎯 العروض المتاحة الآن:</h3>
+            <div class="offers-grid">
+                {% for offer in offers.active_offer.offers_list[:6] %}  <!-- أول 6 عروض بس -->
+                <div class="offer-item" data-game="{{ offer.game }}" data-platform="{{ offer.platform }}" data-account="{{ offer.account }}">
+                    <div class="offer-game-name">
+                        {% if 'AR_Standard' in offer.game %}
+                            🇸🇦 العربي عادي
+                        {% elif 'AR_Ultimate' in offer.game %}
+                            🇸🇦 العربي التميت
+                        {% elif 'EN_Standard' in offer.game %}
+                            🇺🇸 الإنجليزي عادي
+                        {% elif 'EN_Ultimate' in offer.game %}
+                            🇺🇸 الإنجليزي التميت
+                        {% elif 'XBOX_Standard' in offer.game %}
+                            🎮 Xbox عادي
+                        {% elif 'XBOX_Ultimate' in offer.game %}
+                            🎮 Xbox التميت
+                        {% elif 'PC_Standard' in offer.game %}
+                            🖥️ PC شهر
+                        {% elif 'PC_Ultimate' in offer.game %}
+                            🖥️ PC سنة
+                        {% elif 'STEAM_Standard' in offer.game %}
+                            🖥️ Steam عادي
+                        {% elif 'STEAM_Ultimate' in offer.game %}
+                            🖥️ Steam التميت
+                        {% endif %}
+                    </div>
+                    <div class="offer-platform">{{ offer.platform }}</div>
+                    <div class="offer-account-type">{{ offer.account }}</div>
+                    <div class="offer-pricing">
+                        <span class="fake-price">{{ offer.fake_price|format_number }}</span>
+                        <span class="real-price">{{ offer.real_price|format_number }}</span>
+                        <span class="discount-badge">-{{ offer.discount }}%</span>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <!-- إذا فيه عروض أكتر من 6 -->
+                {% if offers.active_offer.offers_list|length > 6 %}
+                <div class="more-offers-indicator">
+                    <span>+ {{ offers.active_offer.offers_list|length - 6 }} عروض أخرى!</span>
+                </div>
+                {% endif %}
             </div>
         </div>
+        {% endif %}
+        
+        <div class="offer-buttons">
+            <button class="btn-offer-accept" onclick="acceptOffers()">
+                🔥 أريد الاستفادة من العروض
+            </button>
+            <button class="btn-offer-decline" onclick="declineOffers()">
+                👀 أريد رؤية باقي المنتجات
+            </button>
+        </div>
     </div>
-    {% endif %}
+</div>
+{% endif %}
 
     <div class="container-fluid">
         <div class="row justify-content-center">
