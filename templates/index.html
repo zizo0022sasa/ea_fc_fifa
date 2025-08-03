@@ -2749,41 +2749,73 @@ function showOffers() {
         .catch(error => {
             console.error('❌ خطأ في تحميل العروض:', error);
             
-            // إظهار عروض تجريبية في حالة الخطأ
-            offersContainer.innerHTML = `
-                <div class="text-center mb-3">
-                    <h4 style="color: #ff6b6b;">⚠️ مشكلة في الاتصال</h4>
-                    <p style="color: #888;">إليك بعض العروض المتاحة:</p>
-                </div>
-                
-                <div class="offer-item" onclick="selectDemoOffer('عرض خاص على FC25 العربي', '1600', '2500')">
-                    <div class="offer-title">🇸🇦 FC25 العربي - عرض محدود</div>
-                    <div class="offer-description">احصل على النسخة العربية بخصم حصري</div>
-                    <div class="offer-price">
-                        <span class="fake-price">$2,500</span>
-                        <span class="real-price">$1,600</span>
-                        <span class="discount-badge">36% خصم</span>
-                    </div>
-                                        <div class="offer-validity">صالح حتى: نفاذ الكمية</div>
-                    <div class="text-center mt-2">
-                        <small style="color: #888;">👆 اضغط للاختيار</small>
-                    </div>
-                </div>
-                
-                <div class="offer-item" onclick="selectDemoOffer('عرض Steam Ultimate', '4500', '7000')">
-                    <div class="offer-title">🖥️ Steam Ultimate - سوبر ديل</div>
-                    <div class="offer-description">أفضل عرض على Steam مع كل المميزات</div>
-                    <div class="offer-price">
-                        <span class="fake-price">$7,000</span>
-                        <span class="real-price">$4,500</span>
-                        <span class="discount-badge">36% خصم</span>
-                    </div>
-                                        <div class="offer-validity">صالح حتى: نفاذ الكمية</div>
-                    <div class="text-center mt-2">
-                        <small style="color: #888;">👆 اضغط للاختيار</small>
-                    </div>
-                </div>
-            `;
+// إظهار عروض تجريبية في حالة الخطأ
+offersContainer.innerHTML = `
+    <div class="text-center mb-3">
+        <h4 style="color: #ff6b6b;">⚠️ مشكلة في الاتصال</h4>
+        <p style="color: #888;">إليك بعض العروض المتاحة:</p>
+    </div>
+    
+    <div class="offer-item" onclick="selectDemoOffer('Standard Edition (Arabic)', '1600', '2500')">
+        <div class="offer-title">🇸🇦 Standard Edition (Arabic)</div>
+        <div class="offer-platform">PS4 • Primary</div>
+        <div class="offer-description">النسخة العربية الكاملة مع جميع المميزات الأساسية</div>
+        <div class="offer-price">
+            <span class="fake-price">2,500</span>
+            <span class="real-price">1,600</span>
+            <span class="discount-badge">36% خصم</span>
+        </div>
+        <div class="offer-validity">⏰ صالح حتى: نفاذ الكمية</div>
+        <div class="text-center mt-2">
+            <small style="color: #888;">👆 اضغط للاختيار</small>
+        </div>
+    </div>
+    
+    <div class="offer-item" onclick="selectDemoOffer('Ultimate Edition (English)', '3500', '5500')">
+        <div class="offer-title">🇺🇸 Ultimate Edition (English)</div>
+        <div class="offer-platform">PS5 • Primary</div>
+        <div class="offer-description">النسخة الفاخرة مع جميع الإضافات والمحتويات الحصرية</div>
+        <div class="offer-price">
+            <span class="fake-price">5,500</span>
+            <span class="real-price">3,500</span>
+            <span class="discount-badge">36% خصم</span>
+        </div>
+        <div class="offer-validity">⏰ صالح حتى: نفاذ الكمية</div>
+        <div class="text-center mt-2">
+            <small style="color: #888;">👆 اضغط للاختيار</small>
+        </div>
+    </div>
+    
+    <div class="offer-item" onclick="selectDemoOffer('Steam Ultimate Edition', '4500', '7000')">
+        <div class="offer-title">🖥️ Steam Ultimate Edition</div>
+        <div class="offer-platform">PC • Full Access</div>
+        <div class="offer-description">أفضل نسخة Steam مع كامل المميزات والتحديثات</div>
+        <div class="offer-price">
+            <span class="fake-price">7,000</span>
+            <span class="real-price">4,500</span>
+            <span class="discount-badge">36% خصم</span>
+        </div>
+        <div class="offer-validity">⏰ صالح حتى: نفاذ الكمية</div>
+        <div class="text-center mt-2">
+            <small style="color: #888;">👆 اضغط للاختيار</small>
+        </div>
+    </div>
+    
+    <div class="offer-item" onclick="selectDemoOffer('Standard Edition (English)', '2200', '3500')">
+        <div class="offer-title">🇺🇸 Standard Edition (English)</div>
+        <div class="offer-platform">PS5 • Secondary</div>
+        <div class="offer-description">نسخة PS5 الثانوية عالية الجودة مع الأساسيات</div>
+        <div class="offer-price">
+            <span class="fake-price">3,500</span>
+            <span class="real-price">2,200</span>
+            <span class="discount-badge">37% خصم</span>
+        </div>
+        <div class="offer-validity">⏰ صالح حتى: نفاذ الكمية</div>
+        <div class="text-center mt-2">
+            <small style="color: #888;">👆 اضغط للاختيار</small>
+        </div>
+    </div>
+`;
         });
 }
 
@@ -2890,6 +2922,61 @@ function declineOffers() {
     document.querySelector('.products-section').scrollIntoView({
         behavior: 'smooth'
     });
+}
+
+.offer-platform {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffd700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 600;
+    display: inline-block;
+    margin: 8px 0;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.offer-title {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #fff;
+    margin: 10px 0 5px 0;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+.offer-price {
+    margin: 15px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.real-price {
+    font-size: 2.2em;
+    font-weight: bold;
+    color: #00ff88;
+    text-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+}
+
+.fake-price {
+    font-size: 1.4em;
+    color: #888;
+    text-decoration: line-through;
+    opacity: 0.8;
+}
+
+.offer-validity {
+    background: linear-gradient(45deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
+    border: 1px solid #ffc107;
+    border-radius: 8px;
+    padding: 8px 15px;
+    margin: 12px 0;
+    color: #ffc107;
+    font-weight: 600;
+    font-size: 0.95em;
+    text-align: center;
 }
 
 console.log('🚀 تم تحميل نظام العروض بنجاح');
