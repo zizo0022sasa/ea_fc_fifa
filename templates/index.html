@@ -1704,6 +1704,175 @@
     .real-price {
         font-size: 18px;
     }
+
+/* 🔥 Enhanced Popup Styles */
+.enhanced-offer-card {
+    background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+    border: 2px solid transparent;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.enhanced-offer-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: left 0.6s ease;
+}
+
+.enhanced-offer-card:hover::before {
+    left: 100%;
+}
+
+.enhanced-offer-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Game Name Styles */
+.offer-game-header {
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.offer-game-name {
+    font-size: 16px;
+    font-weight: bold;
+    padding: 8px 12px;
+    border-radius: 25px;
+    display: inline-block;
+    margin-bottom: 8px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+/* Arabic Styles */
+.ar-standard {
+    background: linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%);
+    color: #3f51b5;
+    border: 2px solid #3f51b5;
+}
+
+.ar-ultimate {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    color: #7b1fa2;
+    border: 2px solid #7b1fa2;
+}
+
+/* English Styles */
+.en-standard {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    color: #1976d2;
+    border: 2px solid #1976d2;
+}
+
+.en-ultimate {
+    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+    color: #388e3c;
+    border: 2px solid #388e3c;
+}
+
+/* Xbox Styles */
+.xbox-standard, .xbox-ultimate {
+    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+    color: #2e7d32;
+    border: 2px solid #2e7d32;
+}
+
+/* PC Styles */
+.pc-standard, .pc-ultimate {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    color: #f57c00;
+    border: 2px solid #f57c00;
+}
+
+/* Steam Styles */
+.steam-standard, .steam-ultimate {
+    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+    color: #d32f2f;
+    border: 2px solid #d32f2f;
+}
+
+/* Platform and Account Info */
+.offer-platform-account {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+}
+
+.offer-platform, .offer-account-type {
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+}
+
+/* Enhanced Pricing */
+.enhanced-pricing {
+    text-align: center;
+    padding: 15px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 10px;
+    border: 1px solid #dee2e6;
+}
+
+.premium-badge {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    animation: premiumPulse 2s infinite alternate;
+}
+
+@keyframes premiumPulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    }
+    100% {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(255, 107, 107, 0.5);
+    }
+}
+
+/* Click Effect */
+.enhanced-offer-card:active {
+    transform: translateY(-4px) scale(0.98);
+}
+
+/* Mobile Optimization */
+@media (max-width: 768px) {
+    .offer-platform-account {
+        flex-direction: column;
+        gap: 5px;
+        text-align: center;
+    }
+    
+    .offer-game-name {
+        font-size: 14px;
+        padding: 6px 10px;
+    }
+    
+    .enhanced-pricing {
+        padding: 12px;
+    }
+
 }
 </style>
 
@@ -1784,77 +1953,90 @@ window.onclick = function(event) {
 {% if offers.active_offer.offers_list %}
 <div class="offers-showcase">
     <h3 class="offers-list-title">🎯 العروض المتاحة الآن:</h3>
-    <div class="offers-grid">
-        {% for offer in offers.active_offer.offers_list[:6] %}
-        <div class="offer-item enhanced-offer-card" data-game="{{ offer.game }}" data-platform="{{ offer.platform }}" data-account="{{ offer.account }}">
-            <div class="offer-game-header">
-                {% if 'AR_Standard' in offer.game %}
-                    <div class="offer-game-name ar-standard">
-                        <i class="fas fa-star" style="color: #7b1fa2;"></i>
-                        Standard Edition (Arabic) 🇸🇦
-                    </div>
-                {% elif 'AR_Ultimate' in offer.game %}
-                    <div class="offer-game-name ar-ultimate">
-                        <i class="fas fa-crown" style="color: #ffd700;"></i>
-                        Ultimate Edition (Arabic) 🇸🇦
-                    </div>
-                {% elif 'EN_Standard' in offer.game %}
-                    <div class="offer-game-name en-standard">
-                        <i class="fas fa-star" style="color: #1976d2;"></i>
-                        Standard Edition (English) 🇺🇸
-                    </div>
-                {% elif 'EN_Ultimate' in offer.game %}
-                    <div class="offer-game-name en-ultimate">
-                        <i class="fas fa-crown" style="color: #ffd700;"></i>
-                        Ultimate Edition (English) 🇺🇸
-                    </div>
-                {% elif 'XBOX_Standard' in offer.game %}
-                    <div class="offer-game-name xbox-standard">
-                        <i class="fab fa-xbox" style="color: #107C10;"></i>
-                        Xbox Standard Edition 🎮
-                    </div>
-                {% elif 'XBOX_Ultimate' in offer.game %}
-                    <div class="offer-game-name xbox-ultimate">
-                        <i class="fab fa-xbox" style="color: #107C10;"></i>
-                        <i class="fas fa-crown" style="color: #ffd700; font-size: 12px;"></i>
-                        Xbox Ultimate Edition 🎮
-                    </div>
-                {% elif 'PC_Standard' in offer.game %}
-                    <div class="offer-game-name pc-standard">
-                        <i class="fas fa-desktop" style="color: #ff8f00;"></i>
-                        PC (شهر) Standard 🖥️
-                    </div>
-                {% elif 'PC_Ultimate' in offer.game %}
-                    <div class="offer-game-name pc-ultimate">
-                        <i class="fas fa-desktop" style="color: #ff8f00;"></i>
-                        PC (سنة) Ultimate 🖥️
-                    </div>
-                {% elif 'STEAM_Standard' in offer.game %}
-                    <div class="offer-game-name steam-standard">
-                        <i class="fab fa-steam-symbol" style="color: #ff0000;"></i>
-                        Steam Standard Edition 🖥️
-                    </div>
-                {% elif 'STEAM_Ultimate' in offer.game %}
-                    <div class="offer-game-name steam-ultimate">
-                        <i class="fab fa-steam-symbol" style="color: #ff0000;"></i>
-                        <i class="fas fa-crown" style="color: #ffd700; font-size: 12px;"></i>
-                        Steam Ultimate Edition 🖥️
-                    </div>
-                {% endif %}
+<div class="offers-grid-horizontal">
+    {% for offer in offers.active_offer.offers_list[:6] %}
+    <div class="offer-card-horizontal interactive-card" 
+         data-game="{{ offer.game }}" 
+         data-platform="{{ offer.platform }}" 
+         data-account="{{ offer.account }}"
+         onclick="navigateToProduct('{{ offer.game }}', '{{ offer.platform }}', '{{ offer.account }}')">
+        
+        <div class="offer-header-section">
+            {% if 'AR_Standard' in offer.game %}
+                <div class="offer-title-badge ar-standard-badge">
+                    <i class="fas fa-star"></i>
+                    Standard Edition (Arabic) 🇸🇦
+                </div>
+            {% elif 'AR_Ultimate' in offer.game %}
+                <div class="offer-title-badge ar-ultimate-badge">
+                    <i class="fas fa-crown"></i>
+                    Ultimate Edition (Arabic) 🇸🇦
+                </div>
+            {% elif 'EN_Standard' in offer.game %}
+                <div class="offer-title-badge en-standard-badge">
+                    <i class="fas fa-star"></i>
+                    Standard Edition (English) 🇺🇸
+                </div>
+            {% elif 'EN_Ultimate' in offer.game %}
+                <div class="offer-title-badge en-ultimate-badge">
+                    <i class="fas fa-crown"></i>
+                    Ultimate Edition (English) 🇺🇸
+                </div>
+            {% elif 'XBOX_Standard' in offer.game %}
+                <div class="offer-title-badge xbox-standard-badge">
+                    <i class="fab fa-xbox"></i>
+                    Xbox Standard 🎮
+                </div>
+            {% elif 'XBOX_Ultimate' in offer.game %}
+                <div class="offer-title-badge xbox-ultimate-badge">
+                    <i class="fab fa-xbox"></i>
+                    Xbox Ultimate 🎮
+                </div>
+            {% elif 'PC_Standard' in offer.game %}
+                <div class="offer-title-badge pc-standard-badge">
+                    <i class="fas fa-desktop"></i>
+                    PC Standard 🖥️
+                </div>
+            {% elif 'PC_Ultimate' in offer.game %}
+                <div class="offer-title-badge pc-ultimate-badge">
+                    <i class="fas fa-desktop"></i>
+                    PC Ultimate 🖥️
+                </div>
+            {% elif 'STEAM_Standard' in offer.game %}
+                <div class="offer-title-badge steam-standard-badge">
+                    <i class="fab fa-steam-symbol"></i>
+                    Steam Standard 🖥️
+                </div>
+            {% elif 'STEAM_Ultimate' in offer.game %}
+                <div class="offer-title-badge steam-ultimate-badge">
+                    <i class="fab fa-steam-symbol"></i>
+                    Steam Ultimate 🖥️
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="offer-details-section">
+            <div class="platform-info">
+                <span class="platform-text">{{ offer.platform }}</span>
+                <span class="account-text">{{ offer.account }}</span>
             </div>
             
-            <div class="offer-platform-account">
-                <div class="offer-platform">📱 {{ offer.platform }}</div>
-                <div class="offer-account-type">🔑 {{ offer.account }}</div>
-            </div>
-            
-            <div class="offer-pricing enhanced-pricing">
-                <span class="fake-price">{{ offer.fake_price|format_number }} جنيه</span>
-                <span class="real-price">{{ offer.real_price|format_number }} جنيه</span>
-                <span class="discount-badge premium-badge">وفر {{ offer.discount }}%</span>
+            <div class="pricing-section-horizontal">
+                <div class="price-container">
+                    <span class="old-price">{{ offer.fake_price|format_number }} جنيه</span>
+                    <span class="new-price">{{ offer.real_price|format_number }} جنيه</span>
+                </div>
+                <div class="discount-percentage">وفر {{ offer.discount }}%</div>
             </div>
         </div>
-        {% endfor %}
+        
+        <div class="click-indicator">
+            <i class="fas fa-hand-pointer"></i>
+            <span>اضغط للذهاب</span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
 
                 
                 <!-- إذا فيه عروض أكتر من 6 -->
