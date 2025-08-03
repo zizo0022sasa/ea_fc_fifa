@@ -2865,6 +2865,33 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
+// دوال أزرار العروض
+function acceptOffers() {
+    // إخفاء popup العروض
+    document.getElementById('offersPopup').style.display = 'none';
+    
+    // عرض رسالة ترحيب
+    alert('🎉 ممتاز! تم قبول العروض بنجاح\n\nاختر المنتج اللي عايزه واستفيد من الخصومات الحصرية! 🔥');
+    
+    // تمرير سلس للمنتجات
+    document.querySelector('.products-section').scrollIntoView({
+        behavior: 'smooth'
+    });
+}
+
+function declineOffers() {
+    // إخفاء popup العروض
+    document.getElementById('offersPopup').style.display = 'none';
+    
+    // عرض رسالة مهذبة
+    alert('👀 لا مشكلة!\n\nيمكنك تصفح جميع المنتجات بالأسعار العادية');
+    
+    // تمرير سلس للمنتجات
+    document.querySelector('.products-section').scrollIntoView({
+        behavior: 'smooth'
+    });
+}
+
 console.log('🚀 تم تحميل نظام العروض بنجاح');
 </script>
 
