@@ -1875,6 +1875,36 @@
     }
 
 }
+<style>
+/* باقي الـ CSS الموجود... */
+
+/* إضافة كود الشعار الجديد هنا */
+.main-logo-img {
+    max-width: 120px;
+    height: auto;
+    filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.3));
+    transition: all 0.3s ease;
+    background: transparent !important;
+    border-radius: 15px;
+    padding: 10px;
+}
+
+.main-logo-img:hover {
+    transform: scale(1.05);
+    filter: drop-shadow(0 4px 12px rgba(255, 255, 255, 0.6));
+}
+
+@media (max-width: 768px) {
+    .main-logo-img {
+        max-width: 100px;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-logo-img {
+        max-width: 80px;
+    }
+}
 </style>
 
 </head>
@@ -2069,13 +2099,12 @@ window.onclick = function(event) {
                     <!-- Header Section -->
                     <div class="header-section">
                         <div class="brand-container">
-                            <div class="ea-sports-logo">
-                                <div class="ea-circle">
-                                    <div class="ea-text">EA</div>
-                                    <div class="sports-text">SPORTS</div>
-                                </div>
-                                <div class="fc26-text">FC26</div>
-                            </div>
+<div class="ea-sports-logo">
+    <img src="https://github.com/user-attachments/assets/e4793d68-39c6-4a8e-b280-e97d0efbe9f8" 
+         alt="EA SPORTS FC" 
+         class="main-logo-img">
+    <div class="fc26-text">FC26</div>
+</div>
                             <h1 class="brand-title">شهد السنيورة</h1>
                         </div>
                         <p class="lead mb-0">احصل على FC 25 بأرخص الأسعار في مصر</p>
@@ -2978,6 +3007,34 @@ function declineOffers() {
     font-weight: 600;
     font-size: 0.95em;
     text-align: center;
+}
+
+.main-logo-img {
+    max-width: 120px;
+    height: auto;
+    filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.3));
+    transition: all 0.3s ease;
+    background: transparent !important; /* خلفية شفافة */
+    border-radius: 15px;
+    padding: 10px;
+}
+
+.main-logo-img:hover {
+    transform: scale(1.05);
+    filter: drop-shadow(0 4px 12px rgba(255, 255, 255, 0.6));
+}
+
+/* تحسين للموبايل */
+@media (max-width: 768px) {
+    .main-logo-img {
+        max-width: 100px;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-logo-img {
+        max-width: 80px;
+    }
 }
 
 console.log('🚀 تم تحميل نظام العروض بنجاح');
