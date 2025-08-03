@@ -123,175 +123,175 @@ def get_offers():
     
     # 🎮 تحكم عام في العروض
     # ======================
-    ALL_OFFERS_ACTIVE = True  # True = كل العروض شغالة | False = كل العروض مقفولة
+    ALL_OFFERS_ACTIVE = "yas"  # yas = كل العروض شغالة | no = كل العروض مقفولة
     
     # 🇸🇦 ================ ARABIC STANDARD EDITION ================
     
     # Arabic Standard - PS5 - Full
-    AR_STD_PS5_FULL_ACTIVE = True      # True = العرض شغال | False = مقفول
+    AR_STD_PS5_FULL_ACTIVE = "yas"      # yas = العرض شغال | no = مقفول
     AR_STD_PS5_FULL_FAKE_PRICE = 5000  # السعر الوهمي (اللي هيتشطب)
     AR_STD_PS5_FULL_REAL_PRICE = 3200  # السعر الحقيقي (اللي العميل هيدفعه)
     
     # Arabic Standard - PS5 - Primary  
-    AR_STD_PS5_PRIMARY_ACTIVE = True     # True = العرض شغال | False = مقفول
+    AR_STD_PS5_PRIMARY_ACTIVE = "yas"     # yas = العرض شغال | no = مقفول
     AR_STD_PS5_PRIMARY_FAKE_PRICE = 2500 # السعر الوهمي
     AR_STD_PS5_PRIMARY_REAL_PRICE = 1600 # السعر الحقيقي
     
     # Arabic Standard - PS5 - Secondary
-    AR_STD_PS5_SECONDARY_ACTIVE = True  # True = العرض شغال | False = مقفول
+    AR_STD_PS5_SECONDARY_ACTIVE = "yas"  # yas = العرض شغال | no = مقفول
     AR_STD_PS5_SECONDARY_FAKE_PRICE = 1800 # السعر الوهمي
     AR_STD_PS5_SECONDARY_REAL_PRICE = 900  # السعر الحقيقي
     
     # Arabic Standard - PS4 - Full
-    AR_STD_PS4_FULL_ACTIVE = False       # True = العرض شغال | False = مقفول
+    AR_STD_PS4_FULL_ACTIVE = "no"       # yas = العرض شغال | no = مقفول
     AR_STD_PS4_FULL_FAKE_PRICE = 4800   # السعر الوهمي
     AR_STD_PS4_FULL_REAL_PRICE = 3200   # السعر الحقيقي
     
     # Arabic Standard - PS4 - Primary
-    AR_STD_PS4_PRIMARY_ACTIVE = True     # True = العرض شغال | False = مقفول
+    AR_STD_PS4_PRIMARY_ACTIVE = "yas"     # yas = العرض شغال | no = مقفول
     AR_STD_PS4_PRIMARY_FAKE_PRICE = 1800 # السعر الوهمي
     AR_STD_PS4_PRIMARY_REAL_PRICE = 800  # السعر الحقيقي
     
     # Arabic Standard - PS4 - Secondary
-    AR_STD_PS4_SECONDARY_ACTIVE = False  # True = العرض شغال | False = مقفول
+    AR_STD_PS4_SECONDARY_ACTIVE = "no"  # yas = العرض شغال | no = مقفول
     AR_STD_PS4_SECONDARY_FAKE_PRICE = 1500 # السعر الوهمي
     AR_STD_PS4_SECONDARY_REAL_PRICE = 1000 # السعر الحقيقي
     
     # 🇸🇦 ================ ARABIC ULTIMATE EDITION ================
     
     # Arabic Ultimate - PS5 - Full
-    AR_ULT_PS5_FULL_ACTIVE = True        # True = العرض شغال | False = مقفول
+    AR_ULT_PS5_FULL_ACTIVE = "yas"        # yas = العرض شغال | no = مقفول
     AR_ULT_PS5_FULL_FAKE_PRICE = 7000    # السعر الوهمي
     AR_ULT_PS5_FULL_REAL_PRICE = 4500    # السعر الحقيقي
     
     # Arabic Ultimate - PS5 - Primary
-    AR_ULT_PS5_PRIMARY_ACTIVE = False    # True = العرض شغال | False = مقفول
+    AR_ULT_PS5_PRIMARY_ACTIVE = "no"    # yas = العرض شغال | no = مقفول
     AR_ULT_PS5_PRIMARY_FAKE_PRICE = 3200 # السعر الوهمي
     AR_ULT_PS5_PRIMARY_REAL_PRICE = 2000 # السعر الحقيقي
     
     # Arabic Ultimate - PS5 - Secondary
-    AR_ULT_PS5_SECONDARY_ACTIVE = True   # True = العرض شغال | False = مقفول
+    AR_ULT_PS5_SECONDARY_ACTIVE = "yas"   # yas = العرض شغال | no = مقفول
     AR_ULT_PS5_SECONDARY_FAKE_PRICE = 3500 # السعر الوهمي
     AR_ULT_PS5_SECONDARY_REAL_PRICE = 1800 # السعر الحقيقي
     
     # Arabic Ultimate - PS4 - Full
-    AR_ULT_PS4_FULL_ACTIVE = False       # True = العرض شغال | False = مقفول
+    AR_ULT_PS4_FULL_ACTIVE = "no"       # yas = العرض شغال | no = مقفول
     AR_ULT_PS4_FULL_FAKE_PRICE = 6800    # السعر الوهمي
     AR_ULT_PS4_FULL_REAL_PRICE = 4300    # السعر الحقيقي
     
     # Arabic Ultimate - PS4 - Primary
-    AR_ULT_PS4_PRIMARY_ACTIVE = True     # True = العرض شغال | False = مقفول
+    AR_ULT_PS4_PRIMARY_ACTIVE = "yas"     # yas = العرض شغال | no = مقفول
     AR_ULT_PS4_PRIMARY_FAKE_PRICE = 2500 # السعر الوهمي
     AR_ULT_PS4_PRIMARY_REAL_PRICE = 1200 # السعر الحقيقي
     
     # Arabic Ultimate - PS4 - Secondary
-    AR_ULT_PS4_SECONDARY_ACTIVE = False  # True = العرض شغال | False = مقفول
+    AR_ULT_PS4_SECONDARY_ACTIVE = "no"  # yas = العرض شغال | no = مقفول
     AR_ULT_PS4_SECONDARY_FAKE_PRICE = 2800 # السعر الوهمي
     AR_ULT_PS4_SECONDARY_REAL_PRICE = 1900 # السعر الحقيقي
     
     # 🇺🇸 ================ ENGLISH STANDARD EDITION ================
     
     # English Standard - PS5 - Full
-    EN_STD_PS5_FULL_ACTIVE = True        # True = العرض شغال | False = مقفول
+    EN_STD_PS5_FULL_ACTIVE = "yas"        # yas = العرض شغال | no = مقفول
     EN_STD_PS5_FULL_FAKE_PRICE = 4500    # السعر الوهمي
     EN_STD_PS5_FULL_REAL_PRICE = 2800    # السعر الحقيقي
     
     # English Standard - PS5 - Primary
-    EN_STD_PS5_PRIMARY_ACTIVE = False    # True = العرض شغال | False = مقفول
+    EN_STD_PS5_PRIMARY_ACTIVE = "no"    # yas = العرض شغال | no = مقفول
     EN_STD_PS5_PRIMARY_FAKE_PRICE = 2200 # السعر الوهمي
     EN_STD_PS5_PRIMARY_REAL_PRICE = 1600 # السعر الحقيقي
     
     # English Standard - PS5 - Secondary
-    EN_STD_PS5_SECONDARY_ACTIVE = True   # True = العرض شغال | False = مقفول
+    EN_STD_PS5_SECONDARY_ACTIVE = "yas"   # yas = العرض شغال | no = مقفول
     EN_STD_PS5_SECONDARY_FAKE_PRICE = 1600 # السعر الوهمي
     EN_STD_PS5_SECONDARY_REAL_PRICE = 800  # السعر الحقيقي
     
     # English Standard - PS4 - Full
-    EN_STD_PS4_FULL_ACTIVE = False       # True = العرض شغال | False = مقفول
+    EN_STD_PS4_FULL_ACTIVE = "no"       # yas = العرض شغال | no = مقفول
     EN_STD_PS4_FULL_FAKE_PRICE = 4200    # السعر الوهمي
     EN_STD_PS4_FULL_REAL_PRICE = 2900    # السعر الحقيقي
     
     # English Standard - PS4 - Primary
-    EN_STD_PS4_PRIMARY_ACTIVE = True     # True = العرض شغال | False = مقفول
+    EN_STD_PS4_PRIMARY_ACTIVE = "yas"     # yas = العرض شغال | no = مقفول
     EN_STD_PS4_PRIMARY_FAKE_PRICE = 1800 # السعر الوهمي
     EN_STD_PS4_PRIMARY_REAL_PRICE = 850  # السعر الحقيقي
     
     # English Standard - PS4 - Secondary
-    EN_STD_PS4_SECONDARY_ACTIVE = False  # True = العرض شغال | False = مقفول
+    EN_STD_PS4_SECONDARY_ACTIVE = "no"  # yas = العرض شغال | no = مقفول
     EN_STD_PS4_SECONDARY_FAKE_PRICE = 1400 # السعر الوهمي
     EN_STD_PS4_SECONDARY_REAL_PRICE = 1000 # السعر الحقيقي
     
     # 🇺🇸 ================ ENGLISH ULTIMATE EDITION ================
     
     # English Ultimate - PS5 - Full
-    EN_ULT_PS5_FULL_ACTIVE = True        # True = العرض شغال | False = مقفول
+    EN_ULT_PS5_FULL_ACTIVE = "yas"        # yas = العرض شغال | no = مقفول
     EN_ULT_PS5_FULL_FAKE_PRICE = 6000    # السعر الوهمي
     EN_ULT_PS5_FULL_REAL_PRICE = 3800    # السعر الحقيقي
     
     # English Ultimate - PS5 - Primary
-    EN_ULT_PS5_PRIMARY_ACTIVE = False    # True = العرض شغال | False = مقفول
+    EN_ULT_PS5_PRIMARY_ACTIVE = "no"    # yas = العرض شغال | no = مقفول
     EN_ULT_PS5_PRIMARY_FAKE_PRICE = 2800 # السعر الوهمي
     EN_ULT_PS5_PRIMARY_REAL_PRICE = 2000 # السعر الحقيقي
     
     # English Ultimate - PS5 - Secondary
-    EN_ULT_PS5_SECONDARY_ACTIVE = True   # True = العرض شغال | False = مقفول
+    EN_ULT_PS5_SECONDARY_ACTIVE = "yas"   # yas = العرض شغال | no = مقفول
     EN_ULT_PS5_SECONDARY_FAKE_PRICE = 2600 # السعر الوهمي
     EN_ULT_PS5_SECONDARY_REAL_PRICE = 1500 # السعر الحقيقي
     
     # English Ultimate - PS4 - Full
-    EN_ULT_PS4_FULL_ACTIVE = False       # True = العرض شغال | False = مقفول
+    EN_ULT_PS4_FULL_ACTIVE = "no"       # yas = العرض شغال | no = مقفول
     EN_ULT_PS4_FULL_FAKE_PRICE = 5800    # السعر الوهمي
     EN_ULT_PS4_FULL_REAL_PRICE = 3600    # السعر الحقيقي
     
     # English Ultimate - PS4 - Primary
-    EN_ULT_PS4_PRIMARY_ACTIVE = True     # True = العرض شغال | False = مقفول
+    EN_ULT_PS4_PRIMARY_ACTIVE = "yas"     # yas = العرض شغال | no = مقفول
     EN_ULT_PS4_PRIMARY_FAKE_PRICE = 2000 # السعر الوهمي
     EN_ULT_PS4_PRIMARY_REAL_PRICE = 1000 # السعر الحقيقي
     
     # English Ultimate - PS4 - Secondary
-    EN_ULT_PS4_SECONDARY_ACTIVE = False  # True = العرض شغال | False = مقفول
+    EN_ULT_PS4_SECONDARY_ACTIVE = "no"  # yas = العرض شغال | no = مقفول
     EN_ULT_PS4_SECONDARY_FAKE_PRICE = 2400 # السعر الوهمي
     EN_ULT_PS4_SECONDARY_REAL_PRICE = 1700 # السعر الحقيقي
     
     # 🎮 ================ XBOX EDITIONS ================
     
     # Xbox Standard - Full
-    XBOX_STD_FULL_ACTIVE = True          # True = العرض شغال | False = مقفول
+    XBOX_STD_FULL_ACTIVE = "yas"          # yas = العرض شغال | no = مقفول
     XBOX_STD_FULL_FAKE_PRICE = 4500      # السعر الوهمي
     XBOX_STD_FULL_REAL_PRICE = 2800      # السعر الحقيقي
     
     # Xbox Ultimate - Full  
-    XBOX_ULT_FULL_ACTIVE = False         # True = العرض شغال | False = مقفول
+    XBOX_ULT_FULL_ACTIVE = "no"         # yas = العرض شغال | no = مقفول
     XBOX_ULT_FULL_FAKE_PRICE = 6200      # السعر الوهمي
     XBOX_ULT_FULL_REAL_PRICE = 3800      # السعر الحقيقي
     
     # 🖥️ ================ PC EDITIONS ================
     
     # PC Standard (شهر) - Full
-    PC_STD_FULL_ACTIVE = False           # True = العرض شغال | False = مقفول
+    PC_STD_FULL_ACTIVE = "no"           # yas = العرض شغال | no = مقفول
     PC_STD_FULL_FAKE_PRICE = 200         # السعر الوهمي
     PC_STD_FULL_REAL_PRICE = 0           # السعر الحقيقي (مجاني)
     
     # PC Ultimate (سنة) - Full
-    PC_ULT_FULL_ACTIVE = True            # True = العرض شغال | False = مقفول
+    PC_ULT_FULL_ACTIVE = "yas"            # yas = العرض شغال | no = مقفول
     PC_ULT_FULL_FAKE_PRICE = 4000        # السعر الوهمي
     PC_ULT_FULL_REAL_PRICE = 2200        # السعر الحقيقي
     
     # 🖥️ ================ STEAM EDITIONS ================
     
     # Steam Standard - Full
-    STEAM_STD_FULL_ACTIVE = True         # True = العرض شغال | False = مقفول
+    STEAM_STD_FULL_ACTIVE = "yas"         # yas = العرض شغال | no = مقفول
     STEAM_STD_FULL_FAKE_PRICE = 2500     # السعر الوهمي
     STEAM_STD_FULL_REAL_PRICE = 1400     # السعر الحقيقي
     
     # Steam Ultimate - Full
-    STEAM_ULT_FULL_ACTIVE = False        # True = العرض شغال | False = مقفول
+    STEAM_ULT_FULL_ACTIVE = "no"        # yas = العرض شغال | no = مقفول
     STEAM_ULT_FULL_FAKE_PRICE = 4200     # السعر الوهمي
     STEAM_ULT_FULL_REAL_PRICE = 2600     # السعر الحقيقي
     
     # 📅 إعدادات العرض المنبثق
     # ========================
-    SHOW_POPUP = True                    # True = يظهر البوب اب | False = مايظهرش
+    SHOW_POPUP = "yas"                    # yas = يظهر البوب اب | no = مايظهرش
     POPUP_TITLE = "🔥 عروض حصرية - وفر حتى 50%!"
     POPUP_DESCRIPTION = "خصومات حقيقية لفترة محدودة - أسعار لن تتكرر!"
     
@@ -308,10 +308,10 @@ def get_offers():
     active_offers = []
     eligible_games = []
     
-    if ALL_OFFERS_ACTIVE:
+    if ALL_OFFERS_ACTIVE == "yas":
         
         # Arabic Standard offers
-        if AR_STD_PS5_FULL_ACTIVE:
+        if AR_STD_PS5_FULL_ACTIVE == "yas":
             discount = calculate_discount(AR_STD_PS5_FULL_FAKE_PRICE, AR_STD_PS5_FULL_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -321,7 +321,7 @@ def get_offers():
                 if "FC26_AR_Standard" not in eligible_games:
                     eligible_games.append("FC26_AR_Standard")
         
-        if AR_STD_PS5_PRIMARY_ACTIVE:
+        if AR_STD_PS5_PRIMARY_ACTIVE == "yas":
             discount = calculate_discount(AR_STD_PS5_PRIMARY_FAKE_PRICE, AR_STD_PS5_PRIMARY_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -331,7 +331,7 @@ def get_offers():
                 if "FC26_AR_Standard" not in eligible_games:
                     eligible_games.append("FC26_AR_Standard")
         
-        if AR_STD_PS5_SECONDARY_ACTIVE:
+        if AR_STD_PS5_SECONDARY_ACTIVE == "yas":
             discount = calculate_discount(AR_STD_PS5_SECONDARY_FAKE_PRICE, AR_STD_PS5_SECONDARY_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -341,7 +341,7 @@ def get_offers():
                 if "FC26_AR_Standard" not in eligible_games:
                     eligible_games.append("FC26_AR_Standard")
         
-        if AR_STD_PS4_FULL_ACTIVE:
+        if AR_STD_PS4_FULL_ACTIVE == "yas":
             discount = calculate_discount(AR_STD_PS4_FULL_FAKE_PRICE, AR_STD_PS4_FULL_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -351,7 +351,7 @@ def get_offers():
                 if "FC26_AR_Standard" not in eligible_games:
                     eligible_games.append("FC26_AR_Standard")
         
-        if AR_STD_PS4_PRIMARY_ACTIVE:
+        if AR_STD_PS4_PRIMARY_ACTIVE == "yas":
             discount = calculate_discount(AR_STD_PS4_PRIMARY_FAKE_PRICE, AR_STD_PS4_PRIMARY_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -361,7 +361,7 @@ def get_offers():
                 if "FC26_AR_Standard" not in eligible_games:
                     eligible_games.append("FC26_AR_Standard")
         
-        if AR_STD_PS4_SECONDARY_ACTIVE:
+        if AR_STD_PS4_SECONDARY_ACTIVE == "yas":
             discount = calculate_discount(AR_STD_PS4_SECONDARY_FAKE_PRICE, AR_STD_PS4_SECONDARY_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -372,7 +372,7 @@ def get_offers():
                     eligible_games.append("FC26_AR_Standard")
         
         # Arabic Ultimate offers
-        if AR_ULT_PS5_FULL_ACTIVE:
+        if AR_ULT_PS5_FULL_ACTIVE == "yas":
             discount = calculate_discount(AR_ULT_PS5_FULL_FAKE_PRICE, AR_ULT_PS5_FULL_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -382,7 +382,7 @@ def get_offers():
                 if "FC26_AR_Ultimate" not in eligible_games:
                     eligible_games.append("FC26_AR_Ultimate")
         
-        if AR_ULT_PS5_PRIMARY_ACTIVE:
+        if AR_ULT_PS5_PRIMARY_ACTIVE == "yas":
             discount = calculate_discount(AR_ULT_PS5_PRIMARY_FAKE_PRICE, AR_ULT_PS5_PRIMARY_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -392,7 +392,7 @@ def get_offers():
                 if "FC26_AR_Ultimate" not in eligible_games:
                     eligible_games.append("FC26_AR_Ultimate")
         
-        if AR_ULT_PS5_SECONDARY_ACTIVE:
+        if AR_ULT_PS5_SECONDARY_ACTIVE == "yas":
             discount = calculate_discount(AR_ULT_PS5_SECONDARY_FAKE_PRICE, AR_ULT_PS5_SECONDARY_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -402,7 +402,7 @@ def get_offers():
                 if "FC26_AR_Ultimate" not in eligible_games:
                     eligible_games.append("FC26_AR_Ultimate")
         
-        if AR_ULT_PS4_FULL_ACTIVE:
+        if AR_ULT_PS4_FULL_ACTIVE == "yas":
             discount = calculate_discount(AR_ULT_PS4_FULL_FAKE_PRICE, AR_ULT_PS4_FULL_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -412,7 +412,7 @@ def get_offers():
                 if "FC26_AR_Ultimate" not in eligible_games:
                     eligible_games.append("FC26_AR_Ultimate")
         
-        if AR_ULT_PS4_PRIMARY_ACTIVE:
+        if AR_ULT_PS4_PRIMARY_ACTIVE == "yas":
             discount = calculate_discount(AR_ULT_PS4_PRIMARY_FAKE_PRICE, AR_ULT_PS4_PRIMARY_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -422,7 +422,7 @@ def get_offers():
                 if "FC26_AR_Ultimate" not in eligible_games:
                     eligible_games.append("FC26_AR_Ultimate")
         
-        if AR_ULT_PS4_SECONDARY_ACTIVE:
+        if AR_ULT_PS4_SECONDARY_ACTIVE == "yas":
             discount = calculate_discount(AR_ULT_PS4_SECONDARY_FAKE_PRICE, AR_ULT_PS4_SECONDARY_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -433,7 +433,7 @@ def get_offers():
                     eligible_games.append("FC26_AR_Ultimate")
         
         # English Standard offers
-        if EN_STD_PS5_FULL_ACTIVE:
+        if EN_STD_PS5_FULL_ACTIVE == "yas":
             discount = calculate_discount(EN_STD_PS5_FULL_FAKE_PRICE, EN_STD_PS5_FULL_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -443,7 +443,7 @@ def get_offers():
                 if "FC26_EN_Standard" not in eligible_games:
                     eligible_games.append("FC26_EN_Standard")
         
-        if EN_STD_PS5_PRIMARY_ACTIVE:
+        if EN_STD_PS5_PRIMARY_ACTIVE == "yas":
             discount = calculate_discount(EN_STD_PS5_PRIMARY_FAKE_PRICE, EN_STD_PS5_PRIMARY_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -453,7 +453,7 @@ def get_offers():
                 if "FC26_EN_Standard" not in eligible_games:
                     eligible_games.append("FC26_EN_Standard")
         
-        if EN_STD_PS5_SECONDARY_ACTIVE:
+        if EN_STD_PS5_SECONDARY_ACTIVE == "yas":
             discount = calculate_discount(EN_STD_PS5_SECONDARY_FAKE_PRICE, EN_STD_PS5_SECONDARY_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -463,7 +463,7 @@ def get_offers():
                 if "FC26_EN_Standard" not in eligible_games:
                     eligible_games.append("FC26_EN_Standard")
         
-        if EN_STD_PS4_FULL_ACTIVE:
+        if EN_STD_PS4_FULL_ACTIVE == "yas":
             discount = calculate_discount(EN_STD_PS4_FULL_FAKE_PRICE, EN_STD_PS4_FULL_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -473,7 +473,7 @@ def get_offers():
                 if "FC26_EN_Standard" not in eligible_games:
                     eligible_games.append("FC26_EN_Standard")
         
-        if EN_STD_PS4_PRIMARY_ACTIVE:
+        if EN_STD_PS4_PRIMARY_ACTIVE == "yas":
             discount = calculate_discount(EN_STD_PS4_PRIMARY_FAKE_PRICE, EN_STD_PS4_PRIMARY_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -483,7 +483,7 @@ def get_offers():
                 if "FC26_EN_Standard" not in eligible_games:
                     eligible_games.append("FC26_EN_Standard")
         
-        if EN_STD_PS4_SECONDARY_ACTIVE:
+        if EN_STD_PS4_SECONDARY_ACTIVE == "yas":
             discount = calculate_discount(EN_STD_PS4_SECONDARY_FAKE_PRICE, EN_STD_PS4_SECONDARY_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -494,7 +494,7 @@ def get_offers():
                     eligible_games.append("FC26_EN_Standard")
         
         # English Ultimate offers
-        if EN_ULT_PS5_FULL_ACTIVE:
+        if EN_ULT_PS5_FULL_ACTIVE == "yas":
             discount = calculate_discount(EN_ULT_PS5_FULL_FAKE_PRICE, EN_ULT_PS5_FULL_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -504,7 +504,7 @@ def get_offers():
                 if "FC26_EN_Ultimate" not in eligible_games:
                     eligible_games.append("FC26_EN_Ultimate")
         
-        if EN_ULT_PS5_PRIMARY_ACTIVE:
+        if EN_ULT_PS5_PRIMARY_ACTIVE == "yas":
             discount = calculate_discount(EN_ULT_PS5_PRIMARY_FAKE_PRICE, EN_ULT_PS5_PRIMARY_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -514,7 +514,7 @@ def get_offers():
                 if "FC26_EN_Ultimate" not in eligible_games:
                     eligible_games.append("FC26_EN_Ultimate")
         
-        if EN_ULT_PS5_SECONDARY_ACTIVE:
+        if EN_ULT_PS5_SECONDARY_ACTIVE == "yas":
             discount = calculate_discount(EN_ULT_PS5_SECONDARY_FAKE_PRICE, EN_ULT_PS5_SECONDARY_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -524,7 +524,7 @@ def get_offers():
                 if "FC26_EN_Ultimate" not in eligible_games:
                     eligible_games.append("FC26_EN_Ultimate")
         
-        if EN_ULT_PS4_FULL_ACTIVE:
+        if EN_ULT_PS4_FULL_ACTIVE == "yas":
             discount = calculate_discount(EN_ULT_PS4_FULL_FAKE_PRICE, EN_ULT_PS4_FULL_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -534,7 +534,7 @@ def get_offers():
                 if "FC26_EN_Ultimate" not in eligible_games:
                     eligible_games.append("FC26_EN_Ultimate")
         
-        if EN_ULT_PS4_PRIMARY_ACTIVE:
+        if EN_ULT_PS4_PRIMARY_ACTIVE == "yas":
             discount = calculate_discount(EN_ULT_PS4_PRIMARY_FAKE_PRICE, EN_ULT_PS4_PRIMARY_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -544,7 +544,7 @@ def get_offers():
                 if "FC26_EN_Ultimate" not in eligible_games:
                     eligible_games.append("FC26_EN_Ultimate")
         
-        if EN_ULT_PS4_SECONDARY_ACTIVE:
+        if EN_ULT_PS4_SECONDARY_ACTIVE == "yas":
             discount = calculate_discount(EN_ULT_PS4_SECONDARY_FAKE_PRICE, EN_ULT_PS4_SECONDARY_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -555,7 +555,7 @@ def get_offers():
                     eligible_games.append("FC26_EN_Ultimate")
         
         # Xbox offers
-        if XBOX_STD_FULL_ACTIVE:
+        if XBOX_STD_FULL_ACTIVE == "yas":
             discount = calculate_discount(XBOX_STD_FULL_FAKE_PRICE, XBOX_STD_FULL_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -565,7 +565,7 @@ def get_offers():
                 if "FC26_XBOX_Standard" not in eligible_games:
                     eligible_games.append("FC26_XBOX_Standard")
         
-        if XBOX_ULT_FULL_ACTIVE:
+        if XBOX_ULT_FULL_ACTIVE == "yas":
             discount = calculate_discount(XBOX_ULT_FULL_FAKE_PRICE, XBOX_ULT_FULL_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -576,7 +576,7 @@ def get_offers():
                     eligible_games.append("FC26_XBOX_Ultimate")
         
         # PC offers
-        if PC_STD_FULL_ACTIVE and PC_STD_FULL_REAL_PRICE >= 0:  # PC مجاني ممكن يكون له عرض وهمي
+        if PC_STD_FULL_ACTIVE == "yas" and PC_STD_FULL_REAL_PRICE >= 0:  # PC مجاني ممكن يكون له عرض وهمي
             discount = calculate_discount(PC_STD_FULL_FAKE_PRICE, PC_STD_FULL_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -586,7 +586,7 @@ def get_offers():
                 if "FC26_PC_Standard" not in eligible_games:
                     eligible_games.append("FC26_PC_Standard")
         
-        if PC_ULT_FULL_ACTIVE:
+        if PC_ULT_FULL_ACTIVE == "yas":
             discount = calculate_discount(PC_ULT_FULL_FAKE_PRICE, PC_ULT_FULL_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -597,7 +597,7 @@ def get_offers():
                     eligible_games.append("FC26_PC_Ultimate")
         
         # Steam offers
-        if STEAM_STD_FULL_ACTIVE:
+        if STEAM_STD_FULL_ACTIVE == "yas":
             discount = calculate_discount(STEAM_STD_FULL_FAKE_PRICE, STEAM_STD_FULL_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -607,7 +607,7 @@ def get_offers():
                 if "FC26_STEAM_Standard" not in eligible_games:
                     eligible_games.append("FC26_STEAM_Standard")
         
-        if STEAM_ULT_FULL_ACTIVE:
+        if STEAM_ULT_FULL_ACTIVE == "yas":
             discount = calculate_discount(STEAM_ULT_FULL_FAKE_PRICE, STEAM_ULT_FULL_REAL_PRICE)
             if discount > 0:
                 active_offers.append({
@@ -623,11 +623,12 @@ def get_offers():
             "title": POPUP_TITLE,
             "description": POPUP_DESCRIPTION,
             "offers_list": active_offers,
-            "show_popup": SHOW_POPUP and ALL_OFFERS_ACTIVE and len(active_offers) > 0,
+            "show_popup": SHOW_POPUP == "yas" and ALL_OFFERS_ACTIVE == "yas" and len(active_offers) > 0,
             "popup_frequency": "once_per_session"
         } if active_offers else None,
         "offer_cards": eligible_games if active_offers else []
     }
+
 
 # 🔥 دالة تطبيق الأسعار الذكية - حط الدالة دي بعد get_offers مباشرة
 def apply_offer_discount(prices, offers):
