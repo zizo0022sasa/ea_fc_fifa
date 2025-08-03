@@ -21,6 +21,8 @@
             --danger-color: #dc3545;
             --whatsapp-color: #25D366;
             --card-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            --offer-gold: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
+            --offer-glow: 0 0 30px rgba(255, 215, 0, 0.8);
         }
         
         body { 
@@ -29,7 +31,252 @@
             min-height: 100vh;
             padding: 15px 0;
         }
-        
+
+        /* 🔥 تصميم العرض المنبثق */
+        .offer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.5s ease-in-out;
+            backdrop-filter: blur(5px);
+        }
+
+        .offer-modal {
+            background: white;
+            border-radius: 25px;
+            padding: 40px 30px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideInUp 0.6s ease-out;
+            border: 3px solid #ffd700;
+        }
+
+        .offer-modal::before {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            background: var(--offer-gold);
+            border-radius: 28px;
+            z-index: -1;
+            animation: pulseGlow 2s infinite;
+        }
+
+        .offer-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #999;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .offer-close:hover {
+            color: #333;
+        }
+
+        .offer-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: var(--offer-gold);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
+        }
+
+        .offer-description {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .offer-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-offer-accept {
+            background: var(--offer-gold);
+            border: none;
+            border-radius: 15px;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            box-shadow: var(--offer-glow);
+            animation: pulseButton 2s infinite;
+        }
+
+        .btn-offer-accept:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+            color: #000;
+        }
+
+        .btn-offer-decline {
+            background: #6c757d;
+            border: none;
+            border-radius: 15px;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-offer-decline:hover {
+            background: #5a6268;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* تأثيرات الأنميشن للعرض */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+            }
+            50% {
+                box-shadow: 0 0 40px rgba(255, 215, 0, 1);
+            }
+        }
+
+        @keyframes pulseButton {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        /* 🎯 تصميم الكروت الخاصة بالعرض */
+        .product-card.offer-card {
+            position: relative;
+            border: 3px solid #ffd700 !important;
+            background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%) !important;
+            box-shadow: var(--offer-glow), 0 20px 50px rgba(0,0,0,0.2) !important;
+            animation: offerCardGlow 3s ease-in-out infinite alternate;
+        }
+
+        .product-card.offer-card::before {
+            content: '🔥 عرض خاص';
+            position: absolute;
+            top: -15px;
+            right: 20px;
+            background: var(--offer-gold);
+            color: #333;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+            z-index: 10;
+        }
+
+        .product-card.offer-card .product-header {
+            background: var(--offer-gold) !important;
+            color: #333 !important;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-card.offer-card .product-header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        .product-card.offer-card .account-price {
+            position: relative;
+        }
+
+        .product-card.offer-card .original-price {
+            text-decoration: line-through;
+            color: #999;
+            font-size: 14px;
+            display: block;
+        }
+
+        .product-card.offer-card .discounted-price {
+            color: #d32f2f;
+            font-weight: bold;
+            font-size: 18px;
+            display: block;
+        }
+
+        .product-card.offer-card .discount-badge {
+            position: absolute;
+            top: -5px;
+            left: -10px;
+            background: #d32f2f;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: bold;
+            transform: rotate(-15deg);
+            box-shadow: 0 2px 8px rgba(211, 47, 47, 0.3);
+        }
+
+        @keyframes offerCardGlow {
+            from {
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.6), 0 20px 50px rgba(0,0,0,0.2);
+            }
+            to {
+                box-shadow: 0 0 40px rgba(255, 215, 0, 1), 0 25px 60px rgba(0,0,0,0.3);
+            }
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            50%, 100% { left: 100%; }
+        }
+
+        /* باقي الكود CSS نفسه... */
         .main-card {
             background: rgba(255, 255, 255, 0.98);
             border-radius: 20px;
@@ -754,6 +1001,25 @@
             .terms-section {
                 padding: 20px 15px;
             }
+
+            /* العرض المنبثق - موبايل */
+            .offer-modal {
+                width: 95%;
+                padding: 30px 20px;
+            }
+
+            .offer-title {
+                font-size: 2rem;
+            }
+
+            .offer-buttons {
+                flex-direction: column;
+            }
+
+            .btn-offer-accept,
+            .btn-offer-decline {
+                width: 100%;
+            }
         }
         
         @media (max-width: 480px) {
@@ -801,6 +1067,14 @@
             .comparison-table td {
                 padding: 8px 4px;
                 font-size: 12px;
+            }
+
+            .offer-modal {
+                padding: 25px 15px;
+            }
+
+            .offer-title {
+                font-size: 1.8rem;
             }
         }
         
@@ -923,6 +1197,26 @@
     </style>
 </head>
 <body>
+    <!-- 🔥 العرض المنبثق -->
+    {% if offers and offers.active_offer and offers.active_offer.show_popup %}
+    <div class="offer-overlay" id="offerOverlay">
+        <div class="offer-modal">
+            <button class="offer-close" onclick="closeOfferModal()">&times;</button>
+            <h2 class="offer-title">{{ offers.active_offer.title }}</h2>
+            <p class="offer-description">{{ offers.active_offer.description }}</p>
+            
+            <div class="offer-buttons">
+                <button class="btn-offer-accept" onclick="acceptOffer()">
+                    🔥 أريد الاستفادة من العرض
+                </button>
+                <button class="btn-offer-decline" onclick="declineOffer()">
+                    👀 أريد رؤية باقي المنتجات
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="container-fluid">
         <div class="row justify-content-center">
             <div class="col-xl-10 col-lg-11 col-md-12">
@@ -979,19 +1273,20 @@
                         <div class="products-grid" id="productsGrid">
                             {% for game_id, game in prices.games.items() %}
                                 {% for platform_id, platform in game.platforms.items() %}
+                                    {% set is_offer_card = game_id in offers.offer_cards if offers and offers.offer_cards else false %}
+                                    
                                     {% if 'EN' in game_id %}
-                                        <div class="product-card" data-game-type="english">
+                                        <div class="product-card {% if is_offer_card %}offer-card{% endif %}" data-game-type="english">
                                     {% elif 'AR' in game_id %}
-                                        <div class="product-card" data-game-type="arabic">
+                                        <div class="product-card {% if is_offer_card %}offer-card{% endif %}" data-game-type="arabic">
                                     {% elif 'XBOX' in game_id %}
-                                        <div class="product-card" data-game-type="xbox">
+                                        <div class="product-card {% if is_offer_card %}offer-card{% endif %}" data-game-type="xbox">
                                     {% elif 'PC' in game_id %}
-    <div class="product-card" data-game-type="pc">
-{% elif 'STEAM' in game_id %}
-    <div class="product-card" data-game-type="steam">
-
+                                        <div class="product-card {% if is_offer_card %}offer-card{% endif %}" data-game-type="pc">
+                                    {% elif 'STEAM' in game_id %}
+                                        <div class="product-card {% if is_offer_card %}offer-card{% endif %}" data-game-type="steam">
                                     {% else %}
-                                        <div class="product-card">
+                                        <div class="product-card {% if is_offer_card %}offer-card{% endif %}">
                                     {% endif %}
                                         <div class="product-header">
                                             <div class="product-title">{{ game.name }}</div>
@@ -1019,8 +1314,15 @@
                                                                 {% endif %}
                                                             </div>
                                                         </div>
-                                                        <div class="account-price">{{ account.price|format_number }} {{ prices.settings.currency[:4] }}</div>
-
+                                                        <div class="account-price">
+                                                            {% if account.get('original_price') %}
+                                                                <span class="discount-badge">-{{ account.discount_percentage }}%</span>
+                                                                <span class="original-price">{{ account.original_price|format_number }}</span>
+                                                                <span class="discounted-price">{{ account.price|format_number }}</span>
+                                                            {% else %}
+                                                                {{ account.price|format_number }} {{ prices.settings.currency[:4] }}
+                                                            {% endif %}
+                                                        </div>
                                                     </div>
                                                 {% endfor %}
                                             </div>
@@ -1094,6 +1396,7 @@
                             </div>
                         </div>
 
+                        <!-- باقي المحتوى يبقى كما هو... -->
                         <!-- الشروط والأحكام -->
                         <div class="terms-section">
                             <h3>📋 الشروط والأحكام</h3>
@@ -1251,17 +1554,18 @@
 
 
 <script>
-        // بيانات الأسعار (نفس الكود الأول)
+        // بيانات الأسعار والعروض
         const pricesData = {{ prices|tojson|safe }};
+        const offersData = {{ offers|tojson|safe }};
         
-        // متغيرات الاختيار (نفس الكود الأول)
+        // متغيرات الاختيار
         let selectedGame = '';
         let selectedPlatform = '';
         let selectedAccount = '';
         let selectedPrice = 0;
         let selectedCurrency = '';
         
-        // متغيرات إضافية من الكود التاني
+        // متغيرات إضافية
         let selectedProductData = {};
         let isRequestInProgress = false;
         
@@ -1269,8 +1573,47 @@
         const alertContainer = document.getElementById('alertContainer');
         const accountOptions = document.querySelectorAll('.account-option');
         const productBtns = document.querySelectorAll('.product-btn');
-        
-        // تحديث الألوان حسب نوع اللعبة (من الكود التاني)
+
+        // 🔥 دوال العرض المنبثق
+        function checkOfferDisplay() {
+            const hasSeenOffer = localStorage.getItem('hasSeenOffer_' + (offersData?.active_offer?.id || 'default'));
+            
+            if (offersData?.active_offer?.show_popup && !hasSeenOffer) {
+                document.getElementById('offerOverlay').style.display = 'flex';
+            }
+        }
+
+        function closeOfferModal() {
+            document.getElementById('offerOverlay').style.display = 'none';
+            localStorage.setItem('hasSeenOffer_' + (offersData?.active_offer?.id || 'default'), 'true');
+        }
+
+        function acceptOffer() {
+            closeOfferModal();
+            
+            // التمرير إلى الكروت المخفضة
+            const firstOfferCard = document.querySelector('.product-card.offer-card');
+            if (firstOfferCard) {
+                firstOfferCard.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center'
+                });
+                
+                // تأثير إضافي للفت الانتباه
+                setTimeout(() => {
+                    firstOfferCard.style.animation = 'offerCardGlow 1s ease-in-out 3 alternate';
+                }, 500);
+            }
+            
+            showAlert('🔥 تم تطبيق العرض! الكروت الذهبية تحتوي على خصومات حصرية', 'success');
+        }
+
+        function declineOffer() {
+            closeOfferModal();
+            showAlert('👍 يمكنك رؤية جميع المنتجات أدناه', 'success');
+        }
+
+        // تحديث الألوان حسب نوع اللعبة
         function updateCardColors() {
             document.querySelectorAll('.product-card').forEach(card => {
                 const gameType = card.getAttribute('data-game-type');
@@ -1280,9 +1623,14 @@
             });
         }
         
-        // إضافة مستمعي الأحداث لخيارات الحساب (مدمج من الكودين)
+        // إضافة مستمعي الأحداث لخيارات الحساب
         document.addEventListener('DOMContentLoaded', function() {
             updateCardColors();
+            
+            // فحص عرض العروض المنبثقة
+            setTimeout(() => {
+                checkOfferDisplay();
+            }, 1000);
             
             // إضافة أحداث النقر على خيارات الحساب
             accountOptions.forEach(option => {
@@ -1296,14 +1644,14 @@
                     // تحديد الخيار الحالي
                     this.classList.add('selected');
                     
-                    // حفظ بيانات الاختيار (نفس الكود الأول)
+                    // حفظ بيانات الاختيار
                     selectedGame = this.dataset.game;
                     selectedPlatform = this.dataset.platform;
                     selectedAccount = this.dataset.account;
                     selectedPrice = this.dataset.price;
                     selectedCurrency = this.dataset.currency;
                     
-                    // تحديث بيانات المنتج المختار (من الكود التاني)
+                    // تحديث بيانات المنتج المختار
                     selectedProductData = {
                         game: this.getAttribute('data-game'),
                         platform: this.getAttribute('data-platform'),
@@ -1311,27 +1659,32 @@
                         price: this.getAttribute('data-price'),
                         currency: this.getAttribute('data-currency')
                     };
-                    // إضافة تأثير على الكارت المختار (من الكود التاني)
+                    
+                    // إضافة تأثير على الكارت المختار
                     document.querySelectorAll('.product-card').forEach(card => {
                         card.classList.remove('active-card');
                     });
                     card.classList.add('active-card');
                     document.getElementById('productsGrid').classList.add('has-active-card');
                     
-                    // تحديث زر الواتساب (مدمج من الكودين)
+                    // تحديث زر الواتساب
                     const btn = card.querySelector('.product-btn');
+                    const priceText = this.querySelector('.discounted-price') ? 
+                        this.querySelector('.discounted-price').textContent :
+                        selectedPrice + ' ' + selectedCurrency.substring(0, 4);
+                    
                     btn.innerHTML = `
                         <svg class="whatsapp-logo-svg" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893A11.821 11.821 0 0020.465 3.488"/>
                         </svg>
-                        اطلب الآن - ${selectedPrice} ${selectedCurrency.substring(0, 4)}
+                        اطلب الآن - ${priceText}
                     `;
                     btn.disabled = false;
                 });
             });
         });
         
-        // إضافة مستمعي الأحداث لأزرار الواتساب (من الكود الأول الشغال)
+        // إضافة مستمعي الأحداث لأزرار الواتساب
         productBtns.forEach(btn => {
             btn.addEventListener('click', async function(e) {
                 e.preventDefault();
@@ -1360,7 +1713,7 @@
                     }
                 }
                 
-                // إنشاء FormData (طريقة الكود الأول الشغال)
+                // إنشاء FormData
                 const formData = new FormData();
                 formData.append('game_type', selectedOption.dataset.game);
                 formData.append('platform', selectedOption.dataset.platform);
@@ -1372,7 +1725,6 @@
                 isRequestInProgress = true;
                 
                 try {
-                    // نفس طريقة الكود الأول الشغال
                     const response = await fetch('/whatsapp', {
                         method: 'POST',
                         body: formData,
@@ -1382,10 +1734,16 @@
                     const data = await response.json();
                     
                     if (response.ok && data.success) {
+                        // إضافة رسالة للعروض الخاصة
+                        let extraMessage = '';
+                        if (card.classList.contains('offer-card')) {
+                            extraMessage = '<br><strong>🔥 تهانينا! لقد اخترت منتج من العرض الخاص!</strong>';
+                        }
+                        
                         showAlert(`
                             ✅ تم تحضير الاستفسار بنجاح!<br>
                             <strong>رقم المرجع:</strong> ${data.reference_id}<br>
-                            <strong>السعر:</strong> ${data.price} ${data.currency}<br>
+                            <strong>السعر:</strong> ${data.price} ${data.currency}${extraMessage}<br>
                             <strong>سيتم فتح الواتساب الآن...</strong>
                         `, 'success');
                         
@@ -1411,7 +1769,7 @@
             });
         });
         
-        // دالة إظهار الرسائل (نفس الكود الأول)
+        // دالة إظهار الرسائل
         function showAlert(message, type = 'success') {
             const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
             const icon = type === 'success' ? '✅' : '❌';
@@ -1430,7 +1788,7 @@
             }, 5000);
         }
         
-        // إزالة تأثير البلور عند النقر خارج الكروت (من الكود التاني)
+        // إزالة تأثير البلور عند النقر خارج الكروت
         document.addEventListener('click', function(event) {
             if (!event.target.closest('.product-card')) {
                 document.querySelectorAll('.product-card').forEach(card => {
@@ -1443,7 +1801,7 @@
             }
         });
         
-        // تأثيرات إضافية للموبايل (من الكود الأول)
+        // تأثيرات إضافية للموبايل
         document.addEventListener('DOMContentLoaded', function() {
             // تأثير الاهتزاز للموبايل عند الضغط
             if ('vibrate' in navigator) {
@@ -1452,6 +1810,14 @@
                         navigator.vibrate(50);
                     });
                 });
+            }
+        });
+
+        // إغلاق العرض المنبثق عند الضغط خارجه
+        document.addEventListener('click', function(event) {
+            const offerOverlay = document.getElementById('offerOverlay');
+            if (event.target === offerOverlay) {
+                closeOfferModal();
             }
         });
 </script>
