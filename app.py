@@ -99,6 +99,53 @@ def anti_spam_check(ip_address, user_agent):
     failed_attempts[key].append(current_time)
     return True
 
+# 🔥 دالة جديدة لإدارة العروض - تحط هنا بعد anti_spam_check
+def get_offers():
+    """إدارة العروض والخصومات"""
+    return {
+        "active_offer": {
+            "id": "flash_sale_2025",
+            "title": "🔥 عرض البرق - خصم 20%",
+            "description": "خصم حصري على مجموعة مختارة من الألعاب لفترة محدودة!",
+            "discount_percentage": 20,
+            "valid_until": "2025-01-15 23:59:59",
+            "eligible_games": [
+                "FC26_EN_Standard", 
+                "FC26_AR_Standard",
+                "FC26_STEAM_Standard"
+            ],
+            "show_popup": True,
+            "popup_frequency": "once_per_session"  # once_per_day, once_per_session, always
+        },
+        "offer_cards": [
+            "FC26_EN_Standard",
+            "FC26_AR_Standard", 
+            "FC26_STEAM_Standard"
+        ]
+    }
+
+# 🔥 دالة تطبيق الخصم على الأسعار - تحط هنا بعد get_offers
+def apply_offer_discount(prices, offers):
+    """تطبيق الخصومات على الأسعار"""
+    if not offers.get("active_offer"):
+        return prices
+    
+    offer = offers["active_offer"]
+    discount = offer["discount_percentage"] / 100
+    
+    for game_id in offer["eligible_games"]:
+        if game_id in prices["games"]:
+            for platform_id, platform in prices["games"][game_id]["platforms"].items():
+                for account_id, account in platform["accounts"].items():
+                    original_price = account["price"]
+                    if original_price > 0:  # تجنب الأسعار المجانية
+                        discounted_price = int(original_price * (1 - discount))
+                        account["original_price"] = original_price
+                        account["price"] = discounted_price
+                        account["discount_percentage"] = offer["discount_percentage"]
+    
+    return prices
+
 # الأسعار الثابتة - مدمجة في الكود مباشرة
 def get_prices():
     return {
@@ -258,7 +305,7 @@ def get_prices():
                             <rect x="6" y="20" width="12" height="2" fill="#FF8C00"/>
                         </svg>''',
                         "accounts": {
-                            "Full": {"name": "Full - حساب كامل على حسابك الشخصي 🔐", "price": 0000}
+                            "Full": {"name": "Full - حساب كامل على حسابك الشخصي 🔐", "price": 0}
                         }
                     }
                 }
@@ -349,14 +396,19 @@ def sanitize_input(text, max_length=100):
     
     return text
 
-# الصفحة الرئيسية
+# 🔥 الصفحة الرئيسية المحدثة - هنا بتغير الدالة دي
 @app.route('/')
 @rate_limit(max_requests=25, window=60)
 def index():
     try:
         prices = get_prices()
-        logger.info("✅ تم تحميل الصفحة الرئيسية بنجاح")
-        return render_template('index.html', prices=prices)
+        offers = get_offers()
+        
+        # تطبيق العروض على الأسعار
+        prices = apply_offer_discount(prices, offers)
+        
+        logger.info("✅ تم تحميل الصفحة الرئيسية بنجاح مع العروض")
+        return render_template('index.html', prices=prices, offers=offers)
     except Exception as e:
         logger.error(f"❌ خطأ في الصفحة الرئيسية: {e}")
         abort(500)
@@ -381,8 +433,12 @@ def create_whatsapp_link():
         if not all([game_type, platform, account_type]):
             return jsonify({'error': 'يرجى اختيار جميع الخيارات أولاً'}), 400
         
-        # تحميل الأسعار والتحقق
+        # 🔥 تحميل الأسعار والعروض هنا
         prices = get_prices()
+        offers = get_offers()
+        
+        # تطبيق العروض على الأسعار
+        prices = apply_offer_discount(prices, offers)
         
         if (game_type not in prices.get('games', {}) or
             platform not in prices['games'][game_type].get('platforms', {}) or
@@ -444,12 +500,26 @@ def create_whatsapp_link():
         logger.error(f"❌ خطأ في إنشاء رابط الواتساب: {e}")
         return jsonify({'error': 'حدث خطأ في النظام - يرجى المحاولة مرة أخرى'}), 500
 
+# 🔥 API جديد للعروض - تضيف دي بعد get_prices_api
+@app.route('/api/offers')
+@rate_limit(max_requests=15, window=60)
+def get_offers_api():
+    try:
+        offers = get_offers()
+        return jsonify(offers)
+    except Exception as e:
+        logger.error(f"❌ خطأ في API العروض: {e}")
+        return jsonify({'error': 'خطأ في النظام'}), 500
+
 # API للحصول على الأسعار
 @app.route('/api/prices')
 @rate_limit(max_requests=15, window=60)
 def get_prices_api():
     try:
         prices = get_prices()
+        offers = get_offers()
+        # تطبيق العروض على الأسعار
+        prices = apply_offer_discount(prices, offers)
         return jsonify(prices)
     except Exception as e:
         logger.error(f"❌ خطأ في API الأسعار: {e}")
@@ -494,7 +564,7 @@ def format_number_filter(number):
 
 # تشغيل التطبيق
 if __name__ == '__main__':
-    logger.info("🚀 تم تشغيل التطبيق بنجاح - الأسعار مدمجة في الكود مع فاصلة عشرية")
+    logger.info("🚀 تم تشغيل التطبيق بنجاح - الأسعار مدمجة في الكود مع فاصلة عشرية والعروض")
     app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
 else:
-    logger.info("🚀 تم تشغيل التطبيق عبر gunicorn - الأسعار مدمجة في الكود مع فاصلة عشرية")
+    logger.info("🚀 تم تشغيل التطبيق عبر gunicorn - الأسعار مدمجة في الكود مع فاصلة عشرية والعروض")
