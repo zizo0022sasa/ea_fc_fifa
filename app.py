@@ -101,48 +101,106 @@ def anti_spam_check(ip_address, user_agent):
 
 # 🔥 دالة جديدة لإدارة العروض - تحط هنا بعد anti_spam_check
 def get_offers():
-    """إدارة العروض والخصومات"""
+    """
+    🔥 مركز التحكم في العروض - غير من هنا بس!
+    =====================================
+    
+    📝 إزاي تستعمل النظام:
+    1. فعل/قفل العرض: غير OFFER_ACTIVE من True ل False
+    2. اختار نوع الحسابات: اكتب "Full" أو "Primary" أو "Secondary" 
+    3. غير نسبة الخصم: اكتب الرقم اللي عايزه (مثال: 25 يعني 25%)
+    4. اختار الألعاب: حط أسماء الألعاب اللي عايز العرض عليها
+    """
+    
+    # 🎮 إعدادات العرض الرئيسية - غير الأرقام دي بس!
+    # ======================================================
+    OFFER_ACTIVE = True              # True = العرض شغال | False = العرض مقفول
+    DISCOUNT_PERCENTAGE = 25         # نسبة الخصم (مثال: 20 يعني 20%)
+    OFFER_TITLE = "🔥 عرض البرق - خصم 25%"  # عنوان العرض
+    
+    # 🎯 اختيار أنواع الحسابات المشمولة في العرض
+    # ============================================
+    # ممكن تحط واحد أو أكتر من الأنواع دي:
+    # "Full" = الحساب الكامل
+    # "Primary" = البرايمري  
+    # "Secondary" = السكندري
+    
+    ELIGIBLE_ACCOUNT_TYPES = [
+        "Full",        # ✅ الحساب الكامل
+        "Primary",     # ✅ البرايمري
+        "Secondary"    # ✅ السكندري
+    ]
+    
+    # 🎮 اختيار الألعاب المشمولة في العرض  
+    # ====================================
+    # الأسماء الموجودة في النظام:
+    # "FC26_EN_Standard"   = الإنجليزي عادي
+    # "FC26_EN_Ultimate"   = الإنجليزي التميت
+    # "FC26_AR_Standard"   = العربي عادي  
+    # "FC26_AR_Ultimate"   = العربي التميت
+    # "FC26_XBOX_Standard" = Xbox عادي
+    # "FC26_XBOX_Ultimate" = Xbox التميت
+    # "FC26_PC_Standard"   = PC شهر
+    # "FC26_PC_Ultimate"   = PC سنة
+    # "FC26_STEAM_Standard" = Steam عادي
+    # "FC26_STEAM_Ultimate" = Steam التميت
+    
+    ELIGIBLE_GAMES = [
+        "FC26_EN_Standard",    # ✅ الإنجليزي عادي
+        "FC26_AR_Standard",    # ✅ العربي عادي
+        "FC26_STEAM_Standard"  # ✅ Steam عادي
+    ]
+    
+    # 📅 إعدادات إضافية للعرض
+    # ========================
+    OFFER_END_DATE = "2025-02-15 23:59:59"  # تاريخ انتهاء العرض
+    OFFER_DESCRIPTION = "خصم حصري على مجموعة مختارة من الألعاب لفترة محدودة!"
+    
+    # 🔄 إعدادات العرض المنبثق
+    # =========================
+    SHOW_POPUP = True                    # True = يظهر البوب اب | False = مايظهرش
+    POPUP_FREQUENCY = "once_per_session" # "once_per_day" | "once_per_session" | "always"
+    
+    # ⚠️ لا تغير الكود اللي تحت ده - ده بيطبق الإعدادات اللي فوق
+    # ===============================================================
+    
     return {
         "active_offer": {
-            "id": "flash_sale_2025",
-            "title": "🔥 عرض البرق - خصم 20%",
-            "description": "خصم حصري على مجموعة مختارة من الألعاب لفترة محدودة!",
-            "discount_percentage": 20,
-            "valid_until": "2025-01-15 23:59:59",
-            "eligible_games": [
-                "FC26_EN_Standard", 
-                "FC26_AR_Standard",
-                "FC26_STEAM_Standard"
-            ],
-            "show_popup": True,
-            "popup_frequency": "once_per_session"  # once_per_day, once_per_session, always
-        },
-        "offer_cards": [
-            "FC26_EN_Standard",
-            "FC26_AR_Standard", 
-            "FC26_STEAM_Standard"
-        ]
+            "id": f"flash_sale_{DISCOUNT_PERCENTAGE}percent_2025",
+            "title": OFFER_TITLE,
+            "description": OFFER_DESCRIPTION,
+            "discount_percentage": DISCOUNT_PERCENTAGE,
+            "valid_until": OFFER_END_DATE,
+            "eligible_games": ELIGIBLE_GAMES,
+            "eligible_account_types": ELIGIBLE_ACCOUNT_TYPES,
+            "show_popup": SHOW_POPUP and OFFER_ACTIVE,
+            "popup_frequency": POPUP_FREQUENCY
+        } if OFFER_ACTIVE else None,
+        "offer_cards": ELIGIBLE_GAMES if OFFER_ACTIVE else []
     }
 
-# 🔥 دالة تطبيق الخصم على الأسعار - تحط هنا بعد get_offers
+# 🔥 دالة تطبيق الخصم على الأسعار - حط الدالة دي بعد get_offers مباشرة
 def apply_offer_discount(prices, offers):
-    """تطبيق الخصومات على الأسعار"""
+    """تطبيق الخصومات على الأسعار حسب نوع الحساب"""
     if not offers.get("active_offer"):
         return prices
     
     offer = offers["active_offer"]
     discount = offer["discount_percentage"] / 100
+    eligible_account_types = offer.get("eligible_account_types", [])
     
     for game_id in offer["eligible_games"]:
         if game_id in prices["games"]:
             for platform_id, platform in prices["games"][game_id]["platforms"].items():
                 for account_id, account in platform["accounts"].items():
-                    original_price = account["price"]
-                    if original_price > 0:  # تجنب الأسعار المجانية
-                        discounted_price = int(original_price * (1 - discount))
-                        account["original_price"] = original_price
-                        account["price"] = discounted_price
-                        account["discount_percentage"] = offer["discount_percentage"]
+                    # تطبيق الخصم بس على أنواع الحسابات المحددة
+                    if account_id in eligible_account_types:
+                        original_price = account["price"]
+                        if original_price > 0:  # تجنب الأسعار المجانية
+                            discounted_price = int(original_price * (1 - discount))
+                            account["original_price"] = original_price
+                            account["price"] = discounted_price
+                            account["discount_percentage"] = offer["discount_percentage"]
     
     return prices
 
