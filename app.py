@@ -662,7 +662,7 @@ def get_prices():
     return {
         "games": {
             "FC26_EN_Standard": {
-                "name": "Standard Edition (English) 🇺🇸 PS/4 Primary",
+                "name": "Standard Edition (English) 🇺🇸",
                 "platforms": {
                     "PS5": {
                         "name": "PlayStation PS/5",
@@ -689,7 +689,7 @@ def get_prices():
                 }
             },
             "FC26_EN_Ultimate": {
-                "name": "Ultimate Edition (English) 🇺🇸 PS/5 Secondary",
+                "name": "Ultimate Edition (English) 🇺🇸",
                 "platforms": {
                     "PS5": {
                         "name": "PlayStation PS/5",
@@ -718,7 +718,7 @@ def get_prices():
                 }
             },
             "FC26_AR_Standard": {
-                "name": "Standard Edition (Arabic) 🇸🇦 PS/4 Primary",
+                "name": "Standard Edition (Arabic) 🇸🇦",
                 "platforms": {
                     "PS5": {
                         "name": "PlayStation PS/5",
@@ -745,7 +745,7 @@ def get_prices():
                 }
             },
             "FC26_AR_Ultimate": {
-                "name": "Ultimate Edition (Arabic) 🇸🇦 PS/5 Primary",
+                "name": "Ultimate Edition (Arabic) 🇸🇦",
                 "platforms": {
                     "PS5": {
                         "name": "PlayStation PS/5",
@@ -774,7 +774,7 @@ def get_prices():
                 }
             },
             "FC26_XBOX_Standard": {
-                "name": "Xbox Standard Edition 🎮 Full",
+                "name": "Xbox Standard Edition 🎮",
                 "platforms": {
                     "Xbox": {
                         "name": "Xbox Series X/S & Xbox One",
@@ -783,12 +783,13 @@ def get_prices():
                         </div>''',
                         "accounts": {
                             "Full": {"name": "Full - حساب كامل", "price": 3200},
+
                         }
                     }
                 }
             },
             "FC26_XBOX_Ultimate": {
-                "name": "Xbox Ultimate Edition 🎮 Full",
+                "name": "Xbox Ultimate Edition 🎮",
                 "platforms": {
                     "Xbox": {
                         "name": "Xbox Series X/S & Xbox One",
@@ -798,12 +799,13 @@ def get_prices():
                         </div>''',
                         "accounts": {
                             "Full": {"name": "Full - حساب كامل", "price": 4200},
+  
                         }
                     }
                 }
             },
             "FC26_PC_Standard": {
-                "name": "PC (شهر) (month) 🖥️ Full",
+                "name": "PC (شهر) (month)  🖥️",
                 "platforms": {
                     "PC": {
                         "name": "PC (EA PRO)",
@@ -820,7 +822,7 @@ def get_prices():
                 }
             },
             "FC26_PC_Ultimate": {
-                "name": "PC (سنة) (year) 🖥️ Full",
+                "name": "PC (سنة) (year)  🖥️",
                 "platforms": {
                     "PC": {
                         "name": "PC (EA PRO)",
@@ -840,7 +842,7 @@ def get_prices():
                 }
             },
             "FC26_STEAM_Standard": {
-                "name": "Steam Standard Edition 🖥️ PC/Full",
+                "name": "Steam Standard Edition 🖥️",
                 "platforms": {
                     "Steam": {
                         "name": "PC (STEAM)",
@@ -854,7 +856,7 @@ def get_prices():
                 }
             },
             "FC26_STEAM_Ultimate": {
-                "name": "Steam Ultimate Edition 🖥️ PC/Full",
+                "name": "Steam Ultimate Edition 🖥️",
                 "platforms": {
                     "Steam": {
                         "name": "PC (STEAM)",
@@ -870,7 +872,7 @@ def get_prices():
             }
         },
         "settings": {
-            "currency": "",
+            "currency": "جنيه مصري",
             "warranty": "1 سنة",
             "delivery_time": "15 ساعة كحد أقصى",
             "whatsapp_number": "+201094591331"
@@ -1077,3 +1079,4 @@ if __name__ == '__main__':
     app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
 else:
     logger.info("🚀 تم تشغيل التطبيق عبر gunicorn - الأسعار مدمجة في الكود مع فاصلة عشرية والعروض")
+
