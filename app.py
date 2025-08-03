@@ -662,7 +662,7 @@ def get_prices():
     return {
         "games": {
             "FC26_EN_Standard": {
-                "name": "Standard Edition (English) 🇺🇸",
+                "name": "Standard Edition (English) 🇺🇸 PS/4 Primary",
                 "platforms": {
                     "PS5": {
                         "name": "PlayStation PS/5",
@@ -689,7 +689,7 @@ def get_prices():
                 }
             },
             "FC26_EN_Ultimate": {
-                "name": "Ultimate Edition (English) 🇺🇸",
+                "name": "Ultimate Edition (English) 🇺🇸 PS/5 Secondary",
                 "platforms": {
                     "PS5": {
                         "name": "PlayStation PS/5",
@@ -718,7 +718,7 @@ def get_prices():
                 }
             },
             "FC26_AR_Standard": {
-                "name": "Standard Edition (Arabic) 🇸🇦",
+                "name": "Standard Edition (Arabic) 🇸🇦 PS/4 Primary",
                 "platforms": {
                     "PS5": {
                         "name": "PlayStation PS/5",
@@ -745,7 +745,7 @@ def get_prices():
                 }
             },
             "FC26_AR_Ultimate": {
-                "name": "Ultimate Edition (Arabic) 🇸🇦",
+                "name": "Ultimate Edition (Arabic) 🇸🇦 PS/5 Primary",
                 "platforms": {
                     "PS5": {
                         "name": "PlayStation PS/5",
@@ -774,7 +774,7 @@ def get_prices():
                 }
             },
             "FC26_XBOX_Standard": {
-                "name": "Xbox Standard Edition 🎮",
+                "name": "Xbox Standard Edition 🎮 Full",
                 "platforms": {
                     "Xbox": {
                         "name": "Xbox Series X/S & Xbox One",
@@ -783,13 +783,12 @@ def get_prices():
                         </div>''',
                         "accounts": {
                             "Full": {"name": "Full - حساب كامل", "price": 3200},
-
                         }
                     }
                 }
             },
             "FC26_XBOX_Ultimate": {
-                "name": "Xbox Ultimate Edition 🎮",
+                "name": "Xbox Ultimate Edition 🎮 Full",
                 "platforms": {
                     "Xbox": {
                         "name": "Xbox Series X/S & Xbox One",
@@ -799,13 +798,12 @@ def get_prices():
                         </div>''',
                         "accounts": {
                             "Full": {"name": "Full - حساب كامل", "price": 4200},
-  
                         }
                     }
                 }
             },
             "FC26_PC_Standard": {
-                "name": "PC (شهر) (month)  🖥️",
+                "name": "PC (شهر) (month) 🖥️ Full",
                 "platforms": {
                     "PC": {
                         "name": "PC (EA PRO)",
@@ -822,7 +820,7 @@ def get_prices():
                 }
             },
             "FC26_PC_Ultimate": {
-                "name": "PC (سنة) (year)  🖥️",
+                "name": "PC (سنة) (year) 🖥️ Full",
                 "platforms": {
                     "PC": {
                         "name": "PC (EA PRO)",
@@ -842,7 +840,7 @@ def get_prices():
                 }
             },
             "FC26_STEAM_Standard": {
-                "name": "Steam Standard Edition 🖥️",
+                "name": "Steam Standard Edition 🖥️ PC/Full",
                 "platforms": {
                     "Steam": {
                         "name": "PC (STEAM)",
@@ -856,7 +854,7 @@ def get_prices():
                 }
             },
             "FC26_STEAM_Ultimate": {
-                "name": "Steam Ultimate Edition 🖥️",
+                "name": "Steam Ultimate Edition 🖥️ PC/Full",
                 "platforms": {
                     "Steam": {
                         "name": "PC (STEAM)",
@@ -872,7 +870,7 @@ def get_prices():
             }
         },
         "settings": {
-            "currency": "جنيه مصري",
+            "currency": "",
             "warranty": "1 سنة",
             "delivery_time": "15 ساعة كحد أقصى",
             "whatsapp_number": "+201094591331"
