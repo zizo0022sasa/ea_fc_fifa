@@ -315,145 +315,76 @@
             margin-bottom: 15px;
         }
 
-        .ea-sports-logo {
-            display: flex;
-            align-items: center;
-            gap: 30px;
-            font-family: 'Inter', Arial, sans-serif;
-            animation: logoGlow 3s ease-in-out infinite alternate;
-            filter: drop-shadow(0 2px 8px rgba(255,255,255,0.3));
-        }
+.ea-sports-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    font-family: 'Inter', Arial, sans-serif;
+    animation: logoGlow 3s ease-in-out infinite alternate;
+    filter: drop-shadow(0 2px 8px rgba(255,255,255,0.3));
+}
 
-        .ea-circle {
-            width: 80px;
-            height: 80px;
-            background: #ffffff;
-            border-radius: 50%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 5px 20px rgba(255, 255, 255, 0.1);
-        }
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
-        .ea-text {
-            font-size: 20px;
-            font-weight: 900;
-            color: #000000;
-            letter-spacing: 1px;
-            line-height: 1;
-            margin-bottom: -1px;
-        }
+.main-logo-img {
+    max-width: 120px;
+    height: auto;
+    filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.3));
+    transition: all 0.3s ease;
+    background: transparent !important;
+    border: none;
+    object-fit: contain;
+}
 
-        .sports-text {
-            font-size: 9px;
-            font-weight: 700;
-            color: #000000;
-            letter-spacing: 1px;
-            line-height: 1;
-            margin-top: -1px;
-        }
+.main-logo-img:hover {
+    transform: scale(1.05);
+    filter: drop-shadow(0 4px 12px rgba(255, 255, 255, 0.6));
+}
 
-        .fc26-text {
-            font-size: 64px;
-            font-weight: 900;
-            color: #ffffff;
-            letter-spacing: 6px;
-            text-shadow: 0 5px 15px rgba(255, 255, 255, 0.2);
-            line-height: 1;
-        }
+.fc26-text {
+    font-size: 64px;
+    font-weight: 900;
+    color: #ffffff;
+    letter-spacing: 6px;
+    text-shadow: 0 5px 15px rgba(255, 255, 255, 0.2);
+    line-height: 1;
+}
 
-        /* تكبير وتعريض شهد السنيورة */
-        .brand-title {
-            font-size: 2.8rem !important;
-            font-weight: 900 !important;
-            letter-spacing: 2px !important;
-            text-shadow: 0 3px 10px rgba(255, 255, 255, 0.3) !important;
-            margin: 0 !important;
-        }
+/* حذف الـ CSS القديم للدائرة */
+/* .ea-circle, .ea-text, .sports-text - احذف هذه الأجزاء */
 
-        @keyframes logoGlow {
-            from {
-                filter: drop-shadow(0 2px 8px rgba(255,255,255,0.3));
-            }
-            to {
-                filter: drop-shadow(0 4px 12px rgba(255,255,255,0.6));
-            }
-        }
+@media (max-width: 768px) {
+    .ea-sports-logo {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .main-logo-img {
+        max-width: 100px;
+    }
+    
+    .fc26-text {
+        font-size: 40px;
+        letter-spacing: 3px;
+    }
+}
 
-        .ea-sports-logo:hover .ea-circle {
-            transform: scale(1.05);
-            transition: transform 0.3s ease;
-        }
-
-        .ea-sports-logo:hover .fc26-text {
-            color: #00d4ff;
-            transition: color 0.3s ease;
-        }
-
-        .whatsapp-logo {
-            width: 20px;
-            height: 20px;
-            margin-left: 8px;
-            vertical-align: middle;
-            filter: brightness(0) invert(1);
-        }
-
-        .whatsapp-logo-svg {
-            fill: currentColor;
-            width: 20px;
-            height: 20px;
-            margin-left: 8px;
-            vertical-align: middle;
-        }
-        
-        .features-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 15px;
-            margin-top: 25px;
-        }
-        
-        .feature-item {
-            background: rgba(255,255,255,0.2);
-            padding: 20px 15px;
-            border-radius: 15px;
-            backdrop-filter: blur(5px);
-            transition: all 0.3s ease;
-            text-align: center;
-        }
-        
-        .feature-item:hover {
-            transform: translateY(-3px);
-            background: rgba(255,255,255,0.3);
-        }
-        
-        .products-section {
-            padding: 30px 20px;
-        }
-        
-        .products-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 30px;
-            margin-top: 30px;
-            max-width: 1200px;
-            margin: 30px auto 0;
-        }
-        
-        .product-card {
-            background: #fff;
-            border-radius: 20px;
-            box-shadow: var(--card-shadow);
-            overflow: hidden;
-            transition: all 0.4s ease;
-            border: 2px solid transparent;
-        }
-        
-        .product-card:hover {
-            transform: translateY(-5px) scale(1.02);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-        }
+@media (max-width: 480px) {
+    .main-logo-img {
+        max-width: 80px;
+    }
+    
+    .fc26-text {
+        font-size: 32px;
+        letter-spacing: 2px;
+    }
+}
 
         /* تأثير البلور على الكروت الأخرى عند الاختيار - يعمل على جميع الأجهزة */
         .products-grid.has-active-card .product-card:not(.active-card) {
@@ -2100,9 +2031,12 @@ window.onclick = function(event) {
                     <div class="header-section">
                         <div class="brand-container">
 <div class="ea-sports-logo">
-    <img src="https://github.com/user-attachments/assets/e4793d68-39c6-4a8e-b280-e97d0efbe9f8" 
-         alt="EA SPORTS FC" 
-         class="main-logo-img">
+    <div class="logo-container">
+        <img src="https://github.com/user-attachments/assets/e4793d68-39c6-4a8e-b280-e97d0efbe9f8" 
+             alt="EA SPORTS FC" 
+             class="main-logo-img"
+             onerror="console.log('خطأ في تحميل الصورة')">
+    </div>
     <div class="fc26-text">FC26</div>
 </div>
                             <h1 class="brand-title">شهد السنيورة</h1>
