@@ -324,6 +324,45 @@
             filter: drop-shadow(0 2px 8px rgba(255,255,255,0.3));
         }
 
+        .ea-circle {
+            width: 80px;
+            height: 80px;
+            background: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 5px 20px rgba(255, 255, 255, 0.1);
+        }
+
+        .ea-text {
+            font-size: 20px;
+            font-weight: 900;
+            color: #000000;
+            letter-spacing: 1px;
+            line-height: 1;
+            margin-bottom: -1px;
+        }
+
+        .sports-text {
+            font-size: 9px;
+            font-weight: 700;
+            color: #000000;
+            letter-spacing: 1px;
+            line-height: 1;
+            margin-top: -1px;
+        }
+
+        .fc26-text {
+            font-size: 64px;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 6px;
+            text-shadow: 0 5px 15px rgba(255, 255, 255, 0.2);
+            line-height: 1;
+        }
+
         /* تكبير وتعريض شهد السنيورة */
         .brand-title {
             font-size: 2.8rem !important;
@@ -2061,12 +2100,10 @@ window.onclick = function(event) {
                     <div class="header-section">
                         <div class="brand-container">
 <div class="ea-sports-logo">
-    <div class="logo-container">
-        <img src="https://github.com/user-attachments/assets/e4793d68-39c6-4a8e-b280-e97d0efbe9f8" 
-             alt="EA SPORTS FC" 
-             class="main-logo-img">
-    </div>
-    <div class="fc-text">FC26</div>
+    <img src="https://github.com/user-attachments/assets/e4793d68-39c6-4a8e-b280-e97d0efbe9f8" 
+         alt="EA SPORTS FC" 
+         class="main-logo-img">
+    <div class="fc26-text">FC26</div>
 </div>
                             <h1 class="brand-title">شهد السنيورة</h1>
                         </div>
@@ -2972,6 +3009,15 @@ function declineOffers() {
     text-align: center;
 }
 
+.main-logo-img {
+    max-width: 120px;
+    height: auto;
+    filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.3));
+    transition: all 0.3s ease;
+    background: transparent !important; /* خلفية شفافة */
+    border-radius: 15px;
+    padding: 10px;
+}
 
 .main-logo-img:hover {
     transform: scale(1.05);
@@ -2988,85 +3034,6 @@ function declineOffers() {
 @media (max-width: 480px) {
     .main-logo-img {
         max-width: 80px;
-    }
-}
-
-/* شعار EA SPORTS FC الجديد */
-.ea-sports-logo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 30px;
-    font-family: 'Inter', Arial, sans-serif;
-    animation: logoGlow 3s ease-in-out infinite alternate;
-    filter: drop-shadow(0 2px 8px rgba(255,255,255,0.3));
-}
-
-.logo-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.main-logo-img {
-    max-width: 100px;
-    height: auto;
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    transition: all 0.3s ease;
-    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
-}
-
-.main-logo-img:hover {
-    transform: scale(1.05);
-    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.6));
-}
-
-.fc-text {
-    font-size: 54px;
-    font-weight: 900;
-    color: #ffffff;
-    letter-spacing: 4px;
-    text-shadow: 0 5px 15px rgba(255, 255, 255, 0.2);
-    line-height: 1;
-}
-
-.ea-sports-logo:hover .main-logo-img {
-    transform: scale(1.05);
-    transition: transform 0.3s ease;
-}
-
-.ea-sports-logo:hover .fc-text {
-    color: #00d4ff;
-    transition: color 0.3s ease;
-}
-
-/* للموبايل */
-@media (max-width: 768px) {
-    .ea-sports-logo {
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    .main-logo-img {
-        max-width: 80px;
-    }
-    
-    .fc-text {
-        font-size: 36px;
-        letter-spacing: 2px;
-    }
-}
-
-@media (max-width: 480px) {
-    .main-logo-img {
-        max-width: 70px;
-    }
-    
-    .fc-text {
-        font-size: 28px;
-        letter-spacing: 1px;
     }
 }
 
