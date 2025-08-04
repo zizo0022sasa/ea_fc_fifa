@@ -148,7 +148,7 @@ def get_offers():
     AR_STD_PS4_FULL_REAL_PRICE = 3200   # السعر الحقيقي
     
     # Arabic Standard - PS4 - Primary
-    AR_STD_PS4_PRIMARY_ACTIVE = "yas"     # yas = العرض شغال | no = مقفول
+    AR_STD_PS4_PRIMARY_ACTIVE = "no"     # yas = العرض شغال | no = مقفول
     AR_STD_PS4_PRIMARY_FAKE_PRICE = 1800 # السعر الوهمي
     AR_STD_PS4_PRIMARY_REAL_PRICE = 800  # السعر الحقيقي
     
@@ -234,9 +234,9 @@ def get_offers():
     EN_ULT_PS5_PRIMARY_REAL_PRICE = 2000 # السعر الحقيقي
     
     # English Ultimate - PS5 - Secondary
-    EN_ULT_PS5_SECONDARY_ACTIVE = "no"   # yas = العرض شغال | no = مقفول
-    EN_ULT_PS5_SECONDARY_FAKE_PRICE = 2600 # السعر الوهمي
-    EN_ULT_PS5_SECONDARY_REAL_PRICE = 1500 # السعر الحقيقي
+    EN_ULT_PS5_SECONDARY_ACTIVE = "yas"   # yas = العرض شغال | no = مقفول
+    EN_ULT_PS5_SECONDARY_FAKE_PRICE = 2200 # السعر الوهمي
+    EN_ULT_PS5_SECONDARY_REAL_PRICE = 1650 # السعر الحقيقي
     
     # English Ultimate - PS4 - Full
     EN_ULT_PS4_FULL_ACTIVE = "no"       # yas = العرض شغال | no = مقفول
@@ -249,9 +249,9 @@ def get_offers():
     EN_ULT_PS4_PRIMARY_REAL_PRICE = 1000 # السعر الحقيقي
     
     # English Ultimate - PS4 - Secondary
-    EN_ULT_PS4_SECONDARY_ACTIVE = "no"  # yas = العرض شغال | no = مقفول
-    EN_ULT_PS4_SECONDARY_FAKE_PRICE = 2400 # السعر الوهمي
-    EN_ULT_PS4_SECONDARY_REAL_PRICE = 1700 # السعر الحقيقي
+    EN_ULT_PS4_SECONDARY_ACTIVE = "yas"  # yas = العرض شغال | no = مقفول
+    EN_ULT_PS4_SECONDARY_FAKE_PRICE = 2200 # السعر الوهمي
+    EN_ULT_PS4_SECONDARY_REAL_PRICE = 1650 # السعر الحقيقي
     
     # 🎮 ================ XBOX EDITIONS ================
     
