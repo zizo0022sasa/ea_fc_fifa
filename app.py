@@ -128,17 +128,17 @@ def get_offers():
     # 🇸🇦 ================ ARABIC STANDARD EDITION ================
     
     # Arabic Standard - PS5 - Full
-    AR_STD_PS5_FULL_ACTIVE = "yas"      # yas = العرض شغال | no = مقفول
+    AR_STD_PS5_FULL_ACTIVE = "no"      # yas = العرض شغال | no = مقفول
     AR_STD_PS5_FULL_FAKE_PRICE = 5000  # السعر الوهمي (اللي هيتشطب)
     AR_STD_PS5_FULL_REAL_PRICE = 3200  # السعر الحقيقي (اللي العميل هيدفعه)
     
     # Arabic Standard - PS5 - Primary  
-    AR_STD_PS5_PRIMARY_ACTIVE = "yas"     # yas = العرض شغال | no = مقفول
+    AR_STD_PS5_PRIMARY_ACTIVE = "no"     # yas = العرض شغال | no = مقفول
     AR_STD_PS5_PRIMARY_FAKE_PRICE = 2500 # السعر الوهمي
     AR_STD_PS5_PRIMARY_REAL_PRICE = 1600 # السعر الحقيقي
     
     # Arabic Standard - PS5 - Secondary
-    AR_STD_PS5_SECONDARY_ACTIVE = "yas"  # yas = العرض شغال | no = مقفول
+    AR_STD_PS5_SECONDARY_ACTIVE = "no"  # yas = العرض شغال | no = مقفول
     AR_STD_PS5_SECONDARY_FAKE_PRICE = 1800 # السعر الوهمي
     AR_STD_PS5_SECONDARY_REAL_PRICE = 900  # السعر الحقيقي
     
@@ -160,7 +160,7 @@ def get_offers():
     # 🇸🇦 ================ ARABIC ULTIMATE EDITION ================
     
     # Arabic Ultimate - PS5 - Full
-    AR_ULT_PS5_FULL_ACTIVE = "yas"        # yas = العرض شغال | no = مقفول
+    AR_ULT_PS5_FULL_ACTIVE = "no"        # yas = العرض شغال | no = مقفول
     AR_ULT_PS5_FULL_FAKE_PRICE = 7000    # السعر الوهمي
     AR_ULT_PS5_FULL_REAL_PRICE = 4500    # السعر الحقيقي
     
@@ -170,7 +170,7 @@ def get_offers():
     AR_ULT_PS5_PRIMARY_REAL_PRICE = 2000 # السعر الحقيقي
     
     # Arabic Ultimate - PS5 - Secondary
-    AR_ULT_PS5_SECONDARY_ACTIVE = "yas"   # yas = العرض شغال | no = مقفول
+    AR_ULT_PS5_SECONDARY_ACTIVE = "no"   # yas = العرض شغال | no = مقفول
     AR_ULT_PS5_SECONDARY_FAKE_PRICE = 3500 # السعر الوهمي
     AR_ULT_PS5_SECONDARY_REAL_PRICE = 1800 # السعر الحقيقي
     
@@ -180,7 +180,7 @@ def get_offers():
     AR_ULT_PS4_FULL_REAL_PRICE = 4300    # السعر الحقيقي
     
     # Arabic Ultimate - PS4 - Primary
-    AR_ULT_PS4_PRIMARY_ACTIVE = "yas"     # yas = العرض شغال | no = مقفول
+    AR_ULT_PS4_PRIMARY_ACTIVE = "no"     # yas = العرض شغال | no = مقفول
     AR_ULT_PS4_PRIMARY_FAKE_PRICE = 2500 # السعر الوهمي
     AR_ULT_PS4_PRIMARY_REAL_PRICE = 1200 # السعر الحقيقي
     
@@ -192,7 +192,7 @@ def get_offers():
     # 🇺🇸 ================ ENGLISH STANDARD EDITION ================
     
     # English Standard - PS5 - Full
-    EN_STD_PS5_FULL_ACTIVE = "yas"        # yas = العرض شغال | no = مقفول
+    EN_STD_PS5_FULL_ACTIVE = "no"        # yas = العرض شغال | no = مقفول
     EN_STD_PS5_FULL_FAKE_PRICE = 4500    # السعر الوهمي
     EN_STD_PS5_FULL_REAL_PRICE = 2800    # السعر الحقيقي
     
@@ -202,7 +202,7 @@ def get_offers():
     EN_STD_PS5_PRIMARY_REAL_PRICE = 1600 # السعر الحقيقي
     
     # English Standard - PS5 - Secondary
-    EN_STD_PS5_SECONDARY_ACTIVE = "yas"   # yas = العرض شغال | no = مقفول
+    EN_STD_PS5_SECONDARY_ACTIVE = "no"   # yas = العرض شغال | no = مقفول
     EN_STD_PS5_SECONDARY_FAKE_PRICE = 1600 # السعر الوهمي
     EN_STD_PS5_SECONDARY_REAL_PRICE = 800  # السعر الحقيقي
     
@@ -212,7 +212,7 @@ def get_offers():
     EN_STD_PS4_FULL_REAL_PRICE = 2900    # السعر الحقيقي
     
     # English Standard - PS4 - Primary
-    EN_STD_PS4_PRIMARY_ACTIVE = "yas"     # yas = العرض شغال | no = مقفول
+    EN_STD_PS4_PRIMARY_ACTIVE = "no"     # yas = العرض شغال | no = مقفول
     EN_STD_PS4_PRIMARY_FAKE_PRICE = 1800 # السعر الوهمي
     EN_STD_PS4_PRIMARY_REAL_PRICE = 850  # السعر الحقيقي
     
@@ -224,7 +224,7 @@ def get_offers():
     # 🇺🇸 ================ ENGLISH ULTIMATE EDITION ================
     
     # English Ultimate - PS5 - Full
-    EN_ULT_PS5_FULL_ACTIVE = "yas"        # yas = العرض شغال | no = مقفول
+    EN_ULT_PS5_FULL_ACTIVE = "no"        # yas = العرض شغال | no = مقفول
     EN_ULT_PS5_FULL_FAKE_PRICE = 6000    # السعر الوهمي
     EN_ULT_PS5_FULL_REAL_PRICE = 3800    # السعر الحقيقي
     
@@ -234,7 +234,7 @@ def get_offers():
     EN_ULT_PS5_PRIMARY_REAL_PRICE = 2000 # السعر الحقيقي
     
     # English Ultimate - PS5 - Secondary
-    EN_ULT_PS5_SECONDARY_ACTIVE = "yas"   # yas = العرض شغال | no = مقفول
+    EN_ULT_PS5_SECONDARY_ACTIVE = "no"   # yas = العرض شغال | no = مقفول
     EN_ULT_PS5_SECONDARY_FAKE_PRICE = 2600 # السعر الوهمي
     EN_ULT_PS5_SECONDARY_REAL_PRICE = 1500 # السعر الحقيقي
     
@@ -244,7 +244,7 @@ def get_offers():
     EN_ULT_PS4_FULL_REAL_PRICE = 3600    # السعر الحقيقي
     
     # English Ultimate - PS4 - Primary
-    EN_ULT_PS4_PRIMARY_ACTIVE = "yas"     # yas = العرض شغال | no = مقفول
+    EN_ULT_PS4_PRIMARY_ACTIVE = "no"     # yas = العرض شغال | no = مقفول
     EN_ULT_PS4_PRIMARY_FAKE_PRICE = 2000 # السعر الوهمي
     EN_ULT_PS4_PRIMARY_REAL_PRICE = 1000 # السعر الحقيقي
     
@@ -256,7 +256,7 @@ def get_offers():
     # 🎮 ================ XBOX EDITIONS ================
     
     # Xbox Standard - Full
-    XBOX_STD_FULL_ACTIVE = "yas"          # yas = العرض شغال | no = مقفول
+    XBOX_STD_FULL_ACTIVE = "no"          # yas = العرض شغال | no = مقفول
     XBOX_STD_FULL_FAKE_PRICE = 4500      # السعر الوهمي
     XBOX_STD_FULL_REAL_PRICE = 2800      # السعر الحقيقي
     
@@ -275,12 +275,12 @@ def get_offers():
     # PC Ultimate (سنة) - Full
     PC_ULT_FULL_ACTIVE = "yas"            # yas = العرض شغال | no = مقفول
     PC_ULT_FULL_FAKE_PRICE = 4000        # السعر الوهمي
-    PC_ULT_FULL_REAL_PRICE = 2200        # السعر الحقيقي
+    PC_ULT_FULL_REAL_PRICE = 2800        # السعر الحقيقي
     
     # 🖥️ ================ STEAM EDITIONS ================
     
     # Steam Standard - Full
-    STEAM_STD_FULL_ACTIVE = "yas"         # yas = العرض شغال | no = مقفول
+    STEAM_STD_FULL_ACTIVE = "no"         # yas = العرض شغال | no = مقفول
     STEAM_STD_FULL_FAKE_PRICE = 2500     # السعر الوهمي
     STEAM_STD_FULL_REAL_PRICE = 1400     # السعر الحقيقي
     
