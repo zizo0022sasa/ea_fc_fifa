@@ -787,6 +787,83 @@ def update_profile():
         print(f"Error details: {repr(e)}")
         return jsonify({'success': False, 'message': 'Internal server error'}), 500
 
+@app.route('/coins-order')
+def coins_order():
+    """صفحة طلب بيع الكوينز"""
+    return render_template('coins_order.html')
+
+@app.route('/submit-coins-order', methods=['POST'])
+def submit_coins_order():
+    """معالجة طلب بيع الكوينز"""
+    try:
+        # جمع البيانات
+        transfer_type = request.form.get('transfer_type')
+        coins_amount = request.form.get('coins_amount')
+        ea_email = request.form.get('ea_email')
+        ea_password = request.form.get('ea_password')
+        backup_codes = []
+        
+        # جمع أكواد النسخ الاحتياطي (6 أكواد)
+        for i in range(1, 7):
+            code = request.form.get(f'backup_code_{i}')
+            if code:
+                backup_codes.append(code)
+        
+        # بيانات الدفع
+        payment_method = request.form.get('payment_method')
+        payment_details = {}
+        
+        # استخراج تفاصيل الدفع حسب النوع
+        if payment_method in ['vodafone_cash', 'etisalat_cash', 'orange_cash', 'we_pay']:
+            payment_details['mobile_number'] = request.form.get('mobile_number')
+        elif payment_method == 'telda_card':
+            payment_details['card_number'] = request.form.get('card_number')
+        elif payment_method == 'instapay_link':
+            payment_details['payment_link'] = request.form.get('payment_link')
+        
+        notes = request.form.get('notes', '')
+        
+        # حساب السعر
+        coins_amount_int = int(coins_amount) if coins_amount else 0
+        base_price = coins_amount_int * 0.02  # 2 قرش لكل كوين
+        
+        if transfer_type == 'instant':
+            # التحويل الفوري - رسوم إضافية 15%
+            total_price = base_price * 0.85  # خصم 15% من السعر النهائي
+            transfer_fee = base_price * 0.15
+        else:
+            # التحويل العادي - بدون رسوم
+            total_price = base_price
+            transfer_fee = 0
+        
+        # حفظ في قاعدة البيانات
+        cursor = get_db_cursor()
+        cursor.execute("""
+            INSERT INTO coins_orders 
+            (transfer_type, coins_amount, ea_email, ea_password, backup_codes, 
+             payment_method, payment_details, notes, base_price, transfer_fee, total_price, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+        """, (
+            transfer_type, coins_amount_int, ea_email, ea_password, 
+            json.dumps(backup_codes), payment_method, json.dumps(payment_details),
+            notes, base_price, transfer_fee, total_price
+        ))
+        
+        order_id = cursor.lastrowid
+        
+        return jsonify({
+            'success': True,
+            'message': 'تم إرسال طلب بيع الكوينز بنجاح!',
+            'order_id': order_id,
+            'total_price': total_price
+        })
+        
+    except Exception as e:
+        print(f"خطأ في طلب الكوينز: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'حدث خطأ، يرجى المحاولة مرة أخرى'
+        }), 500
 
 # دوال التليجرام محدثة
 def generate_telegram_code():
