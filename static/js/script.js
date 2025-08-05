@@ -1405,24 +1405,33 @@ async function openTelegramAppDirect(username, message = null) {
 // --- السياق قبل الدالة ---
 }
 
-// دالة فتح التليجرام المباشر - الربط التلقائي
-function openTelegramAppDirect() {
-    const code = currentTelegramCode || document.getElementById('generatedCode').textContent;
+// دالة فتح التليجرام المباشر - الربط التلقائي المحسن
+async function openTelegramAppDirect() {
+    const code = currentTelegramCode || document.getElementById('generatedCode')?.textContent;
     
     if (!code) {
         showNotification('❌ لا يوجد كود للربط', 'error');
         return;
     }
     
+    // تحميل اسم البوت إذا لم يكن متوفراً
     if (!correctBotUsername) {
         showNotification('جاري تحميل معلومات البوت...', 'info');
-        loadBotUsername().then(() => {
-            openTelegramAppDirect();
-        });
-        return;
+        try {
+            await loadBotUsername();
+        } catch (error) {
+            showNotification('❌ خطأ في تحميل معلومات البوت', 'error');
+            return;
+        }
+        
+        // التأكد من تحميل اسم البوت
+        if (!correctBotUsername) {
+            showNotification('❌ لم يتم العثور على معلومات البوت', 'error');
+            return;
+        }
     }
     
-    // تجميد واجهة المستخدم
+    // تجميد واجهة المستخدم أثناء الفتح
     const telegramCodeResult = document.getElementById('telegramCodeResult');
     const allButtons = document.querySelectorAll('button');
     
@@ -1436,43 +1445,106 @@ function openTelegramAppDirect() {
         btn.style.opacity = '0.6';
     });
     
-    // روابط التليجرام
-    const telegramAppUrl = `tg://resolve?domain=${correctBotUsername}&start=${code}`;
-    const telegramWebUrl = `https://t.me/${correctBotUsername}?start=${code}`;
+    // إنشاء روابط التليجرام المتعددة
+    const telegramLinks = [
+        `tg://resolve?domain=${correctBotUsername}&start=${code}`, // التطبيق الأساسي
+        `https://t.me/${correctBotUsername}?start=${code}`, // رابط الويب
+        `https://telegram.me/${correctBotUsername}?start=${code}` // رابط بديل
+    ];
     
-    console.log('🚀 AUTO-LINKING Telegram:', correctBotUsername, 'Code:', code);
+    console.log('🚀 فتح التليجرام التلقائي:', correctBotUsername, 'الكود:', code);
     
-    // فتح التليجرام حسب النوع
-    if (navigator.userAgent.match(/(iPhone|iPad|iPod|Android)/i)) {
-        // للهواتف - محاولة التطبيق أولاً ثم الويب
-        const tempLink = document.createElement('a');
-        tempLink.href = telegramAppUrl;
-        tempLink.style.display = 'none';
-        document.body.appendChild(tempLink);
-        tempLink.click();
-        document.body.removeChild(tempLink);
+    // تجربة فتح التليجرام بطرق مختلفة
+    let opened = false;
+    
+    // للهواتف المحمولة
+    if (window.DeviceMotionEvent !== undefined || window.DeviceOrientationEvent !== undefined || 
+        navigator.userAgent.match(/(iPhone|iPad|iPod|Android)/i)) {
         
-        setTimeout(() => {
-            window.open(telegramWebUrl, '_blank');
-        }, 800);
+        for (let i = 0; i < telegramLinks.length; i++) {
+            try {
+                const tempLink = document.createElement('a');
+                tempLink.href = telegramLinks[i];
+                tempLink.target = '_blank';
+                tempLink.style.display = 'none';
+                document.body.appendChild(tempLink);
+                tempLink.click();
+                document.body.removeChild(tempLink);
+                
+                console.log(`📱 محاولة ${i + 1}: ${telegramLinks[i]}`);
+                
+                // انتظار قصير بين المحاولات
+                await new Promise(resolve => setTimeout(resolve, 800));
+                opened = true;
+                break;
+                
+            } catch (error) {
+                console.warn(`⚠️ فشل في المحاولة ${i + 1}:`, error);
+            }
+        }
     } else {
-        // للكمبيوتر - فتح الرابط مباشرة
-        window.open(telegramWebUrl, '_blank');
+        // للحواسيب - فتح الرابط مباشرة
+        try {
+            const newWindow = window.open(telegramLinks[1], '_blank');
+            if (newWindow) {
+                opened = true;
+                console.log('💻 تم فتح التليجرام في نافذة جديدة');
+            }
+        } catch (error) {
+            console.error('❌ فشل في فتح التليجرام:', error);
+        }
     }
     
-    // رسائل الربط التلقائي
-    showNotification('🚀 فتح التليجرام...', 'info');
+    if (opened) {
+        // رسائل الربط التلقائي
+        showNotification('🚀 تم فتح التليجرام...', 'info');
+        
+        setTimeout(() => {
+            showNotification('⚡ جاري الربط التلقائي...', 'info');
+        }, 1500);
+        
+        setTimeout(() => {
+            showNotification('🔗 انتظار تأكيد الربط...', 'info');
+        }, 3000);
+        
+        // بدء فحص الربط التلقائي
+        startAutoTelegramLinking(code);
+        
+    } else {
+        // في حالة فشل جميع المحاولات
+        showNotification('❌ فشل في فتح التليجرام تلقائياً', 'error');
+        
+        // عرض التعليمات اليدوية
+        const fallbackMessage = `
+        لم نتمكن من فتح التليجرام تلقائياً.
+        
+        📱 يرجى فتح التليجرام يدوياً والبحث عن:
+        @${correctBotUsername}
+        
+        ثم أرسل الكود: ${code}
+        
+        🔗 أو استخدم هذا الرابط:
+        https://t.me/${correctBotUsername}?start=${code}
+        `;
+        
+        alert(fallbackMessage);
+        
+        // إعادة تفعيل الواجهة
+        if (telegramCodeResult) {
+            telegramCodeResult.style.opacity = '1';
+            telegramCodeResult.style.pointerEvents = 'auto';
+        }
+        
+        allButtons.forEach(btn => {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        });
+    }
     
-    setTimeout(() => {
-        showNotification('⚡ جاري الربط التلقائي...', 'info');
-    }, 1500);
-    
-    setTimeout(() => {
-        showNotification('🔗 انتظار تأكيد الربط...', 'info');
-    }, 3000);
-    
-    // بدء فحص الربط التلقائي
-    startAutoTelegramLinking(code);
+    // اهتزاز للهواتف
+    if (navigator.vibrate) {
+        navigator.vibrate([100, 50, 100]);
+    }
 }
 
 // نظام الربط التلقائي المطور
