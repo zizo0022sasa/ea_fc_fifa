@@ -48,127 +48,21 @@ def sanitize_input(text):
     text = re.sub(r'<[^>]+>', '', text)
     return text.strip()
 
-def validate_egyptian_mobile_instant(phone_input):
-    """🔥 تحقق فوري من الرقم المصري - نظام المحافظ الرقمية (11 رقم فقط)"""
-    if not phone_input:
-        return {
-            'is_valid': False,
-            'error': 'يرجى إدخال رقم الهاتف',
-            'code': 'empty_input'
-        }
-    
-    # إزالة كل شيء عدا الأرقام
-    clean_digits = re.sub(r'[^\d]', '', str(phone_input).strip())
-    
-    # 🚫 رفض فوري إذا لم يكن 11 رقم بالضبط
-    if len(clean_digits) != 11:
-        return {
-            'is_valid': False,
-            'error': f'يجب أن يكون 11 رقماً بالضبط (تم إدخال {len(clean_digits)} رقم)',
-            'code': 'invalid_length',
-            'entered_length': len(clean_digits),
-            'expected_length': 11
-        }
-    
-    # 🚫 التحقق من بداية الرقم - يجب أن يبدأ بـ 01
-    if not clean_digits.startswith('01'):
-        return {
-            'is_valid': False,
-            'error': 'يجب أن يبدأ الرقم بـ 01 (رقم مصري)',
-            'code': 'invalid_country_prefix'
-        }
-    
-    # 🚫 التحقق من كود الشركة - يجب أن يكون 010/011/012/015
-    carrier_code = clean_digits[:3]
-    if carrier_code not in ['010', '011', '012', '015']:
-        return {
-            'is_valid': False,
-            'error': f'كود الشركة {carrier_code} غير صحيح - يجب أن يكون 010/011/012/015',
-            'code': 'invalid_carrier_code',
-            'entered_carrier': carrier_code,
-            'valid_carriers': ['010', '011', '012', '015']
-        }
-    
-    # ✅ الرقم صحيح - معلومات الشركة
-    carrier_info = EGYPTIAN_CARRIERS.get(carrier_code, {
-        'name': 'غير معروف',
-        'carrier_en': 'Unknown'
-    })
-    
-    # ✅ إرجاع النتيجة النهائية للرقم الصحيح
-    return {
-        'is_valid': True,
-        'clean_number': clean_digits,
-        'formatted_number': f"+2{clean_digits}",
-        'display_number': f"0{clean_digits[1:3]} {clean_digits[3:6]} {clean_digits[6:]}",
-        'carrier_code': carrier_code,
-        'carrier_name': carrier_info['name'],
-        'carrier_en': carrier_info['carrier_en'],
-        'country': 'مصر',
-        'country_code': '+2',
-        'validation_type': 'instant_wallet_style',
-        'message': f'✅ رقم {carrier_info["name"]} صحيح',
-        'code': 'valid_egyptian_mobile'
-    }
-
 def normalize_phone_number(phone):
-    """تطبيع رقم الهاتف - نظام المحافظ (11 رقم فقط)"""
+    """تطبيع رقم الهاتف"""
     if not phone:
         return ""
     
-    # 🔥 استخدام التحقق الفوري الجديد
-    validation_result = validate_egyptian_mobile_instant(phone)
-    
-    # إرجاع الرقم المنسق أو فارغ في حالة الخطأ
-    if validation_result['is_valid']:
-        return validation_result['formatted_number']
-    else:
-        return ""  # رفض تام للأرقام غير الصحيحة
-
-def normalize_phone_number(phone):
-    """تطبيع رقم الهاتف - محسن للأرقام المصرية 11 رقم فقط"""
-    if not phone:
-        return ""
-    
-    # إزالة كل شيء عدا الأرقام وعلامة +
     clean_phone = re.sub(r'[^\d+]', '', phone)
     
-    # 🔥 التحقق من الأرقام المصرية (11 رقم) - التحسين الجديد
-    if clean_phone.startswith('01') and len(clean_phone) == 11:
-        # التحقق من أن الرقم يبدأ بكود شركة صحيح
-        if clean_phone.startswith(('010', '011', '012', '015')):
-            return '+2' + clean_phone  # +2 + 11 رقم = 13 رقم نهائي
-        else:
-            return ""  # رقم مصري غير صحيح
+    if clean_phone.startswith('00'):
+        clean_phone = '+' + clean_phone[2:]
+    elif clean_phone.startswith('01') and len(clean_phone) == 11:
+        clean_phone = '+2' + clean_phone
+    elif re.match(r'^\d{12,15}$', clean_phone) and not clean_phone.startswith('01'):
+        clean_phone = '+' + clean_phone
     
-    # للأرقام التي تبدأ بـ 00
-    elif clean_phone.startswith('002') and len(clean_phone) == 14:
-        # التحقق من الكود المصري
-        egyptian_part = clean_phone[3:]  # إزالة 002
-        if len(egyptian_part) == 11 and egyptian_part.startswith(('010', '011', '012', '015')):
-            return '+2' + egyptian_part
-        else:
-            return ""
-    
-    # للأرقام التي تبدأ بـ +2
-    elif clean_phone.startswith('+2') and len(clean_phone) == 13:
-        egyptian_part = clean_phone[2:]  # إزالة +2
-        if len(egyptian_part) == 11 and egyptian_part.startswith(('010', '011', '012', '015')):
-            return clean_phone
-        else:
-            return ""
-    
-    # للأرقام التي تبدأ بـ 2 مباشرة
-    elif clean_phone.startswith('2') and len(clean_phone) == 12:
-        egyptian_part = clean_phone[1:]  # إزالة 2
-        if len(egyptian_part) == 11 and egyptian_part.startswith(('010', '011', '012', '015')):
-            return '+' + clean_phone
-        else:
-            return ""
-    
-    # رفض أي شيء آخر
-    else:
-        return ""
+    return clean_phone
 
 def check_whatsapp_ultimate_method(phone_number):
     """
@@ -358,81 +252,60 @@ def check_whatsapp_ultimate_method(phone_number):
     }
 
 def validate_whatsapp_ultimate(phone):
-    """🔥 التحقق النهائي من الواتساب - نظام المحافظ الرقمية (11 رقم فقط)"""
+    """الدالة النهائية للتحقق المبتكر من الواتساب"""
+    if not phone:
+        return {'is_valid': False, 'error': 'يرجى إدخال رقم الهاتف'}
     
-    # 🚀 التحقق الفوري السريع مثل المحافظ الرقمية
-    instant_validation = validate_egyptian_mobile_instant(phone)
+    normalized_phone = normalize_phone_number(phone)
     
-    # ❌ في حالة فشل التحقق الفوري
-    if not instant_validation['is_valid']:
-        return {
-            'is_valid': False,
-            'error': instant_validation['error'],
-            'error_code': instant_validation['code'],
-            'validation_details': instant_validation,
-            'validation_type': 'instant_wallet_rejection'
-        }
+    if not re.match(r'^\+[1-9]\d{7,14}$', normalized_phone):
+        return {'is_valid': False, 'error': 'تنسيق الرقم غير صحيح'}
     
-    # ✅ الرقم نجح في التحقق الفوري
-    mobile_data = instant_validation
-    normalized_phone = mobile_data['formatted_number']
-    
-    # 📱 طباعة إشعار التحقق السريع
-    print(f"⚡ تم التحقق الفوري من الرقم: {mobile_data['display_number']} ({mobile_data['carrier_name']})")
-    
-    # 🔍 التحقق من الواتساب بالطرق المتقدمة
+    # التحقق بالطريقة المبتكرة
     whatsapp_check = check_whatsapp_ultimate_method(normalized_phone)
     
-    # 📊 تحضير النتيجة النهائية الشاملة
-    base_result = {
-        'is_valid': True,
-        'formatted': normalized_phone,
-        'display_number': mobile_data['display_number'],
-        'clean_number': mobile_data['clean_number'],
-        'country': mobile_data['country'],
-        'country_code': mobile_data['country_code'],
-        'carrier': mobile_data['carrier_name'],
-        'carrier_en': mobile_data['carrier_en'],
-        'carrier_code': mobile_data['carrier_code'],
-        'validation_type': 'wallet_style_instant',
-        'instant_check_passed': True,
-        'mobile_validation': mobile_data,
-        'verification_method': whatsapp_check['method'],
-        'methods_analysis': whatsapp_check.get('details', [])
-    }
+    # الحصول على معلومات إضافية عن الرقم
+    try:
+        parsed_number = phonenumbers.parse(normalized_phone, None)
+        country = geocoder.description_for_number(parsed_number, "ar") or "غير معروف"
+        carrier_name = carrier.name_for_number(parsed_number, "ar") or "غير معروف"
+    except:
+        country = "غير معروف"
+        carrier_name = "غير معروف"
     
-    # 🟢 واتساب موجود
     if whatsapp_check['exists'] is True:
         return {
-            **base_result,
+            'is_valid': True,
+            'formatted': normalized_phone,
+            'country': country,
+            'carrier': carrier_name,
             'whatsapp_status': f'موجود ✅ ({whatsapp_check["confidence"]})',
+            'verification_method': whatsapp_check['method'],
             'confidence': whatsapp_check['confidence'],
             'score': whatsapp_check.get('score', 0),
-            'message': f'✅ رقم {mobile_data["carrier_name"]} صحيح - {whatsapp_check["message"]}',
-            'whatsapp_exists': True
+            'methods_analysis': whatsapp_check.get('details', []),
+            'message': whatsapp_check['message']
         }
-    
-    # 🔴 واتساب غير موجود
     elif whatsapp_check['exists'] is False:
         return {
-            **base_result,
             'is_valid': False,
-            'error': f"واتساب غير موجود ❌ ({whatsapp_check['confidence']}) - {whatsapp_check['message']}",
-            'whatsapp_status': f'غير موجود ❌ ({whatsapp_check["confidence"]})',
+            'error': f"غير موجود ❌ ({whatsapp_check['confidence']}) - {whatsapp_check['message']}",
+            'formatted': normalized_phone,
+            'verification_method': whatsapp_check['method'],
             'confidence': whatsapp_check['confidence'],
-            'message': f'❌ رقم {mobile_data["carrier_name"]} صحيح لكن الواتساب غير موجود',
-            'whatsapp_exists': False
+            'methods_analysis': whatsapp_check.get('details', [])
         }
-    
-    # ⚠️ واتساب غير مؤكد
     else:
         return {
-            **base_result,
+            'is_valid': True,  # نقبل الرقم مع تحذير
+            'formatted': normalized_phone,
+            'country': country,
+            'carrier': carrier_name,
             'whatsapp_status': f'غير مؤكد ⚠️ ({whatsapp_check["confidence"]})',
+            'verification_method': whatsapp_check['method'],
             'confidence': whatsapp_check['confidence'],
-            'message': f'⚠️ رقم {mobile_data["carrier_name"]} صحيح - {whatsapp_check["message"]}',
-            'whatsapp_exists': None,
-            'warning': 'لا يمكن التأكد من وجود الواتساب'
+            'methods_analysis': whatsapp_check.get('details', []),
+            'message': f"رقم صحيح ولكن {whatsapp_check['message']}"
         }
 
 # باقي دوال التطبيق
@@ -448,139 +321,25 @@ def validate_card_number(card_number):
     clean_number = re.sub(r'\D', '', card_number)
     return len(clean_number) == 16 and clean_number.isdigit()
 
-def validate_instapay_link(input_text):
-    """استخلاص وتحقق ذكي من روابط InstaPay"""
-    if not input_text:
+def validate_instapay_link(link):
+    if not link:
+        return False, ""
+    url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+[^\s<>"{}|\\^`\[\].,;!?]'
+    urls = re.findall(url_pattern, link, re.IGNORECASE)
+    if not urls:
         return False, ""
     
-    # تنظيف النص من الأسطر الجديدة والمسافات الزائدة
-    clean_text = input_text.strip().replace('\n', ' ').replace('\r', ' ')
+    valid_domains = ['instapay.com.eg', 'instapay.app', 'app.instapay.com.eg']
     
-    # أنماط البحث المتقدمة لروابط InstaPay
-    instapay_patterns = [
-        # الأنماط الأساسية
-        r'https?://(?:www\.)?ipn\.eg/S/[^/\s]+/instapay/[A-Za-z0-9]+',
-        r'https?://(?:www\.)?instapay\.com\.eg/[^\s<>"{}|\\^`\[\]]+',
-        r'https?://(?:www\.)?app\.instapay\.com\.eg/[^\s<>"{}|\\^`\[\]]+',
-        r'https?://(?:www\.)?instapay\.app/[^\s<>"{}|\\^`\[\]]+',
-        
-        # أنماط متقدمة للروابط المختصرة
-        r'https?://(?:www\.)?ipn\.eg/[^\s<>"{}|\\^`\[\]]+',
-        r'https?://(?:www\.)?pay\.instapay\.com\.eg/[^\s<>"{}|\\^`\[\]]+',
-        
-        # أنماط للروابط مع معاملات
-        r'https?://[^\s<>"{}|\\^`\[\]]*instapay[^\s<>"{}|\\^`\[\]]*',
-    ]
-    
-    extracted_links = []
-    
-    # البحث باستخدام كل نمط
-    for pattern in instapay_patterns:
-        matches = re.findall(pattern, clean_text, re.IGNORECASE)
-        extracted_links.extend(matches)
-    
-    # إزالة المكررات والاحتفاظ بالترتيب
-    unique_links = list(dict.fromkeys(extracted_links))
-    
-    # فلترة الروابط وتنظيفها
-    valid_links = []
-    for link in unique_links:
-        # تنظيف الرابط من العلامات في النهاية
-        cleaned_link = re.sub(r'[.,;!?]+$', '', link.strip())
-        
-        # التحقق من صحة الرابط
-        if is_valid_instapay_url(cleaned_link):
-            valid_links.append(cleaned_link)
-    
-    # إرجاع أفضل رابط موجود
-    if valid_links:
-        best_link = select_best_instapay_link(valid_links)
-        return True, best_link
-    
+    for url in urls:
+        try:
+            parsed = urlparse(url.lower())
+            domain = parsed.netloc.replace('www.', '')
+            if any(valid_domain in domain for valid_domain in valid_domains) or 'instapay' in domain:
+                return True, url
+        except:
+            continue
     return False, ""
-
-def is_valid_instapay_url(url):
-    """التحقق من صحة رابط InstaPay"""
-    if not url or not url.startswith(('http://', 'https://')):
-        return False
-    
-    # قائمة النطاقات الصحيحة
-    valid_domains = [
-        'ipn.eg',
-        'instapay.com.eg',
-        'app.instapay.com.eg',
-        'instapay.app',
-        'pay.instapay.com.eg'
-    ]
-    
-    try:
-        from urllib.parse import urlparse
-        parsed = urlparse(url.lower())
-        domain = parsed.netloc.replace('www.', '')
-        
-        # التحقق من النطاق
-        domain_valid = any(valid_domain in domain for valid_domain in valid_domains)
-        
-        # التحقق من طول الرابط (ليس قصير جداً)
-        length_valid = len(url) >= 20
-        
-        # التحقق من وجود معرف في الرابط
-        has_identifier = len(parsed.path) > 3
-        
-        return domain_valid and length_valid and has_identifier
-        
-    except:
-        return False
-
-def select_best_instapay_link(links):
-    """اختيار أفضل رابط من القائمة"""
-    if not links:
-        return ""
-    
-    # ترتيب الأولويات
-    priority_domains = [
-        'ipn.eg/S/',  # الأولوية العليا
-        'instapay.com.eg',
-        'app.instapay.com.eg',
-        'instapay.app'
-    ]
-    
-    # البحث عن رابط بأولوية عالية
-    for priority in priority_domains:
-        for link in links:
-            if priority in link.lower():
-                return link
-    
-    # إذا لم يوجد، إرجاع الأول
-    return links[0]
-
-def extract_instapay_info(url):
-    """استخلاص معلومات إضافية من رابط InstaPay"""
-    info = {
-        'url': url,
-        'domain': '',
-        'username': '',
-        'code': '',
-        'type': 'unknown'
-    }
-    
-    try:
-        from urllib.parse import urlparse
-        parsed = urlparse(url)
-        info['domain'] = parsed.netloc.replace('www.', '')
-        
-        # استخلاص اسم المستخدم والكود من رابط ipn.eg
-        if 'ipn.eg' in info['domain']:
-            path_parts = parsed.path.strip('/').split('/')
-            if len(path_parts) >= 4 and path_parts[0] == 'S':
-                info['username'] = path_parts[1]
-                info['code'] = path_parts[3] if len(path_parts) > 3 else ''
-                info['type'] = 'standard'
-        
-    except:
-        pass
-    
-    return info
 
 @app.before_request
 def before_request():
@@ -698,21 +457,8 @@ def update_profile():
         elif payment_method == 'instapay':
             is_valid, extracted_link = validate_instapay_link(payment_details)
             if not is_valid:
-                return jsonify({
-                    'success': False, 
-                    'message': 'لم يتم العثور على رابط InstaPay صحيح في النص المدخل'
-                }), 400
-            
-            # استخلاص معلومات إضافية
-            instapay_info = extract_instapay_info(extracted_link)
+                return jsonify({'success': False, 'message': 'Invalid InstaPay link'}), 400
             processed_payment_details = extracted_link
-            
-            print(f"🔗 InstaPay Link Extracted:")
-            print(f"   Original Text: {payment_details[:100]}...")
-            print(f"   Extracted URL: {extracted_link}")
-            print(f"   Domain: {instapay_info['domain']}")
-            print(f"   Username: {instapay_info['username']}")
-            print(f"   Code: {instapay_info['code']}")
         
         # إنشاء بيانات المستخدم المحدثة
         user_data = {
@@ -790,52 +536,8 @@ def update_profile():
 
 # دوال التليجرام محدثة
 def generate_telegram_code():
-    """🔐 توليد كود تليجرام معقد وآمن (16-24 حرف)"""
-    import string
-    import random
-    
-    # 🔥 مجموعة الحروف المعقدة (كابتل + سمول + أرقام + رموز)
-    uppercase = string.ascii_uppercase  # A-Z
-    lowercase = string.ascii_lowercase  # a-z  
-    digits = string.digits  # 0-9
-    special_chars = '!@#$%^&*()_+-=[]{}|;:,.<>?'  # رموز خاصة
-    
-    # 🎲 تحديد طول عشوائي بين 16-24
-    code_length = random.randint(16, 24)
-    
-    # 🔐 ضمان وجود كل نوع حرف (أمان أقصى)
-    code_parts = [
-        random.choice(uppercase),  # حرف كبير واحد على الأقل
-        random.choice(lowercase),  # حرف صغير واحد على الأقل  
-        random.choice(digits),     # رقم واحد على الأقل
-        random.choice(special_chars)  # رمز خاص واحد على الأقل
-    ]
-    
-    # 🌀 باقي الحروف عشوائية تماماً
-    all_chars = uppercase + lowercase + digits + special_chars
-    remaining_length = code_length - 4  # طرح الـ 4 حروف المضمونة
-    
-    for _ in range(remaining_length):
-        code_parts.append(random.choice(all_chars))
-    
-    # 🔀 خلط الحروف عشوائياً (تشفير إضافي)
-    random.shuffle(code_parts)
-    
-    # 🎯 تجميع الكود النهائي
-    final_code = ''.join(code_parts)
-    
-    # 🔍 التأكد من التعقيد (فحص إضافي)
-    has_upper = any(c.isupper() for c in final_code)
-    has_lower = any(c.islower() for c in final_code)  
-    has_digit = any(c.isdigit() for c in final_code)
-    has_special = any(c in special_chars for c in final_code)
-    
-    # 🔄 إعادة التوليد إذا لم يحقق الشروط (حماية إضافية)
-    if not all([has_upper, has_lower, has_digit, has_special]):
-        return generate_telegram_code()  # استدعاء تكراري
-    
-    print(f"🔐 Generated Ultra-Secure Code: Length={len(final_code)}, Complexity=Maximum")
-    return final_code
+    """توليد كود فريد للتليجرام"""
+    return secrets.token_urlsafe(6).upper().replace('_', '').replace('-', '')[:8]
 
 @app.route('/generate-telegram-code', methods=['POST'])
 def generate_telegram_code_endpoint():
@@ -872,16 +574,13 @@ def generate_telegram_code_endpoint():
         bot_username = os.environ.get('TELEGRAM_BOT_USERNAME', 'YourBotName_bot')
         telegram_link = f"https://t.me/{bot_username}?start={telegram_code}"
         
-        print(f"🤖 Generated Ultra-Secure Telegram Code: ******* (Hidden) for {whatsapp_number}")
+        print(f"🤖 Generated Telegram Code: {telegram_code} for {whatsapp_number}")
         
-        # 🔐 إرجاع استجابة مخفية تماماً (بدون عرض الكود)
         return jsonify({
             'success': True,
+            'code': telegram_code,
             'telegram_link': telegram_link,
-            'message': 'تم إنشاء كود الربط بنجاح - سيتم فتح التليجرام تلقائياً',
-            'action': 'auto_redirect',
-            'security_level': 'maximum',
-            'code_hidden': True  # إشارة أن الكود مخفي
+            'message': f'تم إنشاء الكود: {telegram_code}'
         })
         
     except Exception as e:
