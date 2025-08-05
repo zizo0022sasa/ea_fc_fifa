@@ -485,181 +485,19 @@ function setupDynamicInputs() {
         }
     });
     
-// نظام تيلدا المحسن - تنسيق متطور للبطاقات
-function initializeTeldaCardSystem() {
+    // معالجة خاصة لكارت تيلدا (تنسيق الأرقام)
     const teldaInput = document.getElementById('telda_card') || document.getElementById('card-number');
-    if (!teldaInput) return;
-    
-    // إضافة أيقونة تيلدا
-    const inputContainer = teldaInput.parentNode;
-    if (!inputContainer.querySelector('.telda-icon')) {
-        const teldaIcon = document.createElement('div');
-        teldaIcon.className = 'telda-icon';
-        teldaIcon.innerHTML = '<i class="fas fa-credit-card"></i>';
-        inputContainer.style.position = 'relative';
-        inputContainer.appendChild(teldaIcon);
-    }
-    
-    // معالج الإدخال المحسن
-    teldaInput.addEventListener('input', function(e) {
-        let value = e.target.value.replace(/[^\d]/g, ''); // أرقام فقط
-        let formattedValue = '';
-        
-        // تنسيق بصيغة 1234-5678-9012-3456
-        for (let i = 0; i < value.length; i += 4) {
-            if (i > 0) formattedValue += '-';
-            formattedValue += value.substr(i, 4);
-        }
-        
-        // تحديد طول مناسب (16 رقم + 3 شرطات = 19 حرف)
-        if (formattedValue.length <= 19) {
-            e.target.value = formattedValue;
-        }
-        
-        // التحقق الفوري
-        validateTeldaCard(e.target);
-        addTeldaVisualEffects(e.target, value);
-        checkFormValidity();
-    });
-    
-    // معالج اللصق المحسن
-    teldaInput.addEventListener('paste', function(e) {
-        e.preventDefault();
-        let pastedText = (e.clipboardData || window.clipboardData).getData('text');
-        let numbers = pastedText.replace(/[^\d]/g, '');
-        
-        if (numbers.length <= 16) {
-            this.value = numbers;
-            this.dispatchEvent(new Event('input'));
-        }
-    });
-    
-    // تأثيرات التركيز
-    teldaInput.addEventListener('focus', function() {
-        this.parentNode.classList.add('telda-focused');
-    });
-    
-    teldaInput.addEventListener('blur', function() {
-        this.parentNode.classList.remove('telda-focused');
-        finalTeldaValidation(this);
-    });
-}
-
-// التحقق من صحة كارت تيلدا
-function validateTeldaCard(input) {
-    const value = input.value;
-    const numbersOnly = value.replace(/[^\d]/g, '');
-    const container = input.parentNode;
-    
-    // إزالة تأثيرات سابقة
-    container.classList.remove('telda-valid', 'telda-invalid', 'telda-partial');
-    
-    if (numbersOnly.length === 0) {
-        return;
-    } else if (numbersOnly.length < 16) {
-        container.classList.add('telda-partial');
-        showTeldaStatus(input, 'جاري الكتابة...', 'partial');
-    } else if (numbersOnly.length === 16) {
-        container.classList.add('telda-valid');
-        showTeldaStatus(input, '✅ رقم كارت صحيح', 'valid');
-        
-        // اهتزاز نجاح
-        if (navigator.vibrate) {
-            navigator.vibrate([50, 30, 50]);
-        }
-    } else {
-        container.classList.add('telda-invalid');
-        showTeldaStatus(input, '❌ رقم طويل جداً', 'invalid');
-    }
-}
-
-// التحقق النهائي لكارت تيلدا
-function finalTeldaValidation(input) {
-    const numbersOnly = input.value.replace(/[^\d]/g, '');
-    
-    if (numbersOnly.length > 0 && numbersOnly.length !== 16) {
-        showTeldaStatus(input, '⚠️ رقم كارت تيلدا يجب أن يكون 16 رقم', 'invalid');
-    }
-}
-
-// عرض حالة تيلدا
-function showTeldaStatus(input, message, type) {
-    const existingStatus = input.parentNode.querySelector('.telda-status');
-    if (existingStatus) {
-        existingStatus.remove();
-    }
-    
-    if (!message) return;
-    
-    const statusDiv = document.createElement('div');
-    statusDiv.className = `telda-status telda-${type}`;
-    statusDiv.textContent = message;
-    
-    input.parentNode.appendChild(statusDiv);
-    
-    setTimeout(() => {
-        statusDiv.classList.add('show');
-    }, 100);
-    
-    // إزالة تلقائية بعد 3 ثوان للرسائل الجزئية
-    if (type === 'partial') {
-        setTimeout(() => {
-            if (statusDiv.parentNode) {
-                statusDiv.classList.remove('show');
-                setTimeout(() => statusDiv.remove(), 300);
+    if (teldaInput) {
+        teldaInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\s/g, '').replace(/[^0-9]/gi, '');
+            let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+            if (formattedValue !== e.target.value) {
+                e.target.value = formattedValue;
             }
-        }, 3000);
+            validatePaymentInput(this);
+            checkFormValidity();
+        });
     }
-}
-
-// تأثيرات بصرية لتيلدا
-function addTeldaVisualEffects(input, numbersValue) {
-    const container = input.parentNode;
-    
-    // تأثير النبض للأرقام الجديدة
-    if (numbersValue.length > 0 && numbersValue.length % 4 === 0) {
-        container.classList.add('telda-pulse');
-        setTimeout(() => {
-            container.classList.remove('telda-pulse');
-        }, 200);
-    }
-    
-    // شريط التقدم
-    updateTeldaProgressBar(input, numbersValue.length);
-}
-
-// شريط تقدم تيلدا
-function updateTeldaProgressBar(input, length) {
-    let progressBar = input.parentNode.querySelector('.telda-progress');
-    
-    if (!progressBar) {
-        progressBar = document.createElement('div');
-        progressBar.className = 'telda-progress';
-        progressBar.innerHTML = '<div class="telda-progress-fill"></div>';
-        input.parentNode.appendChild(progressBar);
-    }
-    
-    const progressFill = progressBar.querySelector('.telda-progress-fill');
-    const percentage = Math.min((length / 16) * 100, 100);
-    
-    progressFill.style.width = percentage + '%';
-    
-    // ألوان مختلفة حسب التقدم
-    if (percentage < 25) {
-        progressFill.style.background = '#ef4444';
-    } else if (percentage < 50) {
-        progressFill.style.background = '#f97316';
-    } else if (percentage < 75) {
-        progressFill.style.background = '#eab308';
-    } else if (percentage < 100) {
-        progressFill.style.background = '#22c55e';
-    } else {
-        progressFill.style.background = '#10b981';
-    }
-}
-
-// معالجة خاصة لكارت تيلدا (تنسيق الأرقام) - استبدال الكود القديم
-initializeTeldaCardSystem();
 }
 
 // التحقق من صحة حقول الدفع
@@ -1378,14 +1216,14 @@ async function generateTelegramCode() {
                 openTelegramAppDirect();
             };
             
-// إظهار منطقة الكود (بدون زر النسخ)
-telegramCodeResult.innerHTML = `
-    <div class="code-container">
-        <div class="code-header">
-            <i class="fas fa-rocket"></i>
-            <span>جاهز للربط التلقائي</span>
-        </div>
-        <div class="generated-code" style="display: none;">${result.code}</div>
+            // إظهار منطقة الكود (بدون زر النسخ)
+            telegramCodeResult.innerHTML = `
+                <div class="code-container">
+                    <div class="code-header">
+                        <i class="fas fa-rocket"></i>
+                        <span>جاهز للربط التلقائي</span>
+                    </div>
+                    <div class="generated-code">${result.code}</div>
                     <div class="telegram-actions">
                         <button type="button" class="telegram-open-btn-big" onclick="openTelegramAppDirect()">
                             <i class="fab fa-telegram"></i>
@@ -1416,7 +1254,7 @@ telegramCodeResult.innerHTML = `
                 navigator.vibrate([100, 50, 100]);
             }
             
-            showNotification('✅ جاهز للربط! اضغط على الزر لفتح التليجرام', 'success');
+            showNotification(`✅ جاهز للربط! الكود: ${result.code}`, 'success');
             
         } else {
             showNotification(result.message || 'خطأ في إنشاء الكود', 'error');
@@ -1942,225 +1780,3 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 console.log('🔗 Telegram system updated - Auto-link with single button');
-
-// ═══════════════════════════════════════════════════════════════
-// 🔗 نظام استخلاص روابط InstaPay الذكي - إضافة جديدة
-// ═══════════════════════════════════════════════════════════════
-
-// التحقق والاستخلاص الفوري لروابط InstaPay
-function validateInstapayInput(input) {
-    const text = input.value.trim();
-    const container = input.closest('.form-group');
-    
-    // إزالة المعاينة السابقة
-    const existingPreview = container.querySelector('.instapay-preview');
-    if (existingPreview) {
-        existingPreview.remove();
-    }
-    
-    if (!text) {
-        updateValidationUI(input, true, '');
-        return true;
-    }
-    
-    // محاولة استخلاص الرابط
-    const extractedLink = extractInstapayLink(text);
-    
-    if (extractedLink) {
-        // إنشاء معاينة الرابط
-        createInstapayPreview(container, extractedLink, text);
-        updateValidationUI(input, true, '✓ تم استخلاص رابط InstaPay');
-        return true;
-    } else {
-        updateValidationUI(input, false, 'لم يتم العثور على رابط InstaPay صحيح');
-        return false;
-    }
-}
-
-// استخلاص رابط InstaPay من النص (JavaScript)
-function extractInstapayLink(text) {
-    const patterns = [
-        /https?:\/\/(?:www\.)?ipn\.eg\/S\/[^\/\s]+\/instapay\/[A-Za-z0-9]+/gi,
-        /https?:\/\/(?:www\.)?instapay\.com\.eg\/[^\s<>"{}|\\^`\[\]]+/gi,
-        /https?:\/\/(?:www\.)?app\.instapay\.com\.eg\/[^\s<>"{}|\\^`\[\]]+/gi,
-        /https?:\/\/(?:www\.)?instapay\.app\/[^\s<>"{}|\\^`\[\]]+/gi,
-        /https?:\/\/(?:www\.)?ipn\.eg\/[^\s<>"{}|\\^`\[\]]+/gi,
-    ];
-    
-    for (const pattern of patterns) {
-        const matches = text.match(pattern);
-        if (matches && matches.length > 0) {
-            // تنظيف الرابط من العلامات في النهاية
-            let link = matches[0].replace(/[.,;!?]+$/, '');
-            if (isValidInstapayUrl(link)) {
-                return link;
-            }
-        }
-    }
-    
-    return null;
-}
-
-// التحقق من صحة رابط InstaPay (JavaScript)
-function isValidInstapayUrl(url) {
-    if (!url || (!url.startsWith('http://') && !url.startsWith('https://'))) {
-        return false;
-    }
-    
-    const validDomains = ['ipn.eg', 'instapay.com.eg', 'app.instapay.com.eg', 'instapay.app'];
-    const lowerUrl = url.toLowerCase();
-    
-    return validDomains.some(domain => lowerUrl.includes(domain)) && url.length >= 20;
-}
-
-// إنشاء معاينة الرابط المستخلص
-function createInstapayPreview(container, extractedLink, originalText) {
-    const previewDiv = document.createElement('div');
-    previewDiv.className = 'instapay-preview';
-    
-    previewDiv.innerHTML = `
-        <div class="preview-header">
-            <i class="fas fa-link"></i>
-            <span>تم استخلاص رابط InstaPay</span>
-        </div>
-        <div class="extracted-link">
-            <div class="link-label">الرابط المستخلص:</div>
-            <div class="link-url">${extractedLink}</div>
-        </div>
-        <div class="preview-actions">
-            <button type="button" class="test-link-btn" onclick="testInstapayLink('${extractedLink}')">
-                <i class="fas fa-external-link-alt"></i>
-                اختبار الرابط
-            </button>
-            <button type="button" class="copy-link-btn" onclick="copyInstapayLink('${extractedLink}')">
-                <i class="fas fa-copy"></i>
-                نسخ الرابط
-            </button>
-        </div>
-    `;
-    
-    container.appendChild(previewDiv);
-    
-    // انيميشن الظهور
-    setTimeout(() => {
-        previewDiv.classList.add('show');
-    }, 100);
-}
-
-// اختبار رابط InstaPay
-function testInstapayLink(url) {
-    window.open(url, '_blank');
-    showNotification('تم فتح الرابط في تبويب جديد', 'info');
-}
-
-// نسخ رابط InstaPay
-async function copyInstapayLink(url) {
-    try {
-        if (navigator.clipboard && window.isSecureContext) {
-            await navigator.clipboard.writeText(url);
-        } else {
-            // طريقة احتياطية
-            const textArea = document.createElement('textarea');
-            textArea.value = url;
-            textArea.style.position = 'fixed';
-            textArea.style.left = '-999999px';
-            textArea.style.top = '-999999px';
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-        }
-        
-        showNotification('تم نسخ الرابط بنجاح!', 'success');
-        
-        if (navigator.vibrate) {
-            navigator.vibrate([50, 50, 50]);
-        }
-        
-    } catch (error) {
-        showNotification('فشل في نسخ الرابط', 'error');
-    }
-}
-
-// تحديث نظام الاستماع لحقل InstaPay
-function initializeInstapayListener() {
-    const instapayInput = document.getElementById('payment-link');
-    if (instapayInput) {
-        // إزالة المستمعين القدامى
-        instapayInput.removeEventListener('input', validateInstapayInput);
-        instapayInput.removeEventListener('paste', validateInstapayInput);
-        
-        // إضافة المستمعين الجدد
-        instapayInput.addEventListener('input', function() {
-            validateInstapayInput(this);
-        });
-        
-        instapayInput.addEventListener('paste', function() {
-            // تأخير قصير للسماح بلصق النص
-            setTimeout(() => {
-                validateInstapayInput(this);
-            }, 100);
-        });
-        
-        console.log('🔗 InstaPay input listener initialized');
-    }
-}
-
-// تحديث دالة setupDynamicInputs لتشمل InstaPay
-const originalSetupDynamicInputs = setupDynamicInputs;
-setupDynamicInputs = function() {
-    // استدعاء الدالة الأصلية
-    originalSetupDynamicInputs();
-    
-    // إضافة مستمع InstaPay
-    initializeInstapayListener();
-};
-
-// إضافة تحديث validatePaymentInput لدعم استخلاص InstaPay
-const originalValidatePaymentInput = validatePaymentInput;
-validatePaymentInput = function(input) {
-    const value = input.value.trim();
-    const inputId = input.id;
-    let isValid = false;
-    let errorMessage = '';
-    
-    if (!value) {
-        updateValidationUI(input, true, '');
-        return true;
-    }
-    
-    // التحقق من المحافظ الإلكترونية (11 رقم)
-    if (['vodafone_cash', 'etisalat_cash', 'orange_cash', 'we_pay', 
-         'fawry', 'aman', 'masary', 'bee', 'mobile-number'].includes(inputId)) {
-        isValid = /^01[0125][0-9]{8}$/.test(value) && value.length === 11;
-        errorMessage = isValid ? '' : 'رقم المحفظة يجب أن يكون 11 رقم ويبدأ بـ 010، 011، 012، أو 015';
-    }
-    // التحقق من كارت تيلدا (16 رقم)
-    else if (['telda_card', 'card-number'].includes(inputId)) {
-        const numbersOnly = value.replace(/\s/g, '');
-        isValid = /^\d{16}$/.test(numbersOnly);
-        errorMessage = isValid ? '' : 'رقم كارت تيلدا يجب أن يكون 16 رقم';
-    }
-    // التحقق من رابط إنستا باي - النسخة المحدثة
-    else if (['instapay_link', 'payment-link'].includes(inputId)) {
-        const extractedLink = extractInstapayLink(value);
-        isValid = !!extractedLink;
-        errorMessage = isValid ? '' : 'لم يتم العثور على رابط InstaPay صحيح';
-        
-        // تحديث قيمة الحقل للرابط المستخلص
-        if (isValid && extractedLink !== value) {
-            input.value = extractedLink;
-        }
-    }
-    
-    updateValidationUI(input, isValid, errorMessage);
-    return isValid;
-};
-
-// تحديث دالة isValidInstaPayLink لاستخدام النظام الجديد
-isValidInstaPayLink = function(link) {
-    return !!extractInstapayLink(link);
-};
-
-console.log('🚀 InstaPay Smart Link Extraction System - Initialized');
