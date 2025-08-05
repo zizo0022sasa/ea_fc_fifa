@@ -195,47 +195,39 @@
     <input type="hidden" name="email_addresses" id="emailAddressesInput" value="">
 </div>
 
-<!-- زر التليجرام المحدث -->
-<div class="telegram-section">
-    <button type="button" class="telegram-btn" id="telegramBtn" onclick="generateTelegramCode()">
-        <div class="telegram-btn-content">
-            <i class="fab fa-telegram telegram-icon"></i>
-            <div class="telegram-text">
-                <span class="telegram-title">📱 ربط مع التليجرام</span>
-                <span class="telegram-subtitle">احصل على كود فوري وادخل للبوت</span>
-            </div>
-        </div>
-    </button>
-    
-    <!-- نتيجة الكود المبسطة -->
-    <div class="telegram-code-result" id="telegramCodeResult" style="display: none;">
-        <div class="code-container">
-            <div class="code-header">
-                <i class="fas fa-check-circle" style="color: #28a745;"></i>
-                <span>جاهز للربط!</span>
-            </div>
-            
-            <!-- الكود المخفي للنظام -->
-            <div class="generated-code" id="generatedCode" style="display: none;"></div>
-            
-            <!-- زر واحد فقط -->
-            <div class="telegram-actions">
-                <button type="button" class="telegram-open-btn" id="telegramOpenBtn" onclick="openTelegramApp()">
-                    <i class="fab fa-telegram"></i>
-                    اضغط لفتح التليجرام والربط
+            <!-- زر التليجرام الكبير -->
+            <div class="telegram-section">
+                <button type="button" class="telegram-btn" id="telegramBtn" onclick="generateTelegramCode()">
+                    <div class="telegram-btn-content">
+                        <i class="fab fa-telegram telegram-icon"></i>
+                        <div class="telegram-text">
+                            <span class="telegram-title">📱 ربط مع التليجرام</span>
+                            <span class="telegram-subtitle">احصل على كود فوري وادخل للبوت</span>
+                        </div>
+                    </div>
                 </button>
-            </div>
-
-            
-            <!-- تعليمات مبسطة -->
-            <div class="telegram-instructions">
-                <div class="single-step">
-                    ⚡ اضغط "فتح التليجرام" وسيتم الربط التلقائي!
-                </div>
-            </div>
-        </div>
+                
+                <div class="telegram-code-result" id="telegramCodeResult" style="display: none;">
+                    <div class="code-container">
+                        <div class="code-header">
+                            <i class="fas fa-key"></i>
+                            <span>الكود الخاص بك</span>
+                        </div>
+<div class="telegram-actions">
+    <button type="button" class="telegram-open-btn" id="telegramOpenBtn" onclick="openTelegramApp()">
+        <i class="fab fa-telegram"></i>
+        فتح التليجرام والربط
+    </button>
+</div>
+<div class="telegram-instructions">
+    <p>📋 <strong>خطوة واحدة فقط:</strong></p>
+    <div class="single-step">
+        ⚡ اضغط "فتح التليجرام" وسيتم الربط التلقائي!
     </div>
 </div>
+                    </div>
+                </div>
+            </div>
 
             <button type="submit" class="submit-btn" id="submitBtn" disabled>
                 💾 حفظ التغييرات
