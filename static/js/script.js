@@ -1327,6 +1327,84 @@ async function generateTelegramCode() {
     }
 }
 
+// إضافة دالة فتح التليجرام التلقائي (المحسنة)
+async function openTelegramAppDirect(username, message = null) {
+    console.log('🔄 محاولة فتح التليجرام التلقائي للمستخدم:', username);
+    
+    if (!username || username.trim() === '') {
+        console.error('❌ اسم المستخدم مطلوب لفتح التليجرام');
+        return false;
+    }
+
+    // تنظيف اسم المستخدم
+    const cleanUsername = username.replace('@', '').trim();
+    
+    // إنشاء الرسالة إذا تم تمريرها
+    const telegramMessage = message ? encodeURIComponent(message) : '';
+    const messageParam = telegramMessage ? `&text=${telegramMessage}` : '';
+    
+    // الروابط المختلفة للتليجرام
+    const telegramLinks = [
+        `tg://resolve?domain=${cleanUsername}${messageParam}`, // التطبيق الأساسي
+        `https://t.me/${cleanUsername}?start=verify${messageParam ? `&text=${telegramMessage}` : ''}`, // رابط الويب
+        `https://telegram.me/${cleanUsername}${messageParam ? `?text=${telegramMessage}` : ''}` // رابط بديل
+    ];
+
+    // تجربة فتح التليجرام بطرق مختلفة
+    for (let i = 0; i < telegramLinks.length; i++) {
+        const link = telegramLinks[i];
+        console.log(`📱 محاولة ${i + 1}: ${link}`);
+        
+        try {
+            // للهواتف المحمولة - تجربة الفتح المباشر
+            if (window.DeviceMotionEvent !== undefined || window.DeviceOrientationEvent !== undefined) {
+                const tempLink = document.createElement('a');
+                tempLink.href = link;
+                tempLink.target = '_blank';
+                tempLink.style.display = 'none';
+                document.body.appendChild(tempLink);
+                tempLink.click();
+                document.body.removeChild(tempLink);
+                
+                // انتظار قصير للتحقق من النجاح
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                console.log('✅ تم فتح التليجرام بنجاح');
+                return true;
+            } else {
+                // للحواسيب - استخدام window.open
+                const newWindow = window.open(link, '_blank');
+                if (newWindow) {
+                    console.log('✅ تم فتح التليجرام في نافذة جديدة');
+                    return true;
+                }
+            }
+        } catch (error) {
+            console.warn(`⚠️ فشل في المحاولة ${i + 1}:`, error);
+        }
+    }
+
+    // في حالة فشل جميع المحاولات
+    console.error('❌ فشل في فتح التليجرام تلقائياً');
+    
+    // إظهار رسالة للمستخدم مع تعليمات يدوية
+    const fallbackMessage = `
+    لم نتمكن من فتح التليجرام تلقائياً.
+    
+    📱 يرجى فتح التليجرام يدوياً والبحث عن:
+    @${cleanUsername}
+    
+    🔗 أو استخدم هذا الرابط:
+    https://t.me/${cleanUsername}
+    `;
+    
+    alert(fallbackMessage);
+    return false;
+}
+
+// --- السياق قبل الدالة ---
+}
+
 // دالة فتح التليجرام المباشر - الربط التلقائي
 function openTelegramAppDirect() {
     const code = currentTelegramCode || document.getElementById('generatedCode').textContent;
@@ -1442,9 +1520,11 @@ function startAutoTelegramLinking(code) {
         
     }, 3000); // فحص كل 3 ثوان
 }
+// --- السياق بعد الدالة ---
 
 // عرض النجاح النهائي
 function showUltimateSuccess() {
+
     // إخفاء كل شيء فوراً
     const loading = document.getElementById('loading');
     const formContainer = document.querySelector('.container');
