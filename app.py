@@ -667,7 +667,7 @@ def telegram_webhook():
 💳 طريقة الدفع: {profile_data['payment_method'].replace('_', ' ').title()}
 {payment_text}
 
-🔗 رابط الموقع: https://ea-fc-fifa-5jbn.onrender.com/
+🔗 رابط الموقع: https://ea-fc-fifa.onrender.com/
 
 شكراً لاختيارك FC 26! 🏆"""
                         
@@ -678,13 +678,13 @@ def telegram_webhook():
                         send_telegram_message(chat_id, f"""❌ هذا الكود ({code}) تم استخدامه من قبل.
 
 يرجى الحصول على كود جديد من الموقع:
-🔗 https://ea-fc-fifa-5jbn.onrender.com/""")
+🔗 https://ea-fc-fifa.onrender.com/""")
                         
                 else:
                     send_telegram_message(chat_id, f"""❌ الكود ({code}) غير صحيح أو منتهي الصلاحية.
 
 يرجى الحصول على كود جديد من الموقع:
-🔗 https://ea-fc-fifa-5jbn.onrender.com/""")
+🔗 https://ea-fc-fifa.onrender.com/""")
             else:
                 # رسالة بداية عامة
                 send_telegram_message(chat_id, f"""🎮 مرحباً بك {first_name} في FC 26 Profile System!
@@ -697,7 +697,7 @@ def telegram_webhook():
 
 مثال: ABC123
 
-🔗 الموقع: https://ea-fc-fifa-5jbn.onrender.com/
+🔗 الموقع: https://ea-fc-fifa.onrender.com/
 
 شكراً! 🏆""")
         
@@ -732,7 +732,7 @@ def telegram_webhook():
 💳 طريقة الدفع: {profile_data['payment_method'].replace('_', ' ').title()}
 {payment_text}
 
-🔗 رابط الموقع: https://ea-fc-fifa-5jbn.onrender.com/
+🔗 رابط الموقع: https://ea-fc-fifa.onrender.com/
 
 شكراً لاختيارك FC 26! 🏆"""
                     
@@ -743,13 +743,13 @@ def telegram_webhook():
                     send_telegram_message(chat_id, f"""❌ هذا الكود ({code}) تم استخدامه من قبل.
 
 يرجى الحصول على كود جديد من الموقع:
-🔗 https://ea-fc-fifa-5jbn.onrender.com/""")
+🔗 https://ea-fc-fifa.onrender.com/""")
                     
             else:
                 send_telegram_message(chat_id, f"""❌ الكود ({code}) غير صحيح أو منتهي الصلاحية.
 
 يرجى الحصول على كود جديد من الموقع:
-🔗 https://ea-fc-fifa-5jbn.onrender.com/
+🔗 https://ea-fc-fifa.onrender.com/
 
 💡 تلميح: أرسل الكود مباشرة بدون /start
 مثال: ABC123""")
@@ -762,7 +762,7 @@ def telegram_webhook():
 📝 /start - البدء والمساعدة
 🔑 إرسال الكود مباشرة (مثال: ABC123)
 
-🔗 الموقع: https://ea-fc-fifa-5jbn.onrender.com/""")
+🔗 الموقع: https://ea-fc-fifa.onrender.com/""")
             
         return jsonify({'ok': True})
         
@@ -806,7 +806,7 @@ def send_telegram_message(chat_id, text):
             'reply_markup': {
                 'inline_keyboard': [[{
                     'text': '🎮 فتح الموقع',
-                    'url': 'https://ea-fc-fifa-5jbn.onrender.com/'
+                    'url': 'https://ea-fc-fifa.onrender.com/'
                 }]]
             }
         }
@@ -866,7 +866,7 @@ def set_telegram_webhook():
         if not bot_token:
             return jsonify({'success': False, 'message': 'TELEGRAM_BOT_TOKEN غير موجود'})
         
-        webhook_url = f"https://ea-fc-fifa-5jbn.onrender.com/telegram-webhook"
+        webhook_url = f"https://ea-fc-fifa.onrender.com/telegram-webhook"
         telegram_api_url = f"https://api.telegram.org/bot{bot_token}/setWebhook"
         
         response = requests.post(telegram_api_url, json={'url': webhook_url}, timeout=10)
