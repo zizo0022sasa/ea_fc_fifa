@@ -1,0 +1,2016 @@
+:root {
+    /* الألوان الدقيقة من الموقع الأصلي */
+    --main-purple: #190f2c;
+    --light-purple: #3a2d5b;
+    --dark-purple: #0d0419;
+    --accent-orange: #ff9000;
+    --hover-orange: #ffa500;
+    --text-white: #FFFFFF;
+    --glass-bg: linear-gradient(145deg, rgba(25, 15, 44, 0.85), rgba(58, 45, 91, 0.75));
+    --button-bg: linear-gradient(145deg, rgba(25, 15, 44, 0.9), rgba(58, 45, 91, 0.8));
+    --selected-bg: linear-gradient(145deg, var(--accent-orange), var(--hover-orange));
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Cairo', sans-serif;
+    background: linear-gradient(135deg, var(--main-purple) 0%, var(--light-purple) 50%, var(--dark-purple) 100%);
+    min-height: 100vh;
+    padding: 15px;
+    overflow-x: hidden;
+}
+
+/* خلفية الجسيمات */
+.particles-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: rgba(255, 144, 0, 0.6);
+    border-radius: 50%;
+    animation: float 8s infinite linear;
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(100vh) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-10vh) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* الحاوي الرئيسي - محسن للهواتف */
+.container {
+    max-width: 500px;
+    margin: 0 auto;
+    background: var(--glass-bg);
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* رأس الصفحة */
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.header h1 {
+    font-family: 'Orbitron', monospace;
+    font-size: 2.2rem;
+    font-weight: 900;
+    margin-bottom: 10px;
+    color: var(--text-white);
+    text-shadow: 0 0 20px rgba(255, 144, 0, 0.3);
+}
+
+.header p {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* قسم المنصات */
+.platforms-section {
+    margin-bottom: 30px;
+}
+
+.section-title {
+    color: var(--text-white);
+    font-size: 1.3rem;
+    font-weight: 800;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.platforms-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.platform-card {
+    background: var(--button-bg);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.platform-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(255, 144, 0, 0.2);
+    border-color: rgba(255, 144, 0, 0.5);
+}
+
+.platform-card.selected {
+    background: var(--selected-bg);
+    border-color: var(--accent-orange);
+    color: #1F2937;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 144, 0, 0.4);
+}
+
+.platform-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.platform-icon.playstation { color: #00D4FF; }
+.platform-icon.xbox { color: #107C10; }
+.platform-icon.pc { color: #ff9000; }
+
+.platform-card h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.platform-card:not(.selected) h3 {
+    color: var(--text-white);
+}
+
+/* نموذج الإدخال */
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    color: var(--text-white);
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 15px 20px;
+    border: none;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-white);
+    font-size: 1rem;
+    font-weight: 600;
+    backdrop-filter: blur(5px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    font-family: 'Cairo', sans-serif;
+}
+
+.form-input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--accent-orange);
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 20px rgba(255, 144, 0, 0.3);
+}
+
+/* طرق الدفع مع الشعارات الأصلية */
+.payment-methods {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.payment-btn {
+    padding: 18px;
+    border: none;
+    border-radius: 12px;
+    background: var(--button-bg);
+    color: var(--text-white);
+    font-size: 1.3rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 15px;
+    font-family: 'Cairo', sans-serif;
+    backdrop-filter: blur(10px);
+}
+
+.payment-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(255, 144, 0, 0.2);
+    border-color: rgba(255, 144, 0, 0.5);
+}
+
+.payment-btn.selected {
+    background: var(--selected-bg);
+    border-color: var(--accent-orange);
+    color: #1F2937;
+    font-weight: 800;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 144, 0, 0.4);
+}
+
+/* الشعارات الأصلية */
+.payment-logo {
+    width: 65px;
+    height: 65px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    display: block;
+    flex-shrink: 0;
+}
+
+.vodafone-logo {
+    background-image: url('https://github.com/user-attachments/assets/6ed6893c-fa29-4ea1-a7d8-a20fb7583129');
+}
+
+.etisalat-logo {
+    background-image: url('https://github.com/user-attachments/assets/1ca35a0e-14c9-4dae-ae5e-c8ceb4e727f2');
+}
+
+.orange-logo {
+    background-image: url('https://github.com/user-attachments/assets/fd19b844-0fb5-419a-a280-3e3704fe8303');
+}
+
+.we-logo {
+    background-image: url('https://github.com/user-attachments/assets/d78cad63-f5ef-4f4d-b3ca-cb2e0141b798');
+}
+
+.bank-logo {
+    background-image: url('https://github.com/user-attachments/assets/82137a51-4d67-46aa-95f9-740cc07e6cfe');
+}
+
+.tilda-logo {
+    background-image: url('https://github.com/user-attachments/assets/1a8dd491-c06c-4fae-be97-9ee7c10600ed');
+}
+
+.instapay-logo {
+    background-image: url('https://github.com/user-attachments/assets/05093b0a-3af6-4fee-9f92-01145ffe50d2');
+}
+
+
+
+
+.whatsapp-logo {
+    color: #25D366;
+    font-size: 1.5rem;
+}
+
+/* الحقول الديناميكية */
+.dynamic-input {
+    display: none;
+    margin-top: 15px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.4s ease;
+}
+
+.dynamic-input.show {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.dynamic-input label {
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* رسائل الخطأ */
+.error-message-field {
+    display: none;
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.3));
+    border: 2px solid #DC2626;
+    border-radius: 8px;
+    color: var(--text-white);
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.error-message-field.show {
+    display: block;
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* زر الحفظ */
+.submit-btn {
+    width: 100%;
+    padding: 18px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent-orange), var(--hover-orange));
+    color: #1F2937;
+    font-size: 1.2rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 30px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'Orbitron', monospace;
+}
+
+.submit-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(255, 144, 0, 0.5);
+}
+
+.submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* رسائل النجاح والخطأ */
+.message {
+    padding: 15px;
+    border-radius: 12px;
+    margin-top: 20px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1rem;
+    display: none;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.4s ease;
+}
+
+.message.show {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.success-message {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.3));
+    border: 2px solid #10B981;
+    color: var(--text-white);
+}
+
+.error-message {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.3));
+    border: 2px solid #DC2626;
+    color: var(--text-white);
+}
+
+/* شاشة التحميل */
+.loading {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(25, 15, 44, 0.95), rgba(58, 45, 91, 0.98));
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    flex-direction: column;
+}
+
+.loading.show {
+    display: flex;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(255, 255, 255, 0.3);
+    border-top: 5px solid var(--accent-orange);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+.loading-text {
+    color: var(--text-white);
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* لوحة الأمان */
+.security-notice {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.3));
+    border: 2px solid #10B981;
+    border-radius: 12px;
+    padding: 15px;
+    margin-top: 25px;
+    color: var(--text-white);
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* تحسينات إضافية للهواتف */
+@media (max-width: 480px) {
+    .container {
+        padding: 20px 15px;
+        margin: 10px;
+        border-radius: 15px;
+    }
+    
+    .header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .payment-btn {
+        padding: 15px;
+        font-size: 0.9rem;
+    }
+    
+    .payment-logo {
+        width: 58px;
+        height: 58px;
+    }
+    
+    .form-input {
+        padding: 12px 15px;
+    }
+    
+    .submit-btn {
+        padding: 15px;
+        font-size: 1.1rem;
+    }
+}
+
+/* تحسينات للاندرويد */
+@media (max-width: 400px) {
+    body {
+        padding: 10px;
+    }
+    
+    .container {
+        padding: 15px;
+        margin: 5px;
+    }
+    
+    .platforms-grid {
+        gap: 10px;
+    }
+    
+    .payment-methods {
+        gap: 10px;
+    }
+    
+    .platform-card {
+        padding: 15px;
+    }
+    
+    .platform-icon {
+        font-size: 2rem;
+    }
+}
+
+/* إضافة هذا الكود في نهاية ملف style.css */
+
+/* تأثير التحقق من الواتساب */
+.form-input.validating {
+    border-color: var(--accent-orange) !important;
+    animation: pulse-border 1.5s infinite;
+}
+
+@keyframes pulse-border {
+    0% {
+        border-color: var(--accent-orange);
+        box-shadow: 0 0 5px rgba(255, 144, 0, 0.3);
+    }
+    50% {
+        border-color: var(--hover-orange);
+        box-shadow: 0 0 15px rgba(255, 144, 0, 0.6);
+    }
+    100% {
+        border-color: var(--accent-orange);
+        box-shadow: 0 0 5px rgba(255, 144, 0, 0.3);
+    }
+}
+
+/* معلومات الرقم */
+.phone-info {
+    margin-top: 15px;
+    padding: 15px;
+    border-radius: 12px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.4s ease;
+    font-size: 0.9rem;
+    backdrop-filter: blur(10px);
+}
+
+.phone-info.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.phone-info.success-info {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.3));
+    border: 2px solid #10B981;
+    color: var(--text-white);
+}
+
+.phone-info.error-info {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.3));
+    border: 2px solid #DC2626;
+    color: var(--text-white);
+}
+
+.info-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.info-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.info-header i {
+    font-size: 1.2rem;
+}
+
+.success-info .info-header i {
+    color: #10B981;
+}
+
+.error-info .info-header i {
+    color: #DC2626;
+}
+
+.info-details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-right: 20px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 600;
+    opacity: 0.9;
+    flex-shrink: 0;
+}
+
+.info-value {
+    font-weight: 700;
+    text-align: left;
+    direction: ltr;
+}
+
+/* تحسينات للهواتف */
+@media (max-width: 480px) {
+    .phone-info {
+        padding: 12px;
+        font-size: 0.85rem;
+    }
+    
+    .info-details {
+        padding-right: 0;
+    }
+    
+    .info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        padding: 6px 0;
+    }
+    
+    .info-value {
+        text-align: right;
+        direction: rtl;
+        font-size: 0.9rem;
+    }
+}
+
+/* انيميشن إضافي للنجاح */
+.success-info {
+    animation: success-glow 2s ease-in-out;
+}
+
+@keyframes success-glow {
+    0% {
+        box-shadow: 0 0 5px rgba(16, 185, 129, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+    }
+    100% {
+        box-shadow: 0 0 5px rgba(16, 185, 129, 0.3);
+    }
+}
+
+/* تحسين رسالة النجاح لعرض معلومات إضافية */
+.success-message small {
+    opacity: 0.9;
+    font-size: 0.85rem;
+    margin-top: 8px;
+    display: block;
+    line-height: 1.4;
+}
+
+/* أنماط معلومات الرقم المبسطة */
+.phone-info .phone-display {
+    text-align: center;
+    margin: 10px 0;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+}
+
+.formatted-number {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent-orange);
+    direction: ltr;
+    font-family: 'Courier New', monospace;
+}
+
+.validation-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 8px;
+    background: rgba(37, 211, 102, 0.2);
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.validation-badge i {
+    color: #25D366;
+}
+
+/* تحسين للهواتف */
+@media (max-width: 480px) {
+    .formatted-number {
+        font-size: 1rem;
+    }
+    
+    .validation-badge {
+        font-size: 0.85rem;
+        padding: 6px;
+    }
+}
+
+/* زر التليجرام الكبير */
+.telegram-section {
+    margin-top: 35px;
+    margin-bottom: 25px;
+}
+
+.telegram-btn {
+    width: 100%;
+    padding: 0;
+    border: none;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #0088cc 0%, #005599 50%, #003366 100%);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 8px 25px rgba(0, 136, 204, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.telegram-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(0, 136, 204, 0.4);
+}
+
+.telegram-btn:active {
+    transform: translateY(-1px);
+}
+
+.telegram-btn-content {
+    display: flex;
+    align-items: center;
+    padding: 22px 25px;
+    gap: 20px;
+    position: relative;
+    z-index: 2;
+}
+
+.telegram-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+    z-index: 1;
+}
+
+.telegram-btn:hover::before {
+    left: 100%;
+}
+
+.telegram-icon {
+    font-size: 3rem;
+    color: #ffffff;
+    flex-shrink: 0;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.telegram-text {
+    display: flex;
+    flex-direction: column;
+    text-align: right;
+    flex-grow: 1;
+}
+
+.telegram-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    font-family: 'Cairo', sans-serif;
+    line-height: 1.2;
+    margin-bottom: 5px;
+}
+
+.telegram-subtitle {
+    font-size: 1rem;
+    font-weight: 600;
+    opacity: 0.95;
+    line-height: 1.3;
+}
+
+/* نتيجة كود التليجرام */
+.telegram-code-result {
+    margin-top: 25px;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.5s ease;
+}
+
+.telegram-code-result.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.code-container {
+    background: linear-gradient(135deg, rgba(0, 136, 204, 0.1), rgba(0, 85, 153, 0.15));
+    border: 2px solid #0088cc;
+    border-radius: 16px;
+    padding: 25px;
+    backdrop-filter: blur(10px);
+}
+
+.code-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    color: #0088cc;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.code-header i {
+    font-size: 1.3rem;
+}
+
+.generated-code {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(0, 136, 204, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 900;
+    font-family: 'Orbitron', monospace;
+    color: #0088cc;
+    letter-spacing: 3px;
+    margin-bottom: 25px;
+    text-shadow: 0 2px 10px rgba(0, 136, 204, 0.3);
+    word-break: break-all;
+}
+
+.telegram-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.telegram-open-btn,
+.copy-code-btn {
+    padding: 15px 20px;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-decoration: none;
+    font-family: 'Cairo', sans-serif;
+}
+
+.telegram-open-btn {
+    background: linear-gradient(135deg, #0088cc, #005599);
+    color: white;
+    border: 2px solid #0088cc;
+}
+
+.telegram-open-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 136, 204, 0.4);
+}
+
+.copy-code-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-white);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.copy-code-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+}
+
+.telegram-instructions {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 20px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.telegram-instructions p {
+    margin-bottom: 15px;
+    font-weight: 700;
+    color: #0088cc;
+}
+
+.telegram-instructions ol {
+    margin-right: 20px;
+    line-height: 1.8;
+}
+
+.telegram-instructions li {
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+/* تحسينات للهواتف */
+@media (max-width: 480px) {
+    .telegram-btn-content {
+        padding: 18px 20px;
+        gap: 15px;
+    }
+    
+    .telegram-icon {
+        font-size: 2.5rem;
+    }
+    
+    .telegram-title {
+        font-size: 1.2rem;
+    }
+    
+    .telegram-subtitle {
+        font-size: 0.9rem;
+    }
+    
+    .generated-code {
+        font-size: 1.5rem;
+        letter-spacing: 2px;
+        padding: 15px;
+    }
+    
+    .telegram-actions {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .telegram-open-btn,
+    .copy-code-btn {
+        padding: 12px 15px;
+        font-size: 0.95rem;
+    }
+    
+    .code-container {
+        padding: 20px 15px;
+    }
+}
+
+/* انيميشن إضافي */
+@keyframes telegram-pulse {
+    0% {
+        box-shadow: 0 8px 25px rgba(0, 136, 204, 0.3);
+    }
+    50% {
+        box-shadow: 0 8px 35px rgba(0, 136, 204, 0.5);
+    }
+    100% {
+        box-shadow: 0 8px 25px rgba(0, 136, 204, 0.3);
+    }
+}
+
+.telegram-btn.generating {
+    animation: telegram-pulse 2s infinite;
+    pointer-events: none;
+}
+
+.telegram-btn.generating .telegram-title::after {
+    content: '...';
+    animation: dots 1.5s infinite;
+}
+
+@keyframes dots {
+    0%, 20% { content: ''; }
+    40% { content: '.'; }
+    60% { content: '..'; }
+    80%, 100% { content: '...'; }
+}
+
+.code-example {
+    margin-top: 15px;
+    padding: 12px;
+    background: rgba(0, 136, 204, 0.1);
+    border-radius: 8px;
+    border-left: 4px solid #0088cc;
+    font-size: 0.9rem;
+}
+
+.code-example code {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    color: #0088cc;
+    font-size: 1.1rem;
+}
+
+/* تحسينات للهواتف */
+@media (max-width: 480px) {
+    .code-example {
+        padding: 10px;
+        font-size: 0.85rem;
+    }
+    
+    .code-example code {
+        font-size: 1rem;
+    }
+}
+
+/* تحديث أزرار التليجرام */
+.telegram-open-btn {
+    background: linear-gradient(135deg, #0088cc, #005599);
+    color: white;
+    border: 2px solid #0088cc;
+    padding: 15px 20px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-decoration: none;
+    font-family: 'Cairo', sans-serif;
+}
+
+.telegram-open-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 136, 204, 0.4);
+}
+
+/* إشعار نجاح ربط التليجرام */
+.telegram-success-notification {
+    margin-top: 20px;
+    padding: 15px;
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.3));
+    border: 2px solid #10B981;
+    border-radius: 12px;
+    animation: success-fade-in 0.5s ease-out;
+}
+
+.success-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-white);
+}
+
+.success-icon {
+    color: #10B981;
+    font-size: 1.5rem;
+}
+
+.success-text {
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+@keyframes success-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* تحسينات للهواتف */
+@media (max-width: 480px) {
+    .telegram-success-notification {
+        padding: 12px;
+    }
+    
+    .success-text {
+        font-size: 1rem;
+    }
+    
+    .success-icon {
+        font-size: 1.3rem;
+    }
+}
+
+/* شاشة نجاح الربط الكاملة */
+.telegram-success-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(25, 15, 44, 0.95), rgba(58, 45, 91, 0.98));
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(15px);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.5s ease;
+}
+
+.telegram-success-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.success-container {
+    background: var(--glass-bg);
+    border-radius: 25px;
+    padding: 50px 40px;
+    text-align: center;
+    max-width: 450px;
+    width: 90%;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    animation: success-popup 0.6s ease-out;
+}
+
+@keyframes success-popup {
+    0% {
+        transform: scale(0.8) translateY(50px);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+.success-animation {
+    margin-bottom: 30px;
+}
+
+.success-mega-icon {
+    font-size: 5rem;
+    color: #10B981;
+    animation: success-bounce 1s ease-out infinite alternate;
+}
+
+@keyframes success-bounce {
+    0% {
+        transform: scale(1);
+    }
+    100% {
+        transform: scale(1.1);
+    }
+}
+
+.success-title {
+    color: var(--text-white);
+    font-size: 2rem;
+    font-weight: 900;
+    margin-bottom: 15px;
+    font-family: 'Cairo', sans-serif;
+}
+
+.success-subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 40px;
+    line-height: 1.5;
+}
+
+.success-actions {
+    display: flex;
+    justify-content: center;
+}
+
+.success-btn {
+    padding: 18px 35px;
+    border: none;
+    border-radius: 15px;
+    background: linear-gradient(135deg, var(--accent-orange), var(--hover-orange));
+    color: #1F2937;
+    font-size: 1.2rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Cairo', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.success-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(255, 144, 0, 0.5);
+}
+
+/* تحسينات للهواتف */
+@media (max-width: 480px) {
+    .success-container {
+        padding: 40px 25px;
+        margin: 20px;
+    }
+    
+    .success-mega-icon {
+        font-size: 4rem;
+    }
+    
+    .success-title {
+        font-size: 1.8rem;
+    }
+    
+    .success-subtitle {
+        font-size: 1.1rem;
+    }
+    
+    .success-btn {
+        padding: 15px 25px;
+        font-size: 1.1rem;
+    }
+}
+
+/* تحديث أزرار التليجرام - زر واحد فقط */
+.telegram-actions {
+    display: block;
+    margin-bottom: 25px;
+}
+
+.telegram-open-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #0088cc, #005599);
+    color: white;
+    border: 2px solid #0088cc;
+    padding: 18px 25px;
+    border-radius: 15px;
+    font-weight: 800;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    text-decoration: none;
+    font-family: 'Cairo', sans-serif;
+    box-shadow: 0 8px 25px rgba(0, 136, 204, 0.3);
+}
+
+.telegram-open-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(0, 136, 204, 0.5);
+    background: linear-gradient(135deg, #0099dd, #0066aa);
+}
+
+.telegram-open-btn i {
+    font-size: 1.4rem;
+}
+
+/* تبسيط التعليمات */
+.single-step {
+    text-align: center;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(0, 136, 204, 0.1), rgba(0, 85, 153, 0.15));
+    border-radius: 15px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0088cc;
+    border: 2px solid rgba(0, 136, 204, 0.3);
+}
+
+/* تحسين شاشة النجاح */
+.success-container {
+    animation: successZoomIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes successZoomIn {
+    0% {
+        transform: scale(0.3) rotate(-10deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.05) rotate(2deg);
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+.success-mega-icon {
+    animation: successPulse 2s ease-in-out infinite;
+}
+
+@keyframes successPulse {
+    0%, 100% {
+        transform: scale(1);
+        color: #10B981;
+    }
+    50% {
+        transform: scale(1.2);
+        color: #00D084;
+        text-shadow: 0 0 20px rgba(16, 185, 129, 0.8);
+    }
+}
+
+.success-title {
+    background: linear-gradient(45deg, #10B981, #059669, #047857);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: titleGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes titleGlow {
+    from {
+        filter: brightness(1);
+    }
+    to {
+        filter: brightness(1.3);
+    }
+}
+
+/* تحسينات للهواتف */
+@media (max-width: 480px) {
+    .telegram-open-btn {
+        padding: 15px 20px;
+        font-size: 1.1rem;
+    }
+    
+    .single-step {
+        padding: 15px;
+        font-size: 1rem;
+    }
+}
+
+/* زر التليجرام الكبير المحدث */
+.telegram-open-btn-big {
+    width: 100%;
+    background: linear-gradient(135deg, #0088cc 0%, #005599 50%, #0099dd 100%);
+    color: white;
+    border: none;
+    padding: 20px 25px;
+    border-radius: 15px;
+    font-weight: 800;
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: all 0.4s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    font-family: 'Cairo', sans-serif;
+    box-shadow: 0 10px 30px rgba(0, 136, 204, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.telegram-open-btn-big::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s;
+}
+
+.telegram-open-btn-big:hover::before {
+    left: 100%;
+}
+
+.telegram-open-btn-big:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 15px 40px rgba(0, 136, 204, 0.6);
+    background: linear-gradient(135deg, #0099dd 0%, #0066aa 50%, #00aaee 100%);
+}
+
+.telegram-open-btn-big i {
+    font-size: 1.8rem;
+    animation: telegramBounce 2s ease-in-out infinite;
+}
+
+@keyframes telegramBounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* التعليمات المبسطة */
+.single-step {
+    text-align: center;
+    padding: 18px 20px;
+    background: linear-gradient(135deg, rgba(0, 136, 204, 0.15), rgba(0, 85, 153, 0.2));
+    border-radius: 15px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0088cc;
+    border: 2px solid rgba(0, 136, 204, 0.3);
+    box-shadow: 0 5px 15px rgba(0, 136, 204, 0.1);
+    animation: stepGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes stepGlow {
+    from { 
+        box-shadow: 0 5px 15px rgba(0, 136, 204, 0.1);
+        border-color: rgba(0, 136, 204, 0.3);
+    }
+    to { 
+        box-shadow: 0 8px 25px rgba(0, 136, 204, 0.3);
+        border-color: rgba(0, 136, 204, 0.5);
+    }
+}
+
+/* تحسينات للهواتف */
+@media (max-width: 480px) {
+    .telegram-open-btn-big {
+        padding: 16px 20px;
+        font-size: 1.1rem;
+    }
+    
+    .telegram-open-btn-big i {
+        font-size: 1.5rem;
+    }
+    
+    .single-step {
+        padding: 15px;
+        font-size: 1rem;
+    }
+}
+
+/* إخفاء خانة الكود نهائياً */
+.generated-code {
+    display: none !important;
+}
+
+/* قسم البريد الإلكتروني الجديد */
+.emails-container {
+    margin-bottom: 20px;
+    min-height: 20px;
+}
+
+.add-email-section {
+    margin-top: 15px;
+}
+
+.email-input-wrapper {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 10px;
+    align-items: stretch;
+}
+
+.email-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.add-email-btn {
+    padding: 15px 20px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #10B981, #059669);
+    color: white;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    font-family: 'Cairo', sans-serif;
+}
+
+.add-email-btn:hover {
+    background: linear-gradient(135deg, #059669, #047857);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+}
+
+.add-email-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    background: #6B7280;
+}
+
+.email-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+.email-info i {
+    color: #3B82F6;
+}
+
+/* الإيميلات المضافة */
+.email-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 20px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    border: 2px solid;
+    backdrop-filter: blur(10px);
+    animation: emailSlideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+}
+
+@keyframes emailSlideIn {
+    0% {
+        transform: translateX(-100%) scale(0.8);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+    }
+}
+
+/* ألوان متدرجة للإيميلات */
+.email-item.email-1 {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1));
+    border-color: #10B981;
+    color: var(--text-white);
+}
+
+.email-item.email-2 {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.1));
+    border-color: #EF4444;
+    color: var(--text-white);
+}
+
+.email-item.email-3 {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.1));
+    border-color: #3B82F6;
+    color: var(--text-white);
+}
+
+.email-item.email-4 {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1));
+    border-color: #F59E0B;
+    color: var(--text-white);
+}
+
+.email-item.email-5 {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(147, 51, 234, 0.1));
+    border-color: #A855F7;
+    color: var(--text-white);
+}
+
+.email-item.email-6 {
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(219, 39, 119, 0.1));
+    border-color: #EC4899;
+    color: var(--text-white);
+}
+
+/* أرقام الإيميلات */
+.email-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    font-weight: 900;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    font-family: 'Orbitron', monospace;
+}
+
+.email-1 .email-number {
+    background: #10B981;
+    color: white;
+}
+
+.email-2 .email-number {
+    background: #EF4444;
+    color: white;
+}
+
+.email-3 .email-number {
+    background: #3B82F6;
+    color: white;
+}
+
+.email-4 .email-number {
+    background: #F59E0B;
+    color: white;
+}
+
+.email-5 .email-number {
+    background: #A855F7;
+    color: white;
+}
+
+.email-6 .email-number {
+    background: #EC4899;
+    color: white;
+}
+
+/* نص الإيميل */
+.email-text {
+    flex: 1;
+    font-size: 1rem;
+    font-weight: 600;
+    word-break: break-all;
+    direction: ltr;
+    text-align: left;
+}
+
+/* زر الحذف */
+.delete-email-btn {
+    width: 35px;
+    height: 35px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.2);
+    color: #EF4444;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.delete-email-btn:hover {
+    background: #EF4444;
+    color: white;
+    transform: scale(1.1);
+}
+
+/* تأثيرات الحذف */
+.email-item.removing {
+    animation: emailSlideOut 0.4s ease-in-out forwards;
+}
+
+@keyframes emailSlideOut {
+    0% {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(100%) scale(0.8);
+        opacity: 0;
+    }
+}
+
+/* حالة فارغة */
+.emails-empty {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+    padding: 20px;
+    margin-bottom: 10px;
+}
+
+/* تحسينات للهواتف */
+@media (max-width: 480px) {
+    .email-input-wrapper {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .add-email-btn {
+        padding: 12px 18px;
+        font-size: 0.95rem;
+        justify-content: center;
+    }
+    
+    .email-item {
+        padding: 12px 15px;
+        gap: 12px;
+    }
+    
+    .email-number {
+        width: 30px;
+        height: 30px;
+        font-size: 1rem;
+    }
+    
+    .email-text {
+        font-size: 0.9rem;
+    }
+    
+    .delete-email-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 0.9rem;
+    }
+}
+
+/* تحسينات إضافية للألوان */
+.email-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    opacity: 0.8;
+}
+
+.email-1::before { background: #10B981; }
+.email-2::before { background: #EF4444; }
+.email-3::before { background: #3B82F6; }
+.email-4::before { background: #F59E0B; }
+.email-5::before { background: #A855F7; }
+.email-6::before { background: #EC4899; }
+
+/* انيميشن النبضة للرقم */
+.email-number {
+    animation: numberPulse 2s ease-in-out infinite;
+}
+
+@keyframes numberPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* معاينة روابط InstaPay */
+.instapay-preview {
+    margin-top: 15px;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.15));
+    border: 2px solid #10B981;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.4s ease;
+}
+
+.instapay-preview.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.preview-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    color: #10B981;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.preview-header i {
+    font-size: 1.2rem;
+}
+
+.extracted-link {
+    margin-bottom: 20px;
+}
+
+.link-label {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.link-url {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 12px 15px;
+    color: #10B981;
+    font-family: 'Courier New', monospace;
+    font-size: 0.95rem;
+    font-weight: 600;
+    word-break: break-all;
+    direction: ltr;
+    text-align: left;
+}
+
+.preview-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.test-link-btn,
+.copy-link-btn {
+    flex: 1;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: 'Cairo', sans-serif;
+}
+
+.test-link-btn {
+    background: linear-gradient(135deg, #3B82F6, #2563EB);
+    color: white;
+    border: 2px solid #3B82F6;
+}
+
+.test-link-btn:hover {
+    background: linear-gradient(135deg, #2563EB, #1D4ED8);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+}
+
+.copy-link-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-white);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.copy-link-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+}
+
+/* انيميشن للتأكيد */
+.instapay-preview.success {
+    animation: successGlow 1s ease-in-out;
+}
+
+@keyframes successGlow {
+    0%, 100% {
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 25px rgba(16, 185, 129, 0.6);
+    }
+}
+
+/* تحسينات للهواتف */
+@media (max-width: 480px) {
+    .instapay-preview {
+        padding: 15px;
+    }
+    
+    .preview-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .test-link-btn,
+    .copy-link-btn {
+        padding: 10px 14px;
+        font-size: 0.85rem;
+    }
+    
+    .link-url {
+        font-size: 0.85rem;
+        padding: 10px 12px;
+    }
+}
+
+/* تحسينات بطاقة تيلدا */
+.telda-feedback {
+    margin-top: 12px;
+    padding: 12px 15px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+}
+
+.telda-feedback.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.feedback-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* أنواع رسائل التحقق */
+.telda-success {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1));
+    border: 2px solid #10B981;
+    color: var(--text-white);
+}
+
+.telda-success .feedback-content i {
+    color: #10B981;
+    animation: successBounce 1s ease-out;
+}
+
+.telda-warning {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1));
+    border: 2px solid #F59E0B;
+    color: var(--text-white);
+}
+
+.telda-warning .feedback-content i {
+    color: #F59E0B;
+    animation: warningPulse 2s infinite;
+}
+
+.telda-error {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.1));
+    border: 2px solid #EF4444;
+    color: var(--text-white);
+}
+
+.telda-error .feedback-content i {
+    color: #EF4444;
+    animation: errorShake 0.5s ease-in-out;
+}
+
+/* انيميشن النجاح */
+@keyframes successBounce {
+    0% { transform: scale(0.5); opacity: 0; }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* انيميشن التحذير */
+@keyframes warningPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+/* انيميشن الخطأ */
+@keyframes errorShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-3px); }
+    75% { transform: translateX(3px); }
+}
+
+/* تحسين مظهر حقل تيلدا */
+#card-number,
+#telda_card {
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-align: center;
+}
+
+/* حالات التحقق البصرية */
+.form-input.telda-valid {
+    border-color: #10B981 !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(5, 150, 105, 0.02)) !important;
+}
+
+.form-input.telda-warning {
+    border-color: #F59E0B !important;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2) !important;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(217, 119, 6, 0.02)) !important;
+}
+
+.form-input.telda-invalid {
+    border-color: #EF4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(220, 38, 38, 0.02)) !important;
+}
+
+/* تحسينات للهواتف */
+@media (max-width: 480px) {
+    .telda-feedback {
+        padding: 10px 12px;
+        font-size: 0.85rem;
+    }
+    
+    #card-number,
+    #telda_card {
+        font-size: 1rem;
+    }
+}
+
+/* تأثير لوحة المفاتيح على الهواتف */
+@media (max-width: 768px) {
+    #card-number:focus,
+    #telda_card:focus {
+        transform: scale(1.02);
+        transition: transform 0.2s ease;
+    }
+}
