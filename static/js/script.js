@@ -1378,14 +1378,14 @@ async function generateTelegramCode() {
                 openTelegramAppDirect();
             };
             
-            // إظهار منطقة الكود (بدون زر النسخ)
-            telegramCodeResult.innerHTML = `
-                <div class="code-container">
-                    <div class="code-header">
-                        <i class="fas fa-rocket"></i>
-                        <span>جاهز للربط التلقائي</span>
-                    </div>
-                    <div class="generated-code">${result.code}</div>
+// إظهار منطقة الكود (بدون زر النسخ)
+telegramCodeResult.innerHTML = `
+    <div class="code-container">
+        <div class="code-header">
+            <i class="fas fa-rocket"></i>
+            <span>جاهز للربط التلقائي</span>
+        </div>
+        <div class="generated-code" style="display: none;">${result.code}</div>
                     <div class="telegram-actions">
                         <button type="button" class="telegram-open-btn-big" onclick="openTelegramAppDirect()">
                             <i class="fab fa-telegram"></i>
@@ -1416,7 +1416,7 @@ async function generateTelegramCode() {
                 navigator.vibrate([100, 50, 100]);
             }
             
-            showNotification(`✅ جاهز للربط! الكود: ${result.code}`, 'success');
+            showNotification('✅ جاهز للربط! اضغط على الزر لفتح التليجرام', 'success');
             
         } else {
             showNotification(result.message || 'خطأ في إنشاء الكود', 'error');
