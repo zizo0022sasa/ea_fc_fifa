@@ -1133,41 +1133,66 @@ let currentTelegramCode = null;
 let telegramStatusChecker = null;
 let correctBotUsername = null;
 
-// تحميل username البوت الصحيح
-async function loadBotUsername() {
-    try {
-        const response = await fetch('/get-bot-username');
-        const result = await response.json();
-        correctBotUsername = result.bot_username;
-        console.log('✅ Bot username loaded:', correctBotUsername);
-    } catch (error) {
-        console.error('❌ Failed to load bot username:', error);
-        correctBotUsername = 'YourBotName_bot'; // fallback
-    }
-}
-
-// دالة توليد كود التليجرام - محدثة
+// دالة توليد كود التليجرام - محسنة ومحدثة
 async function generateTelegramCode() {
     const telegramBtn = document.getElementById('telegramBtn');
     const telegramCodeResult = document.getElementById('telegramCodeResult');
     
-    // التحقق من البيانات الأساسية
+    // التحقق الشامل من البيانات المطلوبة
     const platform = document.getElementById('platform')?.value;
     const whatsappNumber = document.getElementById('whatsapp')?.value;
+    const paymentMethod = document.getElementById('payment_method')?.value;
     
-    if (!platform || !whatsappNumber) {
-        showNotification('يرجى إكمال الملف الشخصي أولاً (المنصة ورقم الواتساب)', 'error');
+    // التحقق من المنصة
+    if (!platform) {
+        showNotification('❌ يرجى اختيار المنصة أولاً', 'error');
+        // تمرير لأول قسم
+        document.querySelector('.platforms-section').scrollIntoView({ behavior: 'smooth' });
         return;
     }
     
-    // حالة التحميل
+    // التحقق من رقم الواتساب
+    if (!whatsappNumber || whatsappNumber.length < 8) {
+        showNotification('❌ يرجى إدخال رقم واتساب صحيح أولاً', 'error');
+        // تركيز على حقل الواتساب
+        document.getElementById('whatsapp')?.focus();
+        return;
+    }
+    
+    // التحقق من طريقة الدفع
+    if (!paymentMethod) {
+        showNotification('❌ يرجى اختيار طريقة الدفع أولاً', 'error');
+        // تمرير لقسم طرق الدفع
+        document.querySelector('.payment-methods').scrollIntoView({ behavior: 'smooth' });
+        return;
+    }
+    
+    // التحقق من تفاصيل الدفع
+    const paymentDetailsInput = document.querySelector('.dynamic-input.show input');
+    const paymentDetails = paymentDetailsInput?.value?.trim() || '';
+    
+    if (!paymentDetails) {
+        showNotification('❌ يرجى إدخال تفاصيل طريقة الدفع أولاً', 'error');
+        paymentDetailsInput?.focus();
+        return;
+    }
+    
+    // التحقق من صحة رقم الواتساب من واجهة المستخدم
+    const phoneInfo = document.querySelector('.phone-info.success-info');
+    if (!phoneInfo) {
+        showNotification('❌ يرجى التأكد من صحة رقم الواتساب أولاً', 'error');
+        document.getElementById('whatsapp')?.focus();
+        return;
+    }
+    
+    // بدء عملية التوليد
     telegramBtn.classList.add('generating');
     telegramBtn.disabled = true;
     telegramBtn.innerHTML = `
         <div class="telegram-btn-content">
             <i class="fas fa-spinner fa-spin telegram-icon"></i>
             <div class="telegram-text">
-                <span class="telegram-title">⚡ جاري إنشاء الرابط</span>
+                <span class="telegram-title">⚡ جاري إنشاء كود الربط</span>
                 <span class="telegram-subtitle">انتظر لحظة...</span>
             </div>
         </div>
@@ -1177,36 +1202,43 @@ async function generateTelegramCode() {
         const formData = {
             platform: platform,
             whatsapp_number: whatsappNumber,
-            payment_method: document.getElementById('payment_method')?.value || '',
-            payment_details: document.querySelector('.dynamic-input.show input')?.value || ''
+            payment_method: paymentMethod,
+            payment_details: paymentDetails,
+            telegram_username: document.getElementById('telegram_username')?.value || ''
         };
         
-        console.log('📤 Generating Telegram code with data:', formData);
+        console.log('📤 Generating Telegram code with complete data:', formData);
         
         const response = await fetch('/generate-telegram-code', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCSRFToken()
             },
             body: JSON.stringify(formData)
         });
         
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const result = await response.json();
         console.log('📥 Telegram code result:', result);
         
-        if (result.success) {
-            // حفظ الكود
+        if (result.success && result.code) {
+            // حفظ الكود وإعداد الواجهة
             currentTelegramCode = result.code;
-            document.getElementById('generatedCode').textContent = result.code;
             
-            // تحديث زر التليجرام ليصبح زر فتح مباشر
+            // تحديث زر التليجرام للفتح المباشر
+            telegramBtn.classList.remove('generating');
+            telegramBtn.disabled = false;
             telegramBtn.innerHTML = `
                 <div class="telegram-btn-content">
                     <i class="fab fa-telegram telegram-icon"></i>
                     <div class="telegram-text">
-                        <span class="telegram-title">📱 فتح التليجرام والربط</span>
-                        <span class="telegram-subtitle">اضغط للربط التلقائي</span>
+                        <span class="telegram-title">🚀 فتح التليجرام والربط</span>
+                        <span class="telegram-subtitle">اضغط للربط الفوري</span>
                     </div>
                 </div>
             `;
@@ -1257,19 +1289,42 @@ async function generateTelegramCode() {
             showNotification(`✅ جاهز للربط! الكود: ${result.code}`, 'success');
             
         } else {
-            showNotification(result.message || 'خطأ في إنشاء الكود', 'error');
-            resetTelegramButton();
+            throw new Error(result.message || 'فشل في إنشاء الكود');
         }
         
     } catch (error) {
-        console.error('خطأ في توليد كود التليجرام:', error);
-        showNotification('خطأ في الاتصال، يرجى المحاولة مرة أخرى', 'error');
-        resetTelegramButton();
+        console.error('❌ خطأ في توليد كود التليجرام:', error);
+        
+        // إعادة تعيين الزر للحالة الطبيعية
+        telegramBtn.classList.remove('generating');
+        telegramBtn.disabled = false;
+        telegramBtn.innerHTML = `
+            <div class="telegram-btn-content">
+                <i class="fab fa-telegram telegram-icon"></i>
+                <div class="telegram-text">
+                    <span class="telegram-title">📱 ربط مع التليجرام</span>
+                    <span class="telegram-subtitle">احصل على كود فوري وادخل للبوت</span>
+                </div>
+            </div>
+        `;
+        
+        // إظهار رسالة خطأ واضحة
+        let errorMessage = 'خطأ في الاتصال بالخادم';
+        if (error.message.includes('HTTP 400')) {
+            errorMessage = 'بيانات غير مكتملة، يرجى التأكد من جميع الحقول';
+        } else if (error.message.includes('HTTP 500')) {
+            errorMessage = 'خطأ في الخادم، يرجى المحاولة مرة أخرى';
+        } else if (error.message.includes('Failed to fetch')) {
+            errorMessage = 'مشكلة في الاتصال بالإنترنت';
+        }
+        
+        showNotification(`❌ ${errorMessage}`, 'error');
+        
+        // اهتزاز خطأ للهواتف
+        if (navigator.vibrate) {
+            navigator.vibrate([300, 100, 300]);
+        }
     }
-    
-    // إزالة حالة التحميل
-    telegramBtn.classList.remove('generating');
-    telegramBtn.disabled = false;
 }
 
 // دالة فتح التليجرام المباشر - الربط التلقائي
