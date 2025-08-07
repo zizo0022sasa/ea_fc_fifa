@@ -1925,19 +1925,54 @@ function closePopup() {
     document.getElementById('offersPopup').style.display = 'none';
 }
 
-// Select offer
+// Select offer - النسخة المحسنة اللي بتربط كل حاجة ببعض
 function selectOffer(offer) {
-    alert(`تم اختيار العرض: ${offer.title}\nالسعر: $${offer.real_price}`);
+    console.log('🎯 تم اختيار عرض:', offer);
+    
+    if (!offer.game_type || !offer.platform || !offer.account_type) {
+        alert('❌ بيانات العرض غير مكتملة، لا يمكن إرسال الطلب.');
+        return;
+    }
+    
+    const confirmMessage = `
+🎉 عرض رائع!
+
+📋 تفاصيل الطلب:
+• ${offer.title}
+• السعر: ${offer.real_price} جنيه
+
+💬 هل تريد تأكيد الطلب وفتح الواتساب الآن؟
+    `;
+    
+    if (confirm(confirmMessage)) {
+        const formData = new FormData();
+        formData.append('game_type', offer.game_type);
+        formData.append('platform', offer.platform);
+        formData.append('account_type', offer.account_type);
+        
+        fetch('/whatsapp', {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`✅ تم تحضير الطلب بنجاح!\nسيتم فتح الواتساب الآن...`);
+                window.open(data.whatsapp_url, '_blank');
+            } else {
+                alert('❌ ' + (data.error || 'حدث خطأ في إرسال الطلب'));
+            }
+        })
+        .catch(error => {
+            console.error('خطأ في الشبكة:', error);
+            alert('❌ حدث خطأ في الاتصال بالشبكة.');
+        });
+    }
+    
     closePopup();
-    // يمكنك إضافة المزيد من الكود هنا لمعالجة العرض المختار
 }
 
-// Close popup when clicking outside
-window.onclick = function(event) {
-    const popup = document.getElementById('offersPopup');
-    if (event.target == popup) {
-        popup.style.display = 'none';
-    }
 }
 </script>
 
