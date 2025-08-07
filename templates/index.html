@@ -3,250 +3,2985 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FC 26 Profile Setup</title>
+    <title>شهدالسنيورة - أفضل متجر ألعاب رقمية</title>
+    
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <!-- خلفية الجسيمات -->
-    <div class="particles-bg" id="particlesBg"></div>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
 
-    <!-- شاشة التحميل -->
-    <div class="loading" id="loading">
-        <div class="spinner"></div>
-        <div class="loading-text">جاري حفظ البيانات...</div>
-    </div>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --whatsapp-color: #25D366;
+            --card-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            --offer-gold: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
+            --offer-glow: 0 0 30px rgba(255, 215, 0, 0.8);
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            padding: 15px 0;
+        }
 
-    <!-- شاشة نجاح الربط الكاملة -->
-    <div class="telegram-success-overlay" id="telegramSuccessOverlay" style="display: none;">
-        <div class="success-container">
-            <div class="success-animation">
-                <i class="fas fa-check-circle success-mega-icon"></i>
-            </div>
-<h2 class="success-title">🎉 تم ربط حسابك بنجاح!</h2>
-<p class="success-subtitle">✅ تم حفظ ملفك الشخصي بأمان<br>💾 تم حفظ جميع معلوماتك<br>🚀 مرحباً بك في عالم FC 26!</p>
-            <div class="success-actions">
-                <button type="button" class="success-btn" onclick="closeSuccessOverlay()">
-                    <i class="fas fa-home"></i>
-                    العودة للرئيسية
-                </button>
-            </div>
-        </div>
-    </div>
+        /* 🔥 تصميم العرض المنبثق */
+        .offer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.5s ease-in-out;
+            backdrop-filter: blur(5px);
+        }
 
-    <div class="container">
-        <div class="header">
-            <h1>🎮 FC 26 - EA SPORTS</h1>
-            <p>إعداد الملف الشخصي</p>
-        </div>
+        .offer-modal {
+            background: white;
+            border-radius: 25px;
+            padding: 40px 30px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideInUp 0.6s ease-out;
+            border: 3px solid #ffd700;
+        }
 
-        <form id="profileForm" method="POST" action="/update-profile">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        .offer-modal::before {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            background: var(--offer-gold);
+            border-radius: 28px;
+            z-index: -1;
+            animation: pulseGlow 2s infinite;
+        }
+
+        .offer-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #999;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .offer-close:hover {
+            color: #333;
+        }
+
+        .offer-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: var(--offer-gold);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
+        }
+
+        .offer-description {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .offer-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-offer-accept {
+            background: var(--offer-gold);
+            border: none;
+            border-radius: 15px;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            box-shadow: var(--offer-glow);
+            animation: pulseButton 2s infinite;
+        }
+
+        .btn-offer-accept:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+            color: #000;
+        }
+
+        .btn-offer-decline {
+            background: #6c757d;
+            border: none;
+            border-radius: 15px;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-offer-decline:hover {
+            background: #5a6268;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* تأثيرات الأنميشن للعرض */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+            }
+            50% {
+                box-shadow: 0 0 40px rgba(255, 215, 0, 1);
+            }
+        }
+
+        @keyframes pulseButton {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        /* 🎯 تصميم الكروت الخاصة بالعرض */
+        .product-card.offer-card {
+            position: relative;
+            border: 3px solid #ffd700 !important;
+            background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%) !important;
+            box-shadow: var(--offer-glow), 0 20px 50px rgba(0,0,0,0.2) !important;
+            animation: offerCardGlow 3s ease-in-out infinite alternate;
+        }
+
+.product-card.offer-card::before {
+    content: '🔥 عرض خاص';
+    position: absolute;
+    top: -15px;
+    right: 20px;
+    background: #FF6B6B;
+    color: #333;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+    z-index: 10;
+}
+
+
+        .product-card.offer-card .product-header {
+            background: var(--offer-gold) !important;
+            color: #333 !important;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-card.offer-card .product-header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        .product-card.offer-card .account-price {
+            position: relative;
+        }
+
+        .product-card.offer-card .original-price {
+            text-decoration: line-through;
+            color: #999;
+            font-size: 14px;
+            display: block;
+        }
+
+        .product-card.offer-card .discounted-price {
+            color: #d32f2f;
+            font-weight: bold;
+            font-size: 18px;
+            display: block;
+        }
+
+        .product-card.offer-card .discount-badge {
+            position: absolute;
+            top: -5px;
+            left: -10px;
+            background: #d32f2f;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: bold;
+            transform: rotate(-15deg);
+            box-shadow: 0 2px 8px rgba(211, 47, 47, 0.3);
+        }
+
+        @keyframes offerCardGlow {
+            from {
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.6), 0 20px 50px rgba(0,0,0,0.2);
+            }
+            to {
+                box-shadow: 0 0 40px rgba(255, 215, 0, 1), 0 25px 60px rgba(0,0,0,0.3);
+            }
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            50%, 100% { left: 100%; }
+        }
+
+        /* باقي الكود CSS نفسه... */
+        .main-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            overflow: hidden;
+            border: none;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header-section {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header-section::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 20px;
+            background: white;
+            border-radius: 20px 20px 0 0;
+        }
+        
+        .brand-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .ea-sports-logo {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            font-family: 'Inter', Arial, sans-serif;
+            animation: logoGlow 3s ease-in-out infinite alternate;
+            filter: drop-shadow(0 2px 8px rgba(255,255,255,0.3));
+        }
+
+        .ea-circle {
+            width: 80px;
+            height: 80px;
+            background: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 5px 20px rgba(255, 255, 255, 0.1);
+        }
+
+        .ea-text {
+            font-size: 20px;
+            font-weight: 900;
+            color: #000000;
+            letter-spacing: 1px;
+            line-height: 1;
+            margin-bottom: -1px;
+        }
+
+        .sports-text {
+            font-size: 9px;
+            font-weight: 700;
+            color: #000000;
+            letter-spacing: 1px;
+            line-height: 1;
+            margin-top: -1px;
+        }
+
+        .fc26-text {
+            font-size: 64px;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 6px;
+            text-shadow: 0 5px 15px rgba(255, 255, 255, 0.2);
+            line-height: 1;
+        }
+
+        /* تكبير وتعريض شهد السنيورة */
+        .brand-title {
+            font-size: 2.8rem !important;
+            font-weight: 900 !important;
+            letter-spacing: 2px !important;
+            text-shadow: 0 3px 10px rgba(255, 255, 255, 0.3) !important;
+            margin: 0 !important;
+        }
+
+        @keyframes logoGlow {
+            from {
+                filter: drop-shadow(0 2px 8px rgba(255,255,255,0.3));
+            }
+            to {
+                filter: drop-shadow(0 4px 12px rgba(255,255,255,0.6));
+            }
+        }
+
+        .ea-sports-logo:hover .ea-circle {
+            transform: scale(1.05);
+            transition: transform 0.3s ease;
+        }
+
+        .ea-sports-logo:hover .fc26-text {
+            color: #00d4ff;
+            transition: color 0.3s ease;
+        }
+
+        .whatsapp-logo {
+            width: 20px;
+            height: 20px;
+            margin-left: 8px;
+            vertical-align: middle;
+            filter: brightness(0) invert(1);
+        }
+
+        .whatsapp-logo-svg {
+            fill: currentColor;
+            width: 20px;
+            height: 20px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        
+        .features-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin-top: 25px;
+        }
+        
+        .feature-item {
+            background: rgba(255,255,255,0.2);
+            padding: 20px 15px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .feature-item:hover {
+            transform: translateY(-3px);
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .products-section {
+            padding: 30px 20px;
+        }
+        
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            margin-top: 30px;
+            max-width: 1200px;
+            margin: 30px auto 0;
+        }
+        
+        .product-card {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            transition: all 0.4s ease;
+            border: 2px solid transparent;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+        }
+
+        /* تأثير البلور على الكروت الأخرى عند الاختيار - يعمل على جميع الأجهزة */
+        .products-grid.has-active-card .product-card:not(.active-card) {
+            opacity: 0.35;
+            filter: blur(2px);
+            transform: scale(0.95);
+        }
+
+        .products-grid.has-active-card .product-card.active-card {
+            opacity: 1;
+            filter: none;
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+            z-index: 10;
+            position: relative;
+        }
+
+        /* تأثير العودة للحالة الطبيعية عند تغيير الاختيار */
+        .products-grid:not(.has-active-card) .product-card {
+            opacity: 1;
+            filter: none;
+            transform: none;
+        }
+        
+        .product-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .product-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .product-platform {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .product-body {
+            padding: 25px 20px;
+        }
+        
+        .account-options {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .account-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .account-option:hover {
+            background: #e9ecef;
+        }
+        
+        .account-info {
+            flex: 1;
+        }
+        
+        .account-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 3px;
+        }
+        
+        .account-description {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .account-price {
+            font-size: 18px;
+            font-weight: bold;
+            margin-left: 15px;
+        }
+        
+        .btn-whatsapp {
+            background: linear-gradient(45deg, var(--whatsapp-color), #128C7E);
+            border: none;
+            border-radius: 15px;
+            padding: 15px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            transition: all 0.4s ease;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+            width: 100%;
+        }
+        
+        .btn-whatsapp:hover {
+            background: linear-gradient(45deg, #128C7E, var(--whatsapp-color));
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .btn-whatsapp:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        
+        .alert-custom {
+            border-radius: 15px;
+            border: none;
+            padding: 20px;
+            margin-bottom: 30px;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+        
+        .security-badge {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: var(--success-color);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 25px;
+            font-size: 12px;
+            z-index: 1000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .requirements-box {
+            background: rgba(255, 193, 7, 0.1);
+            border: 2px solid var(--warning-color);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        
+        .requirements-box h5 {
+            color: #856404;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        
+        .requirements-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .requirements-list li {
+            padding: 5px 0;
+            color: #856404;
+            font-size: 14px;
+        }
+        
+        .requirements-list li:before {
+            content: "⚠️";
+            margin-left: 8px;
+        }
+        
+        .instant-contact {
+            background: rgba(37, 211, 102, 0.1);
+            border: 2px solid var(--whatsapp-color);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .instant-contact h5 {
+            color: #128C7E;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .instant-contact p {
+            color: #128C7E;
+            margin: 0;
+            font-size: 14px;
+        }
+
+        /* إضافة أقسام جديدة */
+        .comparison-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .comparison-section h3 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .comparison-table {
+            overflow-x: auto;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .comparison-table table {
+            width: 100%;
+            background: white;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px 8px;
+            text-align: center;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .comparison-table th {
+            background: var(--primary-gradient);
+            color: white;
+            font-weight: bold;
+        }
+
+        .comparison-table .feature-cell {
+            text-align: right;
+            font-weight: bold;
+            background: #f8f9fa;
+        }
+
+        .check-icon {
+            color: var(--success-color);
+            font-size: 18px;
+        }
+
+        .cross-icon {
+            color: var(--danger-color);
+            font-size: 18px;
+        }
+
+        .price-highlight {
+            font-weight: bold;
+            color: var(--success-color);
+        }
+
+        .terms-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .terms-section h3 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 25px;
+            font-weight: bold;
+        }
+
+        .terms-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .terms-column h4 {
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: bold;
+            border-bottom: 2px solid var(--primary-gradient);
+            padding-bottom: 10px;
+        }
+
+        .terms-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .terms-list li {
+            padding: 8px 0;
+            font-size: 14px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .terms-list li.warning {
+            color: #856404;
+        }
+
+        .terms-list li.success {
+            color: var(--success-color);
+        }
+
+        .terms-list li.danger {
+            color: var(--danger-color);
+        }
+
+        .terms-list li .icon {
+            margin-top: 2px;
+            font-size: 16px;
+        }
+
+        .footer-section {
+            background: linear-gradient(135deg, #333 0%, #555 100%);
+            color: white;
+            padding: 40px 20px 20px;
+            margin-top: 50px;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .footer-content h4 {
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .footer-content p {
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .footer-copyright {
+            border-top: 1px solid #666;
+            padding-top: 20px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #ccc;
+        }
+
+        /* ألوان مختلفة لكل نوع لعبة */
+        
+        /* ألوان زرقاء للألعاب الإنجليزية */
+        .product-card[data-game-type="english"] {
+            border-color: #1976d2;
+        }
+        .product-card[data-game-type="english"] .product-header {
+            border-bottom: 3px solid #1976d2;
+        }
+        .product-card[data-game-type="english"] .account-option:hover {
+            border-color: #1976d2;
+            box-shadow: 0 2px 8px rgba(25, 118, 210, 0.1);
+        }
+        .product-card[data-game-type="english"] .account-option.selected {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-color: #1976d2;
+            box-shadow: 0 4px 12px rgba(25, 118, 210, 0.2);
+            transform: translateY(-2px);
+        }
+        .product-card[data-game-type="english"] .account-price {
+            color: #1976d2;
+        }
+
+        /* ألوان أرجوانية للألعاب العربية */
+        .product-card[data-game-type="arabic"] {
+            border-color: #7b1fa2;
+        }
+        .product-card[data-game-type="arabic"] .product-header {
+            border-bottom: 3px solid #7b1fa2;
+        }
+        .product-card[data-game-type="arabic"] .account-option:hover {
+            border-color: #7b1fa2;
+            box-shadow: 0 2px 8px rgba(123, 31, 162, 0.1);
+        }
+        .product-card[data-game-type="arabic"] .account-option.selected {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            border-color: #7b1fa2;
+            box-shadow: 0 4px 12px rgba(123, 31, 162, 0.2);
+            transform: translateY(-2px);
+        }
+        .product-card[data-game-type="arabic"] .account-price {
+            color: #7b1fa2;
+        }
+
+        /* ألوان ذهبية للـ Xbox */
+        .product-card[data-game-type="xbox"] {
+            border-color: #ff8f00;
+        }
+        .product-card[data-game-type="xbox"] .product-header {
+            border-bottom: 3px solid #ff8f00;
+        }
+        .product-card[data-game-type="xbox"] .account-option:hover {
+            border-color: #ff8f00;
+            box-shadow: 0 2px 8px rgba(255, 143, 0, 0.1);
+        }
+        .product-card[data-game-type="xbox"] .account-option.selected {
+            background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+            border-color: #ff8f00;
+            box-shadow: 0 4px 12px rgba(255, 143, 0, 0.3);
+            transform: translateY(-2px);
+        }
+        .product-card[data-game-type="xbox"] .account-price {
+            color: #ff8f00;
+        }
+
+        /* ألوان خضراء للـ PC */
+        .product-card[data-game-type="pc"] {
+            border-color: var(--whatsapp-color);
+        }
+        .product-card[data-game-type="pc"] .product-header {
+            border-bottom: 3px solid var(--whatsapp-color);
+        }
+        .product-card[data-game-type="pc"] .account-option:hover {
+            border-color: var(--whatsapp-color);
+            box-shadow: 0 2px 8px rgba(37, 211, 102, 0.1);
+        }
+        .product-card[data-game-type="pc"] .account-option.selected {
+            background: rgba(37, 211, 102, 0.1);
+            border-color: var(--whatsapp-color);
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.2);
+            transform: translateY(-2px);
+        }
+        .product-card[data-game-type="pc"] .account-price {
+            color: var(--whatsapp-color);
+        }
+
+/* ألوان حمراء نيون للـ Steam بدون PC icon */
+.product-card[data-game-type="steam"] {
+    border-color: #ff0000;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+.product-card[data-game-type="steam"]:hover {
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.4);
+    transform: translateY(-5px);
+}
+.product-card[data-game-type="steam"] .product-header {
+    border-bottom: 3px solid #ff0000;
+    background: linear-gradient(135deg, #2a0505 0%, #1a0a0a 100%);
+}
+.product-card[data-game-type="steam"] .account-option:hover {
+    border-color: #ff0000;
+    box-shadow: 0 2px 15px rgba(255, 0, 0, 0.3);
+}
+.product-card[data-game-type="steam"] .account-option.selected {
+    background: linear-gradient(135deg, #ffe6e6 0%, #ffcccc 100%);
+    border-color: #ff0000;
+    box-shadow: 0 4px 20px rgba(255, 0, 0, 0.4);
+    transform: translateY(-2px);
+}
+.product-card[data-game-type="steam"] .account-price {
+    color: #ff0000;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+}
+/* تأثير hover للـ Steam logo */
+.product-card[data-game-type="steam"]:hover .fab.fa-steam-symbol {
+    transform: scale(1.1) rotate(10deg) !important;
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.9) !important;
+}
+
+
+        
+        @media (max-width: 768px) {
+            .products-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
             
-            <!-- اختيار المنصة -->
-            <div class="platforms-section">
-                <h2 class="section-title">🎯 اختر منصة اللعب</h2>
-                <div class="platforms-grid">
-                    <div class="platform-card" data-platform="playstation">
-                        <i class="fab fa-playstation platform-icon playstation"></i>
-                        <h3>PlayStation</h3>
-                    </div>
-                    <div class="platform-card" data-platform="xbox">
-                        <i class="fab fa-xbox platform-icon xbox"></i>
-                        <h3>Xbox</h3>
-                    </div>
-                    <div class="platform-card" data-platform="pc">
-                        <i class="fas fa-desktop platform-icon pc"></i>
-                        <h3>PC</h3>
-                    </div>
-                </div>
-                <input type="hidden" name="platform" id="platform" required>
-            </div>
+            .product-card {
+                margin: 0 5px;
+            }
+            
+            .header-section {
+                padding: 25px 15px;
+            }
+            
+            .products-section {
+                padding: 20px 15px;
+            }
+            
+            .features-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .feature-item {
+                padding: 15px 10px;
+            }
+            
+            .alert-custom {
+                position: relative;
+                top: 0;
+                right: 0;
+                margin: 0 0 20px 0;
+                max-width: 100%;
+            }
+            
+            .brand-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .ea-sports-logo {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .ea-circle {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .ea-text {
+                font-size: 16px;
+            }
+            
+            .sports-text {
+                font-size: 7px;
+            }
+            
+            .fc26-text {
+                font-size: 40px;
+                letter-spacing: 3px;
+            }
 
-            <!-- رقم الواتساب -->
-            <div class="form-group">
-                <label for="whatsapp">
-                    <i class="fab fa-whatsapp whatsapp-logo"></i>
-                    رقم الواتساب
-                </label>
-                <input 
-                    type="tel" 
-                    id="whatsapp" 
-                    name="whatsapp_number" 
-                    class="form-input" 
-                    placeholder="مثال: +201012345678 أو 01012345678"
-                    required
-                >
-            </div>
+            .brand-title {
+                font-size: 2.2rem !important;
+            }
 
-            <!-- طرق الدفع -->
-            <div class="form-group">
-                <label>💳 طريقة الدفع المفضلة</label>
-                <div class="payment-methods">
-                    <button type="button" class="payment-btn" data-value="vodafone_cash" data-type="mobile">
-                        <span class="payment-logo vodafone-logo"></span>
-                        فودافون كاش
-                    </button>
-                    <button type="button" class="payment-btn" data-value="etisalat_cash" data-type="mobile">
-                        <span class="payment-logo etisalat-logo"></span>
-                        اتصالات كاش
-                    </button>
-                    <button type="button" class="payment-btn" data-value="orange_cash" data-type="mobile">
-                        <span class="payment-logo orange-logo"></span>
-                        أورانج كاش
-                    </button>
-                    <button type="button" class="payment-btn" data-value="we_cash" data-type="mobile">
-                        <span class="payment-logo we-logo"></span>
-                        وي كاش
-                    </button>
-                    <button type="button" class="payment-btn" data-value="bank_wallet" data-type="mobile">
-                        <span class="payment-logo bank-logo"></span>
-                        محفظة بنكية
-                    </button>
-                    <button type="button" class="payment-btn" data-value="tilda" data-type="card">
-                        <span class="payment-logo tilda-logo"></span>
-                        تيلدا
-                    </button>
-                    <button type="button" class="payment-btn" data-value="instapay" data-type="link">
-                        <span class="payment-logo instapay-logo"></span>
-                        إنستا باي
-                    </button>
-                </div>
-                <input type="hidden" name="payment_method" id="payment_method" required>
+            .terms-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
 
-                <!-- الحقول الديناميكية -->
-                <div class="dynamic-input" id="mobile-input">
-                    <label for="mobile-number">📱 رقم الهاتف (11 رقم بدون مسافات)</label>
-                    <input 
-                        type="tel" 
-                        id="mobile-number" 
-                        name="payment_details" 
-                        class="form-input" 
-                        placeholder="مثال: 01012345678"
-                        maxlength="11"
-                    >
-                    <div class="error-message-field" id="mobile-error">
-                        ❌ الرقم غير صحيح، يرجى إدخال الرقم بدون مسافات (11 رقم يبدأ بـ 010/011/012/015)
-                    </div>
-                </div>
+            .comparison-section,
+            .terms-section {
+                padding: 20px 15px;
+            }
 
-                <div class="dynamic-input" id="card-input">
-                    <label for="card-number">💳 رقم البطاقة (16 رقم - يُسمح بمسافات أو شرطات)</label>
-                    <input 
-                        type="text" 
-                        id="card-number" 
-                        name="payment_details" 
-                        class="form-input" 
-                        placeholder="مثال: 1234 5678 9012 3456 أو 1234-5678-9012-3456"
-                        maxlength="22"
-                    >
-                    <div class="error-message-field" id="card-error">
-                        ❌ رقم البطاقة غير صحيح، يجب أن يكون 16 رقماً
-                    </div>
-                </div>
+            /* العرض المنبثق - موبايل */
+            .offer-modal {
+                width: 95%;
+                padding: 30px 20px;
+            }
 
-                <div class="dynamic-input" id="link-input">
-                    <label for="payment-link">🔗 رابط إنستا باي (سيتم استخلاص الرابط تلقائياً)</label>
-                    <input 
-                        type="text" 
-                        id="payment-link" 
-                        name="payment_details" 
-                        class="form-input" 
-                        placeholder="مثال: هذا رابطي https://instapay.com/pay/123456 للدفع"
-                    >
-                    <div class="error-message-field" id="link-error">
-                        ❌ لم يتم العثور على رابط صحيح، يرجى التأكد من وجود رابط يبدأ بـ https://
-                    </div>
-                </div>
-            </div>
+            .offer-title {
+                font-size: 2rem;
+            }
 
-<!-- قسم البريد الإلكتروني الجديد -->
-<div class="form-group">
-    <label>
-        <i class="fas fa-envelope"></i>
-        البريد الإلكتروني (اختياري)
-    </label>
-    <div class="emails-container" id="emailsContainer">
-        <!-- هنا هتظهر الإيميلات -->
-    </div>
+            .offer-buttons {
+                flex-direction: column;
+            }
+
+            .btn-offer-accept,
+            .btn-offer-decline {
+                width: 100%;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .products-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .product-body {
+                padding: 20px 15px;
+            }
+            
+            .account-option {
+                padding: 12px;
+            }
+            
+            .btn-whatsapp {
+                padding: 12px 20px;
+                font-size: 15px;
+            }
+            
+            .ea-circle {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .ea-text {
+                font-size: 20px;
+            }
+            
+            .sports-text {
+                font-size: 10px;
+            }
+            
+            .fc26-text {
+                font-size: 32px;
+                letter-spacing: 2px;
+            }
+
+            .brand-title {
+                font-size: 1.8rem !important;
+            }
+
+            .comparison-table th,
+            .comparison-table td {
+                padding: 8px 4px;
+                font-size: 12px;
+            }
+
+            .offer-modal {
+                padding: 25px 15px;
+            }
+
+            .offer-title {
+                font-size: 1.8rem;
+            }
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+                /* تنسيق قسم الملحوظات المهمة */
+        .important-notes-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .important-notes-section h3 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 25px;
+            font-weight: bold;
+        }
+
+        .note-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .note-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .updates-note {
+            border-color: #007bff;
+        }
+
+        .rewards-note {
+            border-color: #ffc107;
+        }
+
+        .note-header h4 {
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .note-content {
+            color: #666;
+        }
+
+        .screenshot-container {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .note-screenshot {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 2px solid #007bff;
+        }
+
+        .rewards-info {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .reward-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: rgba(255, 193, 7, 0.1);
+            border-radius: 10px;
+            border: 1px solid #ffc107;
+        }
+
+        .reward-item .icon {
+            font-size: 20px;
+        }
+
+        .reward-item span:last-child {
+            font-weight: bold;
+            color: #856404;
+        }
+
+        @media (max-width: 768px) {
+            .important-notes-section {
+                padding: 20px 15px;
+            }
+            
+            .note-card {
+                padding: 15px;
+            }
+            
+            .note-screenshot {
+                max-height: 200px;
+                object-fit: contain;
+            }
+}
+
+/* 🔥 Enhanced Popup Styles */
+.enhanced-offer-card {
+    background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+    border: 2px solid transparent;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.enhanced-offer-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: left 0.6s ease;
+}
+
+.enhanced-offer-card:hover::before {
+    left: 100%;
+}
+
+.enhanced-offer-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Game Name Styles */
+.offer-game-header {
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.offer-game-name {
+    font-size: 16px;
+    font-weight: bold;
+    padding: 8px 12px;
+    border-radius: 25px;
+    display: inline-block;
+    margin-bottom: 8px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+/* Arabic Styles */
+.ar-standard {
+    background: linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%);
+    color: #3f51b5;
+    border: 2px solid #3f51b5;
+}
+
+.ar-ultimate {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    color: #7b1fa2;
+    border: 2px solid #7b1fa2;
+}
+
+/* English Styles */
+.en-standard {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    color: #1976d2;
+    border: 2px solid #1976d2;
+}
+
+.en-ultimate {
+    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+    color: #388e3c;
+    border: 2px solid #388e3c;
+}
+
+/* Xbox Styles */
+.xbox-standard, .xbox-ultimate {
+    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+    color: #2e7d32;
+    border: 2px solid #2e7d32;
+}
+
+/* PC Styles */
+.pc-standard, .pc-ultimate {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    color: #f57c00;
+    border: 2px solid #f57c00;
+}
+
+/* Steam Styles */
+.steam-standard, .steam-ultimate {
+    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+    color: #d32f2f;
+    border: 2px solid #d32f2f;
+}
+
+/* Platform and Account Info */
+.offer-platform-account {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+}
+
+.offer-platform, .offer-account-type {
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+}
+
+/* Enhanced Pricing */
+.enhanced-pricing {
+    text-align: center;
+    padding: 15px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 10px;
+    border: 1px solid #dee2e6;
+}
+
+.premium-badge {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    animation: premiumPulse 2s infinite alternate;
+}
+
+@keyframes premiumPulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    }
+    100% {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(255, 107, 107, 0.5);
+    }
+}
+
+/* Click Effect */
+.enhanced-offer-card:active {
+    transform: translateY(-4px) scale(0.98);
+}
+
+/* Mobile Optimization */
+@media (max-width: 768px) {
+    .offer-platform-account {
+        flex-direction: column;
+        gap: 5px;
+        text-align: center;
+    }
     
-    <div class="add-email-section">
-        <div class="email-input-wrapper">
-            <input 
-                type="email" 
-                id="newEmailInput" 
-                class="form-input email-input" 
-                placeholder="مثال: your.email@gmail.com"
-                autocomplete="email"
-            >
-            <button type="button" class="add-email-btn" onclick="addNewEmail()">
-                <i class="fas fa-plus"></i>
-                إضافة بريد إلكتروني
-            </button>
-        </div>
-        <div class="email-info">
-            <i class="fas fa-info-circle"></i>
-            يمكنك إضافة عدة عناوين بريد إلكتروني للتواصل
-        </div>
-    </div>
+    .offer-game-name {
+        font-size: 14px;
+        padding: 6px 10px;
+    }
     
-    <!-- حقل مخفي لحفظ الإيميلات -->
-    <input type="hidden" name="email_addresses" id="emailAddressesInput" value="">
-</div>
+    .enhanced-pricing {
+        padding: 12px;
+    }
+}
 
-            <!-- زر التليجرام الكبير -->
-            <div class="telegram-section">
-                <button type="button" class="telegram-btn" id="telegramBtn" onclick="generateTelegramCode()">
-                    <div class="telegram-btn-content">
-                        <i class="fab fa-telegram telegram-icon"></i>
-                        <div class="telegram-text">
-                            <span class="telegram-title">📱 ربط مع التليجرام</span>
-                            <span class="telegram-subtitle">احصل على كود فوري وادخل للبوت</span>
-                        </div>
-                    </div>
-                </button>
+</style>
+
+    </style>
+<style>
+/* Popup Styles */
+.offers-popup {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.7);
+    animation: fadeIn 0.3s;
+}
+
+.popup-content {
+    background-color: #1a1a2e;
+    margin: 5% auto;
+    padding: 30px;
+    border: none;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.close-popup {
+    color: #ff6b6b;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.close-popup:hover {
+    color: #ff5252;
+}
+
+.popup-title {
+    color: #00d4ff;
+    text-align: center;
+    margin-bottom: 25px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.offer-item {
+    background: linear-gradient(135deg, #16213e, #0f172a);
+    border: 1px solid #00d4ff;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.offer-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+    border-color: #ff6b6b;
+}
+
+.offer-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s;
+}
+
+.offer-item:hover::before {
+    left: 100%;
+}
+
+.offer-title {
+    color: #00d4ff;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.offer-description {
+    color: #b8b8b8;
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.offer-price {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.fake-price {
+    color: #888;
+    text-decoration: line-through;
+    font-size: 16px;
+}
+
+.real-price {
+    color: #00ff88;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.discount-badge {
+    background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+    color: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+}
+
+.offer-validity {
+    color: #ffab00;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    background: rgba(255, 171, 0, 0.1);
+    padding: 8px;
+    border-radius: 5px;
+    border-left: 3px solid #ffab00;
+}
+
+.no-offers {
+    text-align: center;
+    color: #888;
+    font-size: 18px;
+    padding: 40px;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .popup-content {
+        margin: 10% auto;
+        padding: 20px;
+        width: 95%;
+    }
+    
+    .offer-title {
+        font-size: 16px;
+    }
+    
+    .real-price {
+        font-size: 18px;
+    }
+}
+    </style>
+
+<style>
+/* Popup Styles */
+.offers-popup {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.7);
+    animation: fadeIn 0.3s;
+}
+
+.popup-content {
+    background-color: #1a1a2e;
+    margin: 5% auto;
+    padding: 30px;
+    border: none;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.close-popup {
+    color: #ff6b6b;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.close-popup:hover {
+    color: #ff5252;
+}
+
+.popup-title {
+    color: #00d4ff;
+    text-align: center;
+    margin-bottom: 25px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.offer-item {
+    background: linear-gradient(135deg, #16213e, #0f172a);
+    border: 1px solid #00d4ff;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.offer-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+    border-color: #ff6b6b;
+}
+
+.offer-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s;
+}
+
+.offer-item:hover::before {
+    left: 100%;
+}
+
+.offer-title {
+    color: #00d4ff;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.offer-description {
+    color: #b8b8b8;
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.offer-price {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.fake-price {
+    color: #888;
+    text-decoration: line-through;
+    font-size: 16px;
+}
+
+.real-price {
+    color: #00ff88;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.discount-badge {
+    background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+    color: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+}
+
+.offer-validity {
+    color: #ffab00;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    background: rgba(255, 171, 0, 0.1);
+    padding: 8px;
+    border-radius: 5px;
+    border-left: 3px solid #ffab00;
+}
+
+.no-offers {
+    text-align: center;
+    color: #888;
+    font-size: 18px;
+    padding: 40px;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .popup-content {
+        margin: 10% auto;
+        padding: 20px;
+        width: 95%;
+    }
+    
+    .offer-title {
+        font-size: 16px;
+    }
+    
+    .real-price {
+        font-size: 18px;
+    }
+
+/* 🔥 Enhanced Popup Styles */
+.enhanced-offer-card {
+    background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+    border: 2px solid transparent;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.enhanced-offer-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: left 0.6s ease;
+}
+
+.enhanced-offer-card:hover::before {
+    left: 100%;
+}
+
+.enhanced-offer-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Game Name Styles */
+.offer-game-header {
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.offer-game-name {
+    font-size: 16px;
+    font-weight: bold;
+    padding: 8px 12px;
+    border-radius: 25px;
+    display: inline-block;
+    margin-bottom: 8px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+/* Arabic Styles */
+.ar-standard {
+    background: linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%);
+    color: #3f51b5;
+    border: 2px solid #3f51b5;
+}
+
+.ar-ultimate {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    color: #7b1fa2;
+    border: 2px solid #7b1fa2;
+}
+
+/* English Styles */
+.en-standard {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    color: #1976d2;
+    border: 2px solid #1976d2;
+}
+
+.en-ultimate {
+    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+    color: #388e3c;
+    border: 2px solid #388e3c;
+}
+
+/* Xbox Styles */
+.xbox-standard, .xbox-ultimate {
+    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+    color: #2e7d32;
+    border: 2px solid #2e7d32;
+}
+
+/* PC Styles */
+.pc-standard, .pc-ultimate {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    color: #f57c00;
+    border: 2px solid #f57c00;
+}
+
+/* Steam Styles */
+.steam-standard, .steam-ultimate {
+    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+    color: #d32f2f;
+    border: 2px solid #d32f2f;
+}
+
+/* Platform and Account Info */
+.offer-platform-account {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+}
+
+.offer-platform, .offer-account-type {
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+}
+
+/* Enhanced Pricing */
+.enhanced-pricing {
+    text-align: center;
+    padding: 15px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 10px;
+    border: 1px solid #dee2e6;
+}
+
+.premium-badge {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    animation: premiumPulse 2s infinite alternate;
+}
+
+@keyframes premiumPulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    }
+    100% {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(255, 107, 107, 0.5);
+    }
+}
+
+/* Click Effect */
+.enhanced-offer-card:active {
+    transform: translateY(-4px) scale(0.98);
+}
+
+/* Mobile Optimization */
+@media (max-width: 768px) {
+    .offer-platform-account {
+        flex-direction: column;
+        gap: 5px;
+        text-align: center;
+    }
+    
+    .offer-game-name {
+        font-size: 14px;
+        padding: 6px 10px;
+    }
+    
+    .enhanced-pricing {
+        padding: 12px;
+    }
+
+}
+</style>
+
+</head>
+<script>
+// Show offers popup
+function showOffers() {
+    fetch('/get_offers')
+        .then(response => response.json())
+        .then(data => {
+            const popup = document.getElementById('offersPopup');
+            const offersContainer = document.getElementById('offersContainer');
+            
+            if (data.offers && data.offers.length > 0) {
+                offersContainer.innerHTML = '';
                 
-                <div class="telegram-code-result" id="telegramCodeResult" style="display: none;">
-                    <div class="code-container">
-                        <div class="code-header">
-                            <i class="fas fa-key"></i>
-                            <span>الكود الخاص بك</span>
+                data.offers.forEach(offer => {
+                    const offerElement = document.createElement('div');
+                    offerElement.className = 'offer-item';
+                    offerElement.onclick = () => selectOffer(offer);
+                    
+                    offerElement.innerHTML = `
+                        <div class="offer-title">${offer.title}</div>
+                        <div class="offer-description">${offer.description}</div>
+                        <div class="offer-price">
+                            <span class="fake-price">$${offer.fake_price}</span>
+                            <span class="real-price">$${offer.real_price}</span>
+                            <span class="discount-badge">${offer.discount_percentage}% خصم</span>
                         </div>
-<div class="telegram-actions">
-    <button type="button" class="telegram-open-btn" id="telegramOpenBtn" onclick="openTelegramApp()">
-        <i class="fab fa-telegram"></i>
-        فتح التليجرام والربط
-    </button>
+                        <div class="offer-validity">صالح حتى: ${offer.valid_until}</div>
+                    `;
+                    
+                    offersContainer.appendChild(offerElement);
+                });
+            } else {
+                offersContainer.innerHTML = '<div class="no-offers">لا توجد عروض متاحة حالياً</div>';
+            }
+            
+            popup.style.display = 'block';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ في تحميل العروض');
+        });
+}
+
+// Close popup
+function closePopup() {
+    document.getElementById('offersPopup').style.display = 'none';
+}
+
+// Select offer
+function selectOffer(offer) {
+    alert(`تم اختيار العرض: ${offer.title}\nالسعر: $${offer.real_price}`);
+    closePopup();
+    // يمكنك إضافة المزيد من الكود هنا لمعالجة العرض المختار
+}
+
+// Close popup when clicking outside
+window.onclick = function(event) {
+    const popup = document.getElementById('offersPopup');
+    if (event.target == popup) {
+        popup.style.display = 'none';
+    }
+}
+</script>
+
+<body>
+<!-- 🔥 العرض المنبثق الذكي -->
+{% if offers and offers.active_offer and offers.active_offer.show_popup %}
+<div class="offer-overlay" id="offerOverlay">
+    <div class="offer-modal smart-offers-modal">
+        <button class="offer-close" onclick="closeOfferModal()">&times;</button>
+        <h2 class="offer-title">{{ offers.active_offer.title }}</h2>
+        <p class="offer-description">{{ offers.active_offer.description }}</p>
+        
+<!-- عرض قائمة العروض المتاحة -->
+{% if offers.active_offer.offers_list %}
+<div class="offers-showcase">
+    <h3 class="offers-list-title">🎯 العروض المتاحة الآن:</h3>
+<div class="offers-grid-horizontal">
+    {% for offer in offers.active_offer.offers_list[:6] %}
+    <div class="offer-card-horizontal interactive-card" 
+         data-game="{{ offer.game }}" 
+         data-platform="{{ offer.platform }}" 
+         data-account="{{ offer.account }}"
+         onclick="navigateToProduct('{{ offer.game }}', '{{ offer.platform }}', '{{ offer.account }}')">
+        
+        <div class="offer-header-section">
+            {% if 'AR_Standard' in offer.game %}
+                <div class="offer-title-badge ar-standard-badge">
+                    <i class="fas fa-star"></i>
+                    Standard Edition (Arabic) 🇸🇦
+                </div>
+            {% elif 'AR_Ultimate' in offer.game %}
+                <div class="offer-title-badge ar-ultimate-badge">
+                    <i class="fas fa-crown"></i>
+                    Ultimate Edition (Arabic) 🇸🇦
+                </div>
+            {% elif 'EN_Standard' in offer.game %}
+                <div class="offer-title-badge en-standard-badge">
+                    <i class="fas fa-star"></i>
+                    Standard Edition (English) 🇺🇸
+                </div>
+            {% elif 'EN_Ultimate' in offer.game %}
+                <div class="offer-title-badge en-ultimate-badge">
+                    <i class="fas fa-crown"></i>
+                    Ultimate Edition (English) 🇺🇸
+                </div>
+            {% elif 'XBOX_Standard' in offer.game %}
+                <div class="offer-title-badge xbox-standard-badge">
+                    <i class="fab fa-xbox"></i>
+                    Xbox Standard 🎮
+                </div>
+            {% elif 'XBOX_Ultimate' in offer.game %}
+                <div class="offer-title-badge xbox-ultimate-badge">
+                    <i class="fab fa-xbox"></i>
+                    Xbox Ultimate 🎮
+                </div>
+            {% elif 'PC_Standard' in offer.game %}
+                <div class="offer-title-badge pc-standard-badge">
+                    <i class="fas fa-desktop"></i>
+                    PC Standard 🖥️
+                </div>
+            {% elif 'PC_Ultimate' in offer.game %}
+                <div class="offer-title-badge pc-ultimate-badge">
+                    <i class="fas fa-desktop"></i>
+                    PC Ultimate 🖥️
+                </div>
+            {% elif 'STEAM_Standard' in offer.game %}
+                <div class="offer-title-badge steam-standard-badge">
+                    <i class="fab fa-steam-symbol"></i>
+                    Steam Standard 🖥️
+                </div>
+            {% elif 'STEAM_Ultimate' in offer.game %}
+                <div class="offer-title-badge steam-ultimate-badge">
+                    <i class="fab fa-steam-symbol"></i>
+                    Steam Ultimate 🖥️
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="offer-details-section">
+            <div class="platform-info">
+                <span class="platform-text">{{ offer.platform }}</span>
+                <span class="account-text">{{ offer.account }}</span>
+            </div>
+            
+            <div class="pricing-section-horizontal">
+                <div class="price-container">
+                    <span class="old-price">{{ offer.fake_price|format_number }} جنيه</span>
+                    <span class="new-price">{{ offer.real_price|format_number }} جنيه</span>
+                </div>
+                <div class="discount-percentage">وفر {{ offer.discount }}%</div>
+            </div>
+        </div>
+        
+        <div class="click-indicator">
+            <i class="fas fa-hand-pointer"></i>
+            <span>اضغط للذهاب</span>
+        </div>
+    </div>
+    {% endfor %}
 </div>
-<div class="telegram-instructions">
-    <p>📋 <strong>خطوة واحدة فقط:</strong></p>
-    <div class="single-step">
-        ⚡ اضغط "فتح التليجرام" وسيتم الربط التلقائي!
+
+                
+                <!-- إذا فيه عروض أكتر من 6 -->
+                {% if offers.active_offer.offers_list|length > 6 %}
+                <div class="more-offers-indicator">
+                    <span>+ {{ offers.active_offer.offers_list|length - 6 }} عروض أخرى!</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="offer-buttons">
+            <button class="btn-offer-accept" onclick="acceptOffers()">
+                🔥 أريد الاستفادة من العروض
+            </button>
+            <button class="btn-offer-decline" onclick="declineOffers()">
+                👀 أريد رؤية باقي المنتجات
+            </button>
+        </div>
     </div>
 </div>
+{% endif %}
+
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-xl-10 col-lg-11 col-md-12">
+                <div class="card main-card">
+                    <!-- Header Section -->
+                    <div class="header-section">
+                        <div class="brand-container">
+                            <div class="ea-sports-logo">
+                                <div class="ea-circle">
+                                    <div class="ea-text">EA</div>
+                                    <div class="sports-text">SPORTS</div>
+                                </div>
+                                <div class="fc26-text">FC26</div>
+                            </div>
+                            <h1 class="brand-title">شهد السنيورة</h1>
+                        </div>
+                        <p class="lead mb-0">احصل على FC 25 بأرخص الأسعار في مصر</p>
+                        <p class="mb-0">منصتك الأولى لشراء حسابات الألعاب الرقمية بأفضل الأسعار وأسرع الطرق</p>
+                        
+                        <div class="features-row">
+                            <div class="feature-item">
+                                <h6>🛡️ ضمان 1 سنة</h6>
+                                <small>مع عدم المخالفة</small>
+                            </div>
+                            <div class="feature-item">
+                                <h6>⚡ تسليم سريع</h6>
+                                <small>خلال 15 دقيقه</small>
+                            </div>
+                            <div class="feature-item">
+                                <h6> جميع المنصات</h6>
+                                <small>PlayStation, Xbox, PC</small>
+                            </div>
+                            <div class="feature-item">
+                                <h6>
+                                    <svg class="whatsapp-logo-svg" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893A11.821 11.821 0 0020.465 3.488"/>
+                                    </svg>
+                                    تواصل مباشر
+                                </h6>
+                                <small>عبر الواتساب فوراً</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Products Section -->
+                    <div class="products-section">
+                        <div id="alertContainer"></div>
+                        
+                        <div class="text-center mb-4">
+                            <h2 class="fw-bold text-primary">🎯 اختر المنتج المطلوب</h2>
+                            <p class="text-muted">اضغط على نوع الحساب و اطلب الان مباشرة عبر الواتساب</p>
+                            <button onclick="showOffers()" class="btn btn-warning btn-lg mb-3" style="background: linear-gradient(45deg, #ffd700, #ffb347); border: none; border-radius: 15px; box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);">
+                                🎁 شاهد العروض المتاحة الآن
+                            </button>
+                        </div>
+                        
+                        <div class="products-grid" id="productsGrid">
+                            {% for game_id, game in prices.games.items() %}
+                                {% for platform_id, platform in game.platforms.items() %}
+                                    {% set is_offer_card = game_id in offers.offer_cards if offers and offers.offer_cards else false %}
+                                    
+                                    {% if 'EN' in game_id %}
+                                        <div class="product-card {% if is_offer_card %}offer-card{% endif %}" data-game-type="english">
+                                    {% elif 'AR' in game_id %}
+                                        <div class="product-card {% if is_offer_card %}offer-card{% endif %}" data-game-type="arabic">
+                                    {% elif 'XBOX' in game_id %}
+                                        <div class="product-card {% if is_offer_card %}offer-card{% endif %}" data-game-type="xbox">
+                                    {% elif 'PC' in game_id %}
+                                        <div class="product-card {% if is_offer_card %}offer-card{% endif %}" data-game-type="pc">
+                                    {% elif 'STEAM' in game_id %}
+                                        <div class="product-card {% if is_offer_card %}offer-card{% endif %}" data-game-type="steam">
+                                    {% else %}
+                                        <div class="product-card {% if is_offer_card %}offer-card{% endif %}">
+                                    {% endif %}
+                                        <div class="product-header">
+                                            <div class="product-title">{{ game.name }}</div>
+                                            <div class="product-platform">{{ platform.icon|safe }} {{ platform.name }}</div>
+                                        </div>
+                                        
+                                        <div class="product-body">
+                                            <div class="account-options">
+                                                {% for account_id, account in platform.accounts.items() %}
+                                                    <div class="account-option" 
+                                                         data-game="{{ game_id }}" 
+                                                         data-platform="{{ platform_id }}" 
+                                                         data-account="{{ account_id }}"
+                                                         data-price="{{ account.price }}"
+                                                         data-currency="{{ prices.settings.currency }}">
+                                                        <div class="account-info">
+                                                            <div class="account-name">{{ account.name }}</div>
+                                                            <div class="account-description">
+                                                                {% if account_id == 'Full' %}
+                                                                    حساب كامل - اللعبة ملكك تماماً
+                                                                {% elif account_id == 'Primary' %}
+                                                                    فعله كأساسي والعب من حسابك
+                                                                {% elif account_id == 'Secondary' %}
+                                                                    تسجيل دخول مؤقت - ممنوع تفعيل
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                        <div class="account-price">
+                                                            {% if account.get('original_price') %}
+                                                                <span class="discount-badge">-{{ account.discount_percentage }}%</span>
+                                                                <span class="original-price">{{ account.original_price|format_number }}</span>
+                                                                <span class="discounted-price">{{ account.price|format_number }}</span>
+                                                            {% else %}
+                                                                {{ account.price|format_number }} {{ prices.settings.currency[:4] }}
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                            
+                                            <button class="btn-whatsapp product-btn" 
+                                                    data-game="{{ game_id }}" 
+                                                    data-platform="{{ platform_id }}">
+                                                <svg class="whatsapp-logo-svg" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893A11.821 11.821 0 0020.465 3.488"/>
+                                                </svg>
+                                                اختر نوع الحساب و اطلب الان 
+                                            </button>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- مقارنة أنواع الحسابات -->
+                        <div class="comparison-section">
+                            <h3>⚖️ مقارنة أنواع الحسابات</h3>
+                            <div class="comparison-table">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>الميزة</th>
+                                            <th>Primary</th>
+                                            <th>Secondary</th>
+                                            <th>Full</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="feature-cell">تفعيل الحساب كأساسي</td>
+                                            <td><i class="fas fa-check check-icon"></i></td>
+                                            <td><i class="fas fa-times cross-icon"></i></td>
+                                            <td><i class="fas fa-check check-icon"></i></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="feature-cell">اللعب من حسابك الشخصي</td>
+                                            <td><i class="fas fa-check check-icon"></i></td>
+                                            <td><i class="fas fa-check check-icon"></i></td>
+                                            <td><i class="fas fa-check check-icon"></i></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="feature-cell">الألعاب متاحة لكل المستخدمين</td>
+                                            <td><i class="fas fa-check check-icon"></i></td>
+                                            <td><i class="fas fa-times cross-icon"></i></td>
+                                            <td><i class="fas fa-check check-icon"></i></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="feature-cell">إمكانية تعديل البيانات</td>
+                                            <td><i class="fas fa-times cross-icon"></i></td>
+                                            <td><i class="fas fa-times cross-icon"></i></td>
+                                            <td><i class="fas fa-check check-icon"></i></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="feature-cell">مدة الضمان</td>
+                                            <td>1 سنة</td>
+                                            <td>1 سنة</td>
+                                            <td>1 سنة</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="feature-cell">السعر</td>
+                                            <td class="price-highlight">أرخص</td>
+                                            <td class="price-highlight">متوسط</td>
+                                            <td class="price-highlight">أغلى</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- باقي المحتوى يبقى كما هو... -->
+                        <!-- الشروط والأحكام -->
+                        <div class="terms-section">
+                            <h3>📋 الشروط والأحكام</h3>
+                            
+                            <div class="terms-grid">
+                                <div class="terms-column">
+                                    <h4>⚠️ شروط الاستخدام:</h4>
+                                    <ul class="terms-list">
+                                        <li class="warning">
+                                            <span class="icon">🔒</span>
+                                            <span>ممنوع تماماً تغيير كلمة المرور</span>
+                                        </li>
+                                        <li class="warning">
+                                            <span class="icon">🔒</span>
+                                            <span>ممنوع تغيير اسم المستخدم</span>
+                                        </li>
+                                        <li class="warning">
+                                            <span class="icon">🔒</span>
+                                            <span>ممنوع تغيير الإيميل</span>
+                                        </li>
+                                        <li class="warning">
+                                            <span class="icon">🔒</span>
+                                            <span>ممنوع إضافة رقم هاتف أو إيميل استرجاع</span>
+                                        </li>
+                                        <li class="warning">
+                                            <span class="icon">🔒</span>
+                                            <span>ممنوع مشاركة الحساب مع الآخرين</span>
+                                        </li>
+                                        <li class="warning">
+                                            <span class="icon">🎮</span>
+                                            <span>الحساب (Primary)  (البرايمري): فعله كأساسي والعب من حسابك الشخصي</span>
+                                        </li>
+                                        <li class="warning">
+                                            <span class="icon">🎮</span>
+                                            <span>الحساب (Secondary)  (السكندري): ممنوع تفعيله كأساسي نهائياً</span>
+                                        </li>
+                                        <li class="warning">
+                                            <span class="icon">🎮</span>
+                                            <span>PS4 مخصص للـ PS4 فقط و PS5 مخصص للـ PS5 فقط</span>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <div class="terms-column">
+                                    <h4>🛡️ الضمان والدعم:</h4>
+                                    <ul class="terms-list">
+                                        <li class="success">
+                                            <span class="icon">✅</span>
+                                            <span>ضمان 1 سنة مع عدم مخالفة الشروط</span>
+                                        </li>
+                                        <li class="success">
+                                            <span class="icon">✅</span>
+                                            <span>استبدال فوري في حالة المشاكل</span>
+                                        </li>
+                                        <li class="success">
+                                            <span class="icon">✅</span>
+                                            <span>تسليم خلال 15 دقيقه كحد أقصى</span>
+                                        </li>
+                                        <li class="success">
+                                            <span class="icon">✅</span>
+                                            <span>دعم فني مجاني عبر الواتساب</span>
+                                        </li>
+                                        <li class="danger">
+                                            <span class="icon">⚠️</span>
+                                            <span>المخالفة الأولى: تحذير</span>
+                                        </li>
+                                        <li class="danger">
+                                            <span class="icon">⚠️</span>
+                                            <span>المخالفة الثانية: سحب الحساب نهائياً</span>
+                                        </li>
+                                        <li class="danger">
+                                            <span class="icon">❌</span>
+                                            <span>لا استرداد في حالة المخالفة</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <!-- ملحوظات مهمة -->
+                        <div class="important-notes-section">
+                            <h3>📌 ملحوظات مهمة</h3>
+                            
+                            <!-- ملحوظة التحديثات المستمرة -->
+                            <div class="note-card updates-note">
+                                <div class="note-header">
+                                    <h4>🔄 تحديثات مستمرة</h4>
+                                </div>
+                                <div class="note-content">
+                                    <div class="screenshot-container">
+                                        <img src="https://cdn1.genspark.ai/user-upload-image/v1/webpage_capture_screen_tool_call/84944f2c-2106-464c-a069-da76caf6d76c" alt="تحديثات مستمرة" class="note-screenshot">
+                                    </div>
+                                    <p>نحن نقدم تحديثات مستمرة لضمان أفضل خدمة لعملائنا الكرام</p>
+                                </div>
+                            </div>
+
+                            <!-- ملحوظة الجوائز -->
+                            <div class="note-card rewards-note">
+                                <div class="note-header">
+                                    <h4>🏆 ملحوظة هامة حول الجوائز</h4>
+                                </div>
+                                <div class="note-content">
+                                    <div class="rewards-info">
+                                        <div class="reward-item">
+                                            <span class="icon">🎁</span>
+                                            <span>الجوائز بتنزل في السكندري ( Ultimate ) ( التميت ) اكونت فقط</span>
+                                        </div>
+                                        <div class="reward-item">
+                                            <span class="icon">⚡</span>
+                                            <span>البرايمري ( Ultimate ) ( التميت ) بيستمتع بالوصول المبكر فقط (اللعبة تشتغل بدري أسبوع)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                                            
+                        <!-- صندوق التواصل المباشر -->
+                        <div class="instant-contact">
+                            <h5>
+                                <svg class="whatsapp-logo-svg" viewBox="0 0 24 24" fill="currentColor" style="color: #128C7E;">
+                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893A11.821 11.821 0 0020.465 3.488"/>
+                                </svg>
+                                كيفية الطلب
+                            </h5>
+                            <p>اضغط على نوع الحساب المطلوب ← سيتم فتح الواتساب مباشرة ← أرسل الرسالة المُعدة تلقائياً</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Footer Section -->
+                    <div class="footer-section">
+                        <div class="footer-content">
+                            <h4>شهد السنيورة - متجرك الموثوق للألعاب الرقمية</h4>
+                            <p>نوفر أفضل الأسعار وأسرع الخدمات في مصر والوطن العربي</p>
+                            <p>تواصل معنا على الواتساب: <strong>{{ prices.settings.whatsapp_number }}</strong></p>
+                            <p>جميع الحقوق محفوظة لدى شهد السنيورة</p>
+                            
+                            <div class="footer-copyright">
+                                © 2022-2025 شهد السنيورة. تم التطوير بواسطة مطوري مصر 🇪🇬
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <button type="submit" class="submit-btn" id="submitBtn" disabled>
-                💾 حفظ التغييرات
-            </button>
-
-            <div class="message success-message" id="successMessage">
-                ✅ تم حفظ بياناتك بنجاح! مرحباً بك في عالم FC 26
-            </div>
-
-            <div class="message error-message" id="errorMessage">
-                ❌ حدث خطأ، يرجى التحقق من البيانات والمحاولة مرة أخرى
-            </div>
-        </form>
-
-        <div class="security-notice">
-            🔒 بياناتك محمية بأعلى معايير الأمان والتشفير العالمي
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <!-- Security Badge -->
+    <div class="security-badge">
+        🔒
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Offers Popup -->
+<div id="offersPopup" class="offers-popup">
+    <div class="popup-content">
+        <span class="close-popup" onclick="closePopup()">&times;</span>
+        <h2 class="popup-title">🎉 العروض المتاحة</h2>
+        <div id="offersContainer">
+            <!-- العروض ستظهر هنا -->
+        </div>
+    </div>
+</div>
+
+<script>
+        // بيانات الأسعار والعروض
+        const pricesData = {{ prices|tojson|safe }};
+        const offersData = {{ offers|tojson|safe }};
+        
+        // متغيرات الاختيار
+        let selectedGame = '';
+        let selectedPlatform = '';
+        let selectedAccount = '';
+        let selectedPrice = 0;
+        let selectedCurrency = '';
+        
+        // متغيرات إضافية
+        let selectedProductData = {};
+        let isRequestInProgress = false;
+        
+        // عناصر النموذج
+        const alertContainer = document.getElementById('alertContainer');
+        const accountOptions = document.querySelectorAll('.account-option');
+        const productBtns = document.querySelectorAll('.product-btn');
+
+        // 🔥 دوال العرض المنبثق
+        function checkOfferDisplay() {
+            const hasSeenOffer = localStorage.getItem('hasSeenOffer_' + (offersData?.active_offer?.id || 'default'));
+            
+            if (offersData?.active_offer?.show_popup && !hasSeenOffer) {
+                document.getElementById('offerOverlay').style.display = 'flex';
+            }
+        }
+
+        function closeOfferModal() {
+            document.getElementById('offerOverlay').style.display = 'none';
+            localStorage.setItem('hasSeenOffer_' + (offersData?.active_offer?.id || 'default'), 'true');
+        }
+
+        function acceptOffer() {
+            closeOfferModal();
+            
+            // التمرير إلى الكروت المخفضة
+            const firstOfferCard = document.querySelector('.product-card.offer-card');
+            if (firstOfferCard) {
+                firstOfferCard.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center'
+                });
+                
+                // تأثير إضافي للفت الانتباه
+                setTimeout(() => {
+                    firstOfferCard.style.animation = 'offerCardGlow 1s ease-in-out 3 alternate';
+                }, 500);
+            }
+            
+            showAlert('🔥 تم تطبيق العرض! الكروت الذهبية تحتوي على خصومات حصرية', 'success');
+        }
+
+        function declineOffer() {
+            closeOfferModal();
+            showAlert('👍 يمكنك رؤية جميع المنتجات أدناه', 'success');
+        }
+
+        // تحديث الألوان حسب نوع اللعبة
+        function updateCardColors() {
+            document.querySelectorAll('.product-card').forEach(card => {
+                const gameType = card.getAttribute('data-game-type');
+                if (gameType) {
+                    card.classList.add(gameType);
+                }
+            });
+        }
+        
+        // إضافة مستمعي الأحداث لخيارات الحساب
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCardColors();
+            
+            // فحص عرض العروض المنبثقة
+            setTimeout(() => {
+                checkOfferDisplay();
+            }, 1000);
+            
+            // إضافة أحداث النقر على خيارات الحساب
+            accountOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    // إزالة التحديد من جميع الخيارات في نفس البطاقة
+                    const card = this.closest('.product-card');
+                    card.querySelectorAll('.account-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // تحديد الخيار الحالي
+                    this.classList.add('selected');
+                    
+                    // حفظ بيانات الاختيار
+                    selectedGame = this.dataset.game;
+                    selectedPlatform = this.dataset.platform;
+                    selectedAccount = this.dataset.account;
+                    selectedPrice = this.dataset.price;
+                    selectedCurrency = this.dataset.currency;
+                    
+                    // تحديث بيانات المنتج المختار
+                    selectedProductData = {
+                        game: this.getAttribute('data-game'),
+                        platform: this.getAttribute('data-platform'),
+                        account: this.getAttribute('data-account'),
+                        price: this.getAttribute('data-price'),
+                        currency: this.getAttribute('data-currency')
+                    };
+                    
+                    // إضافة تأثير على الكارت المختار
+                    document.querySelectorAll('.product-card').forEach(card => {
+                        card.classList.remove('active-card');
+                    });
+                    card.classList.add('active-card');
+                    document.getElementById('productsGrid').classList.add('has-active-card');
+                    
+                    // تحديث زر الواتساب
+                    const btn = card.querySelector('.product-btn');
+                    const priceText = this.querySelector('.discounted-price') ? 
+                        this.querySelector('.discounted-price').textContent :
+                        selectedPrice + ' ' + selectedCurrency.substring(0, 4);
+                    
+                    btn.innerHTML = `
+                        <svg class="whatsapp-logo-svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893A11.821 11.821 0 0020.465 3.488"/>
+                        </svg>
+                        اطلب الآن - ${priceText}
+                    `;
+                    btn.disabled = false;
+                });
+            });
+        });
+        
+        // إضافة مستمعي الأحداث لأزرار الواتساب
+        productBtns.forEach(btn => {
+            btn.addEventListener('click', async function(e) {
+                e.preventDefault();
+                
+                if (isRequestInProgress) {
+                    return;
+                }
+                
+                const card = this.closest('.product-card');
+                const selectedOption = card.querySelector('.account-option.selected');
+                
+                // إذا مافيش account مختار، نختار الأول تلقائياً
+                if (!selectedOption) {
+                    const firstOption = card.querySelector('.account-option');
+                    if (firstOption) {
+                        firstOption.click(); // تفعيل الاختيار التلقائي
+                        
+                        // إنتظار قليل ثم المتابعة
+                        setTimeout(() => {
+                            this.click();
+                        }, 100);
+                        return;
+                    } else {
+                        showAlert('يرجى اختيار نوع الحساب أولاً', 'error');
+                        return;
+                    }
+                }
+                
+                // إنشاء FormData
+                const formData = new FormData();
+                formData.append('game_type', selectedOption.dataset.game);
+                formData.append('platform', selectedOption.dataset.platform);
+                formData.append('account_type', selectedOption.dataset.account);
+                
+                const originalText = this.innerHTML;
+                this.disabled = true;
+                this.innerHTML = '<span class="loading-spinner"></span> جاري التحضير...';
+                isRequestInProgress = true;
+                
+                try {
+                    const response = await fetch('/whatsapp', {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success) {
+                        // إضافة رسالة للعروض الخاصة
+                        let extraMessage = '';
+                        if (card.classList.contains('offer-card')) {
+                            extraMessage = '<br><strong>🔥 تهانينا! لقد اخترت منتج من العرض الخاص!</strong>';
+                        }
+                        
+                        showAlert(`
+                            ✅ تم تحضير الاستفسار بنجاح!<br>
+                            <strong>رقم المرجع:</strong> ${data.reference_id}<br>
+                            <strong>السعر:</strong> ${data.price} ${data.currency}${extraMessage}<br>
+                            <strong>سيتم فتح الواتساب الآن...</strong>
+                        `, 'success');
+                        
+                        // فتح الواتساب فوراً
+                        setTimeout(() => {
+                            window.open(data.whatsapp_url, '_blank');
+                        }, 500);
+                        
+                    } else {
+                        showAlert(data.error || 'حدث خطأ غير متوقع', 'error');
+                    }
+                } catch (error) {
+                    console.error('Network Error:', error);
+                    showAlert('خطأ في الشبكة. يرجى المحاولة مرة أخرى.', 'error');
+                } finally {
+                    // إعادة تعيين الزر
+                    setTimeout(() => {
+                        isRequestInProgress = false;
+                        this.disabled = false;
+                        this.innerHTML = originalText;
+                    }, 2000);
+                }
+            });
+        });
+        
+        // دالة إظهار الرسائل
+        function showAlert(message, type = 'success') {
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+            const icon = type === 'success' ? '✅' : '❌';
+            
+            alertContainer.innerHTML = `
+                <div class="alert ${alertClass} alert-dismissible fade show alert-custom" role="alert">
+                    <strong>${icon} ${message}</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            // إزالة الرسالة بعد 5 ثوان
+            setTimeout(() => {
+                const alert = alertContainer.querySelector('.alert');
+                if (alert) alert.remove();
+            }, 5000);
+        }
+        
+        // إزالة تأثير البلور عند النقر خارج الكروت
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.product-card')) {
+                document.querySelectorAll('.product-card').forEach(card => {
+                    card.classList.remove('active-card');
+                });
+                const productsGrid = document.getElementById('productsGrid');
+                if (productsGrid) {
+                    productsGrid.classList.remove('has-active-card');
+                }
+            }
+        });
+        
+        // تأثيرات إضافية للموبايل
+        document.addEventListener('DOMContentLoaded', function() {
+            // تأثير الاهتزاز للموبايل عند الضغط
+            if ('vibrate' in navigator) {
+                document.querySelectorAll('.account-option, .btn-whatsapp').forEach(element => {
+                    element.addEventListener('touchstart', function() {
+                        navigator.vibrate(50);
+                    });
+                });
+            }
+        });
+
+        // إغلاق العرض المنبثق عند الضغط خارجه
+        document.addEventListener('click', function(event) {
+            const offerOverlay = document.getElementById('offerOverlay');
+            if (event.target === offerOverlay) {
+                closeOfferModal();
+            }
+        });
+</script>
+
+<script>
+// Show offers popup with better error handling
+function showOffers() {
+    console.log('🎯 بدء تحميل العروض...');
+    
+    // إظهار الـ popup فوراً مع loading
+    const popup = document.getElementById('offersPopup');
+    const offersContainer = document.getElementById('offersContainer');
+    
+    popup.style.display = 'block';
+    offersContainer.innerHTML = '<div class="text-center p-4"><div class="loading-spinner mx-auto mb-3"></div><p style="color: #00d4ff;">جاري تحميل العروض...</p></div>';
+    
+    fetch('/get_offers')
+        .then(response => {
+            console.log('📡 Response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('📊 البيانات المستلمة:', data);
+            
+            if (data.offers && data.offers.length > 0) {
+                offersContainer.innerHTML = '';
+                
+                data.offers.forEach((offer, index) => {
+                    console.log(`🎁 عرض ${index + 1}:`, offer);
+                    
+                    const offerElement = document.createElement('div');
+                    offerElement.className = 'offer-item';
+                    offerElement.setAttribute('data-offer-id', offer.id || index);
+                    
+                    // إضافة onclick مباشرة
+                    offerElement.addEventListener('click', function() {
+                        selectOffer(offer);
+                    });
+                    
+                    offerElement.innerHTML = `
+                        <div class="offer-title">${offer.title || 'عرض خاص'}</div>
+                        <div class="offer-description">${offer.description || 'احصل على خصم رائع'}</div>
+                        <div class="offer-price">
+                            <span class="fake-price">$${offer.fake_price || '0'}</span>
+                            <span class="real-price">$${offer.real_price || '0'}</span>
+                            <span class="discount-badge">${offer.discount_percentage || '0'}% خصم</span>
+                        </div>
+                        <div class="offer-validity">صالح حتى: ${offer.valid_until || 'غير محدود'}</div>
+                        <div class="text-center mt-2">
+                            <small style="color: #888;">👆 اضغط للاختيار</small>
+                        </div>
+                    `;
+                    
+                    offersContainer.appendChild(offerElement);
+                });
+                
+                console.log('✅ تم تحميل العروض بنجاح');
+            } else {
+                console.log('⚠️ لا توجد عروض متاحة');
+                offersContainer.innerHTML = `
+                    <div class="no-offers">
+                        <h4>😔 لا توجد عروض متاحة حالياً</h4>
+                        <p>تابعنا للحصول على أحدث العروض</p>
+                        <button onclick="closePopup()" class="btn btn-primary mt-2">حسناً</button>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('❌ خطأ في تحميل العروض:', error);
+            
+// إظهار عروض تجريبية في حالة الخطأ
+offersContainer.innerHTML = `
+    <div class="text-center mb-3">
+        <h4 style="color: #ff6b6b;">⚠️ مشكلة في الاتصال</h4>
+        <p style="color: #888;">إليك بعض العروض المتاحة:</p>
+    </div>
+    
+    <div class="offer-item" onclick="selectDemoOffer('Standard Edition (Arabic)', '1600', '2500')">
+        <div class="offer-title">🇸🇦 Standard Edition (Arabic)</div>
+        <div class="offer-platform">PS4 • Primary</div>
+        <div class="offer-description">النسخة العربية الكاملة مع جميع المميزات الأساسية</div>
+        <div class="offer-price">
+            <span class="fake-price">2,500</span>
+            <span class="real-price">1,600</span>
+            <span class="discount-badge">36% خصم</span>
+        </div>
+        <div class="offer-validity">⏰ صالح حتى: نفاذ الكمية</div>
+        <div class="text-center mt-2">
+            <small style="color: #888;">👆 اضغط للاختيار</small>
+        </div>
+    </div>
+    
+    <div class="offer-item" onclick="selectDemoOffer('Ultimate Edition (English)', '3500', '5500')">
+        <div class="offer-title">🇺🇸 Ultimate Edition (English)</div>
+        <div class="offer-platform">PS5 • Primary</div>
+        <div class="offer-description">النسخة الفاخرة مع جميع الإضافات والمحتويات الحصرية</div>
+        <div class="offer-price">
+            <span class="fake-price">5,500</span>
+            <span class="real-price">3,500</span>
+            <span class="discount-badge">36% خصم</span>
+        </div>
+        <div class="offer-validity">⏰ صالح حتى: نفاذ الكمية</div>
+        <div class="text-center mt-2">
+            <small style="color: #888;">👆 اضغط للاختيار</small>
+        </div>
+    </div>
+    
+    <div class="offer-item" onclick="selectDemoOffer('Steam Ultimate Edition', '4500', '7000')">
+        <div class="offer-title">🖥️ Steam Ultimate Edition</div>
+        <div class="offer-platform">PC • Full Access</div>
+        <div class="offer-description">أفضل نسخة Steam مع كامل المميزات والتحديثات</div>
+        <div class="offer-price">
+            <span class="fake-price">7,000</span>
+            <span class="real-price">4,500</span>
+            <span class="discount-badge">36% خصم</span>
+        </div>
+        <div class="offer-validity">⏰ صالح حتى: نفاذ الكمية</div>
+        <div class="text-center mt-2">
+            <small style="color: #888;">👆 اضغط للاختيار</small>
+        </div>
+    </div>
+    
+    <div class="offer-item" onclick="selectDemoOffer('Standard Edition (English)', '2200', '3500')">
+        <div class="offer-title">🇺🇸 Standard Edition (English)</div>
+        <div class="offer-platform">PS5 • Secondary</div>
+        <div class="offer-description">نسخة PS5 الثانوية عالية الجودة مع الأساسيات</div>
+        <div class="offer-price">
+            <span class="fake-price">3,500</span>
+            <span class="real-price">2,200</span>
+            <span class="discount-badge">37% خصم</span>
+        </div>
+        <div class="offer-validity">⏰ صالح حتى: نفاذ الكمية</div>
+        <div class="text-center mt-2">
+            <small style="color: #888;">👆 اضغط للاختيار</small>
+        </div>
+    </div>
+`;
+        });
+}
+
+// Close popup
+function closePopup() {
+    const popup = document.getElementById('offersPopup');
+    popup.style.display = 'none';
+    console.log('❌ تم إغلاق العروض');
+}
+
+// Select offer - محسن
+function selectOffer(offer) {
+    console.log('🎯 تم اختيار عرض:', offer);
+    
+    // تأثير بصري
+    const popup = document.getElementById('offersPopup');
+    popup.style.background = 'rgba(0,255,0,0.1)';
+    
+    setTimeout(() => {
+        popup.style.background = 'rgba(0,0,0,0.7)';
+    }, 300);
+    
+    // رسالة تأكيد محسنة
+    const confirmMessage = `
+        🎉 تم اختيار العرض بنجاح!
+        
+        📋 تفاصيل العرض:
+        • ${offer.title || 'عرض خاص'}
+        • السعر: $${offer.real_price || '0'}
+        • الخصم: ${offer.discount_percentage || '0'}%
+        
+        💬 هل تريد التواصل عبر الواتساب الآن؟
+    `;
+    
+    if (confirm(confirmMessage)) {
+        // فتح الواتساب مع رسالة مخصصة
+        const message = encodeURIComponent(`
+مرحباً! 🎉
+
+أريد الاستفادة من العرض الخاص:
+📋 ${offer.title || 'عرض خاص'}
+💰 السعر: $${offer.real_price || '0'}
+🔥 الخصم: ${offer.discount_percentage || '0'}%
+
+يرجى تأكيد توفر العرض
+        `);
+        
+        const whatsappUrl = `https://wa.me/+201094591331?text=${message}`;
+        window.open(whatsappUrl, '_blank');
+    }
+    
+    closePopup();
+}
+
+// دالة للعروض التجريبية
+function selectDemoOffer(title, price, oldPrice) {
+    const discount = Math.round(((oldPrice - price) / oldPrice) * 100);
+    
+    selectOffer({
+        title: title,
+        real_price: price,
+        fake_price: oldPrice,
+        discount_percentage: discount
+    });
+}
+
+// Close popup when clicking outside
+window.onclick = function(event) {
+    const popup = document.getElementById('offersPopup');
+    if (event.target === popup) {
+        closePopup();
+    }
+}
+
+// إضافة لوحة مفاتيح
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closePopup();
+    }
+});
+
+// دوال أزرار العروض
+function acceptOffers() {
+    // إخفاء popup العروض
+    document.getElementById('offersPopup').style.display = 'none';
+    
+    // عرض رسالة ترحيب
+    alert('🎉 ممتاز! تم قبول العروض بنجاح\n\nاختر المنتج اللي عايزه واستفيد من الخصومات الحصرية! 🔥');
+    
+    // تمرير سلس للمنتجات
+    document.querySelector('.products-section').scrollIntoView({
+        behavior: 'smooth'
+    });
+}
+
+function declineOffers() {
+    // إخفاء popup العروض
+    document.getElementById('offersPopup').style.display = 'none';
+    
+    // عرض رسالة مهذبة
+    alert('👀 لا مشكلة!\n\nيمكنك تصفح جميع المنتجات بالأسعار العادية');
+    
+    // تمرير سلس للمنتجات
+    document.querySelector('.products-section').scrollIntoView({
+        behavior: 'smooth'
+    });
+}
+
+.offer-platform {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffd700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 600;
+    display: inline-block;
+    margin: 8px 0;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.offer-title {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #fff;
+    margin: 10px 0 5px 0;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+.offer-price {
+    margin: 15px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.real-price {
+    font-size: 2.2em;
+    font-weight: bold;
+    color: #00ff88;
+    text-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+}
+
+.fake-price {
+    font-size: 1.4em;
+    color: #888;
+    text-decoration: line-through;
+    opacity: 0.8;
+}
+
+.offer-validity {
+    background: linear-gradient(45deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
+    border: 1px solid #ffc107;
+    border-radius: 8px;
+    padding: 8px 15px;
+    margin: 12px 0;
+    color: #ffc107;
+    font-weight: 600;
+    font-size: 0.95em;
+    text-align: center;
+}
+
+console.log('🚀 تم تحميل نظام العروض بنجاح');
+</script>
+
 </body>
 </html>
