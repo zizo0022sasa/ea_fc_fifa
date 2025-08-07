@@ -2656,24 +2656,31 @@ function selectOffer(offer) {
             });
         });
         
-        // دالة إظهار الرسائل
-        function showAlert(message, type = 'success') {
-            const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
-            const icon = type === 'success' ? '✅' : '❌';
-            
-            alertContainer.innerHTML = `
-                <div class="alert ${alertClass} alert-dismissible fade show alert-custom" role="alert">
-                    <strong>${icon} ${message}</strong>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            `;
-            
-            // إزالة الرسالة بعد 5 ثوان
-            setTimeout(() => {
-                const alert = alertContainer.querySelector('.alert');
-                if (alert) alert.remove();
-            }, 5000);
-        }
+// دالة إظهار الرسائل (لو مش موجودة)
+function showAlert(message, type = 'success') {
+    const alertContainer = document.getElementById('alertContainer');
+    if (!alertContainer) {
+        console.error('❌ alertContainer مش موجود');
+        alert(message.replace(/<br>/g, '\n').replace(/<[^>]*>/g, ''));
+        return;
+    }
+    
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const icon = type === 'success' ? '✅' : '❌';
+    
+    alertContainer.innerHTML = `
+        <div class="alert ${alertClass} alert-dismissible fade show alert-custom" role="alert">
+            <strong>${icon} ${message}</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // إزالة الرسالة بعد 5 ثوان
+    setTimeout(() => {
+        const alert = alertContainer.querySelector('.alert');
+        if (alert) alert.remove();
+    }, 5000);
+}
         
         // إزالة تأثير البلور عند النقر خارج الكروت
         document.addEventListener('click', function(event) {
