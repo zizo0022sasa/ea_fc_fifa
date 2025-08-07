@@ -2873,47 +2873,47 @@ function closePopup() {
     console.log('❌ تم إغلاق العروض');
 }
 
-// Select offer - محسن
+// الدالة الجديدة (بدون رسالة تأكيد)
 function selectOffer(offer) {
     console.log('🎯 تم اختيار عرض:', offer);
     
-    // تأثير بصري
-    const popup = document.getElementById('offersPopup');
-    popup.style.background = 'rgba(0,255,0,0.1)';
-    
-    setTimeout(() => {
-        popup.style.background = 'rgba(0,0,0,0.7)';
-    }, 300);
-    
-    // رسالة تأكيد محسنة
-    const confirmMessage = `
-        🎉 تم اختيار العرض بنجاح!
-        
-        📋 تفاصيل العرض:
-        • ${offer.title || 'عرض خاص'}
-        • السعر: $${offer.real_price || '0'}
-        • الخصم: ${offer.discount_percentage || '0'}%
-        
-        💬 هل تريد التواصل عبر الواتساب الآن؟
-    `;
-    
-    if (confirm(confirmMessage)) {
-        // فتح الواتساب مع رسالة مخصصة
-        const message = encodeURIComponent(`
-مرحباً! 🎉
-
-أريد الاستفادة من العرض الخاص:
-📋 ${offer.title || 'عرض خاص'}
-💰 السعر: $${offer.real_price || '0'}
-🔥 الخصم: ${offer.discount_percentage || '0'}%
-
-يرجى تأكيد توفر العرض
-        `);
-        
-        const whatsappUrl = `https://wa.me/+201094591331?text=${message}`;
-        window.open(whatsappUrl, '_blank');
+    // التأكد من وجود البيانات المطلوبة
+    if (!offer.game_type || !offer.platform || !offer.account_type) {
+        alert('❌ بيانات العرض غير مكتملة، لا يمكن إرسال الطلب.');
+        return;
     }
     
+    // (تم مسح كود رسالة التأكيد من هنا)
+    
+    // تجهيز بيانات الطلب مباشرة
+    const formData = new FormData();
+    formData.append('game_type', offer.game_type);
+    formData.append('platform', offer.platform);
+    formData.append('account_type', offer.account_type);
+    
+    // إرسال الطلب وفتح الواتساب مباشرة
+    fetch('/whatsapp', {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // ممكن تظهر رسالة سريعة في الـ console بدل الـ alert
+            console.log(`طلب ناجح! جاري فتح الواتساب... المرجع: ${data.reference_id}`);
+            window.open(data.whatsapp_url, '_blank');
+        } else {
+            // في حالة الخطأ، لازم نظهر رسالة
+            alert('❌ ' + (data.error || 'حدث خطأ في إرسال الطلب'));
+        }
+    })
+    .catch(error => {
+        console.error('خطأ في الشبكة:', error);
+        alert('❌ حدث خطأ في الاتصال بالشبكة.');
+    });
+    
+    // قفل الـ popup بعد الضغط مباشرة
     closePopup();
 }
 
