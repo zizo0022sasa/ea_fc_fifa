@@ -1,901 +1,1083 @@
-from flask import Flask, render_template, request, jsonify, session
-import os
-import re
-import hashlib
-import secrets
-import requests
-from datetime import datetime
-import json
-import phonenumbers
-from phonenumbers import geocoder, carrier
-from phonenumbers.phonenumberutil import number_type
-import time
-import random
-from urllib.parse import urlparse
-from bs4 import BeautifulSoup
-import numpy as np
-import sqlite3
-import threading
+from flask import Flask, render_template, request, jsonify, abort
+import json, os, secrets, time, re, hashlib
+from datetime import datetime, timedelta
+import logging
+from functools import wraps
+from collections import defaultdict
+import urllib.parse
 
+# إعداد التطبيق
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', secrets.token_urlsafe(32))
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))
 
-# إعدادات الأمان محدثة
-app.config['SESSION_COOKIE_SECURE'] = False  # تم تعطيل HTTPS للتطوير
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+# إعداد الـ Logging للأمان
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
-# قاعدة بيانات بسيطة في الذاكرة للـ telegram codes
-telegram_codes = {}
-users_data = {}
+# متغيرات الحماية العامة
+blocked_ips = {}
+request_counts = defaultdict(list)
+failed_attempts = {}
 
-# قاموس البلدان والشركات المصرية
-EGYPTIAN_CARRIERS = {
-    '010': {'name': 'فودافون مصر', 'carrier_en': 'Vodafone Egypt'},
-    '011': {'name': 'اتصالات مصر', 'carrier_en': 'Etisalat Egypt'},
-    '012': {'name': 'أورانج مصر', 'carrier_en': 'Orange Egypt'},
-    '015': {'name': 'وي مصر', 'carrier_en': 'WE Egypt (Telecom Egypt)'}
-}
+# إعدادات الواتساب
+WHATSAPP_NUMBER = "+201094591331"
+BUSINESS_NAME = "شهد السنيورة"
 
-def generate_csrf_token():
-    """توليد رمز CSRF آمن"""
-    return secrets.token_urlsafe(32)
+# دالة تنسيق الأرقام بالفاصلة العشرية
+def format_number(number):
+    """تنسيق الأرقام بالفاصلة العشرية"""
+    return f"{int(number):,}"
 
-def sanitize_input(text):
-    """تنظيف المدخلات من الأكواد الضارة"""
-    if not text:
-        return ""
-    text = re.sub(r'<[^>]+>', '', text)
-    return text.strip()
+# Rate Limiting محسن بدون CSRF
+def rate_limit(max_requests=10, window=60):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+            current_time = time.time()
+            
+            # فحص IP محظور
+            if client_ip in blocked_ips:
+                block_time, duration = blocked_ips[client_ip]
+                if current_time - block_time < duration:
+                    logger.warning(f"🚨 IP محظور: {client_ip}")
+                    abort(429)
+                else:
+                    del blocked_ips[client_ip]
+            
+            # تنظيف الطلبات القديمة
+            request_counts[client_ip] = [
+                req_time for req_time in request_counts[client_ip]
+                if current_time - req_time < window
+            ]
+            
+            # فحص عدد الطلبات
+            if len(request_counts[client_ip]) >= max_requests:
+                # حظر مؤقت
+                blocked_ips[client_ip] = (current_time, 300)  # 5 دقائق
+                logger.warning(f"🚨 Rate limit exceeded - IP blocked: {client_ip}")
+                abort(429)
+            
+            # إضافة الطلب الحالي
+            request_counts[client_ip].append(current_time)
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
 
-def normalize_phone_number(phone):
-    """تطبيع رقم الهاتف"""
-    if not phone:
-        return ""
+# حماية إضافية من Spam
+def anti_spam_check(ip_address, user_agent):
+    """فحص إضافي ضد الـ spam والـ bots"""
+    current_time = time.time()
     
-    clean_phone = re.sub(r'[^\d+]', '', phone)
+    # فحص User Agent
+    suspicious_agents = ['bot', 'crawler', 'spider', 'scraper']
+    if any(agent in user_agent.lower() for agent in suspicious_agents):
+        logger.warning(f"🚨 Suspicious user agent from IP: {ip_address}")
+        return False
     
-    if clean_phone.startswith('00'):
-        clean_phone = '+' + clean_phone[2:]
-    elif clean_phone.startswith('01') and len(clean_phone) == 11:
-        clean_phone = '+2' + clean_phone
-    elif re.match(r'^\d{12,15}$', clean_phone) and not clean_phone.startswith('01'):
-        clean_phone = '+' + clean_phone
+    # فحص التكرار السريع
+    key = f"{ip_address}_{user_agent}"
+    if key not in failed_attempts:
+        failed_attempts[key] = []
     
-    return clean_phone
+    # تنظيف المحاولات القديمة
+    failed_attempts[key] = [
+        t for t in failed_attempts[key] 
+        if current_time - t < 60  # آخر دقيقة
+    ]
+    
+    # إذا أكتر من 3 محاولات في دقيقة واحدة
+    if len(failed_attempts[key]) >= 3:
+        blocked_ips[ip_address] = (current_time, 900)  # حظر 15 دقيقة
+        logger.warning(f"🚨 Anti-spam triggered - IP blocked: {ip_address}")
+        return False
+    
+    failed_attempts[key].append(current_time)
+    return True
 
-def check_whatsapp_ultimate_method(phone_number):
+# 🔥 دالة جديدة لإدارة العروض - مع الأسعار الوهمية
+def get_offers():
     """
-    🔥 الطريقة النهائية المبتكرة - تجمع كل الحلول الذكية
+    🔥 مركز التحكم الذكي - أسعار وهمية + أسعار حقيقية!
+    =========================================================
+    
+    📝 النظام الجديد:
+    - FAKE_PRICE = السعر الوهمي (اللي هيتشطب)
+    - REAL_PRICE = السعر الحقيقي (اللي العميل هيدفعه)
+    - الخصم هيتحسب تلقائي = ((FAKE - REAL) / FAKE) * 100
+    
+    🎯 مثال:
+    FAKE_PRICE = 5000  (السعر الوهمي)
+    REAL_PRICE = 3200  (السعر الحقيقي) 
+    النتيجة = خصم 36% تلقائي!
+    
+    💡 استراتيجية التسعير:
+    1. حط السعر الحقيقي اللي عايزه
+    2. حط السعر الوهمي أعلى منه
+    3. الخصم هيظهر تلقائي وجذاب!
     """
     
-    results = []
-    clean_phone = phone_number.replace('+', '').replace(' ', '')
+    # 🎮 تحكم عام في العروض
+    # ======================
+    ALL_OFFERS_ACTIVE = "yas"  # yas = كل العروض شغالة | no = كل العروض مقفولة
     
-    # الطريقة 1: Advanced Scraping
-    try:
-        time.sleep(random.uniform(0.1, 0.5))  # محاكاة سلوك إنساني
-        
-        url = f"https://wa.me/{clean_phone}?text=Test"
-        session_req = requests.Session()
-        
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language': 'ar,en;q=0.9',
-            'Connection': 'keep-alive'
-        }
-        
-        response = session_req.get(url, headers=headers, timeout=8, allow_redirects=True)
-        
-        # تحليل محتوى متقدم
-        soup = BeautifulSoup(response.text, 'html.parser')
-        page_content = response.text.lower()
-        
-        success_indicators = ['continue to chat', 'المتابعة إلى الدردشة', 'open whatsapp', 'whatsapp://send']
-        error_indicators = ['phone number shared via url is invalid', 'رقم الهاتف غير صحيح', 'invalid phone']
-        
-        scraping_result = None
-        for indicator in success_indicators:
-            if indicator.lower() in page_content:
-                scraping_result = True
-                break
-                
-        if scraping_result is None:
-            for indicator in error_indicators:
-                if indicator.lower() in page_content:
-                    scraping_result = False
-                    break
-        
-        results.append({
-            'method': 'advanced_scraping',
-            'result': scraping_result,
-            'confidence': 0.8 if scraping_result is not None else 0.3
-        })
-        
-    except:
-        results.append({
-            'method': 'advanced_scraping',
-            'result': None,
-            'confidence': 0.1
-        })
+    # 🇸🇦 ================ ARABIC STANDARD EDITION ================
     
-    # الطريقة 2: Multiple Endpoints
-    try:
-        endpoints = [
-            f"https://wa.me/{clean_phone}",
-            f"https://api.whatsapp.com/send?phone={clean_phone}",
-            f"https://web.whatsapp.com/send?phone={clean_phone}"
-        ]
-        
-        success_count = 0
-        total_count = 0
-        
-        for endpoint in endpoints:
-            try:
-                resp = requests.head(endpoint, timeout=3, allow_redirects=True)
-                total_count += 1
-                if resp.status_code in [200, 302]:
-                    success_count += 1
-            except:
-                total_count += 1
-        
-        endpoint_result = success_count > (total_count / 2) if total_count > 0 else None
-        endpoint_confidence = (success_count / total_count) if total_count > 0 else 0.1
-        
-        results.append({
-            'method': 'multiple_endpoints',
-            'result': endpoint_result,
-            'confidence': endpoint_confidence
-        })
-        
-    except:
-        results.append({
-            'method': 'multiple_endpoints',
-            'result': None,
-            'confidence': 0.1
-        })
+    # Arabic Standard - PS5 - Full
+    AR_STD_PS5_FULL_ACTIVE = "no"      # yas = العرض شغال | no = مقفول
+    AR_STD_PS5_FULL_FAKE_PRICE = 5000  # السعر الوهمي (اللي هيتشطب)
+    AR_STD_PS5_FULL_REAL_PRICE = 3200  # السعر الحقيقي (اللي العميل هيدفعه)
     
-    # الطريقة 3: AI Pattern Recognition
-    try:
-        # خصائص للتحليل
-        features = []
-        features.append(len(clean_phone))  # طول الرقم
-        
-        # تحليل كود البلد
-        egypt_patterns = ['2010', '2011', '2012', '2015']
-        has_egypt_pattern = any(clean_phone.startswith(pattern) for pattern in egypt_patterns)
-        features.append(int(has_egypt_pattern))
-        
-        # تحليل الأرقام
-        if len(clean_phone) > 0:
-            digits = [int(d) for d in clean_phone if d.isdigit()]
-            if digits:
-                features.extend([
-                    np.mean(digits),
-                    len(set(digits)),
-                    int(len(clean_phone) >= 10 and len(clean_phone) <= 15)
-                ])
-            else:
-                features.extend([0, 0, 0])
-        else:
-            features.extend([0, 0, 0])
-        
-        # حساب نقاط الثقة بناءً على الخصائص
-        ai_score = 0.5  # قيمة افتراضية
-        
-        # للأرقام المصرية الصحيحة
-        if has_egypt_pattern and len(clean_phone) == 12:
-            ai_score = 0.9
-        elif len(clean_phone) >= 10 and len(clean_phone) <= 15:
-            ai_score = 0.7
-        elif len(clean_phone) < 8 or len(clean_phone) > 16:
-            ai_score = 0.2
-        
-        ai_result = ai_score > 0.6
-        
-        results.append({
-            'method': 'ai_pattern',
-            'result': ai_result,
-            'confidence': ai_score
-        })
-        
-    except:
-        results.append({
-            'method': 'ai_pattern',
-            'result': None,
-            'confidence': 0.1
-        })
+    # Arabic Standard - PS5 - Primary  
+    AR_STD_PS5_PRIMARY_ACTIVE = "no"     # yas = العرض شغال | no = مقفول
+    AR_STD_PS5_PRIMARY_FAKE_PRICE = 2500 # السعر الوهمي
+    AR_STD_PS5_PRIMARY_REAL_PRICE = 1600 # السعر الحقيقي
     
-    # تحليل النتائج النهائية
-    valid_results = [r for r in results if r['result'] is not None]
+    # Arabic Standard - PS5 - Secondary
+    AR_STD_PS5_SECONDARY_ACTIVE = "no"  # yas = العرض شغال | no = مقفول
+    AR_STD_PS5_SECONDARY_FAKE_PRICE = 1800 # السعر الوهمي
+    AR_STD_PS5_SECONDARY_REAL_PRICE = 900  # السعر الحقيقي
     
-    if not valid_results:
-        return {
-            'exists': None,
-            'method': 'ultimate_combined',
-            'confidence': 'very_low',
-            'details': results,
-            'message': 'لا يمكن التحقق من الرقم - جميع الطرق فشلت'
-        }
+    # Arabic Standard - PS4 - Full
+    AR_STD_PS4_FULL_ACTIVE = "no"       # yas = العرض شغال | no = مقفول
+    AR_STD_PS4_FULL_FAKE_PRICE = 4800   # السعر الوهمي
+    AR_STD_PS4_FULL_REAL_PRICE = 3200   # السعر الحقيقي
     
-    # حساب النتيجة المرجحة
-    positive_weight = sum(r['confidence'] for r in valid_results if r['result'] is True)
-    negative_weight = sum(r['confidence'] for r in valid_results if r['result'] is False)
-    total_weight = positive_weight + negative_weight
+    # Arabic Standard - PS4 - Primary
+    AR_STD_PS4_PRIMARY_ACTIVE = "no"     # yas = العرض شغال | no = مقفول
+    AR_STD_PS4_PRIMARY_FAKE_PRICE = 1800 # السعر الوهمي
+    AR_STD_PS4_PRIMARY_REAL_PRICE = 800  # السعر الحقيقي
     
-    if total_weight == 0:
-        final_result = None
-        confidence_level = 'very_low'
-    else:
-        final_score = positive_weight / total_weight
-        final_result = final_score > 0.5
+    # Arabic Standard - PS4 - Secondary
+    AR_STD_PS4_SECONDARY_ACTIVE = "no"  # yas = العرض شغال | no = مقفول
+    AR_STD_PS4_SECONDARY_FAKE_PRICE = 1500 # السعر الوهمي
+    AR_STD_PS4_SECONDARY_REAL_PRICE = 1000 # السعر الحقيقي
+    
+    # 🇸🇦 ================ ARABIC ULTIMATE EDITION ================
+    
+    # Arabic Ultimate - PS5 - Full
+    AR_ULT_PS5_FULL_ACTIVE = "no"        # yas = العرض شغال | no = مقفول
+    AR_ULT_PS5_FULL_FAKE_PRICE = 7000    # السعر الوهمي
+    AR_ULT_PS5_FULL_REAL_PRICE = 4500    # السعر الحقيقي
+    
+    # Arabic Ultimate - PS5 - Primary
+    AR_ULT_PS5_PRIMARY_ACTIVE = "no"    # yas = العرض شغال | no = مقفول
+    AR_ULT_PS5_PRIMARY_FAKE_PRICE = 3200 # السعر الوهمي
+    AR_ULT_PS5_PRIMARY_REAL_PRICE = 2000 # السعر الحقيقي
+    
+    # Arabic Ultimate - PS5 - Secondary
+    AR_ULT_PS5_SECONDARY_ACTIVE = "no"   # yas = العرض شغال | no = مقفول
+    AR_ULT_PS5_SECONDARY_FAKE_PRICE = 3500 # السعر الوهمي
+    AR_ULT_PS5_SECONDARY_REAL_PRICE = 1800 # السعر الحقيقي
+    
+    # Arabic Ultimate - PS4 - Full
+    AR_ULT_PS4_FULL_ACTIVE = "no"       # yas = العرض شغال | no = مقفول
+    AR_ULT_PS4_FULL_FAKE_PRICE = 6800    # السعر الوهمي
+    AR_ULT_PS4_FULL_REAL_PRICE = 4300    # السعر الحقيقي
+    
+    # Arabic Ultimate - PS4 - Primary
+    AR_ULT_PS4_PRIMARY_ACTIVE = "no"     # yas = العرض شغال | no = مقفول
+    AR_ULT_PS4_PRIMARY_FAKE_PRICE = 2500 # السعر الوهمي
+    AR_ULT_PS4_PRIMARY_REAL_PRICE = 1200 # السعر الحقيقي
+    
+    # Arabic Ultimate - PS4 - Secondary
+    AR_ULT_PS4_SECONDARY_ACTIVE = "no"  # yas = العرض شغال | no = مقفول
+    AR_ULT_PS4_SECONDARY_FAKE_PRICE = 2800 # السعر الوهمي
+    AR_ULT_PS4_SECONDARY_REAL_PRICE = 1900 # السعر الحقيقي
+    
+    # 🇺🇸 ================ ENGLISH STANDARD EDITION ================
+    
+    # English Standard - PS5 - Full
+    EN_STD_PS5_FULL_ACTIVE = "no"        # yas = العرض شغال | no = مقفول
+    EN_STD_PS5_FULL_FAKE_PRICE = 0000    # السعر الوهمي
+    EN_STD_PS5_FULL_REAL_PRICE = 0000    # السعر الحقيقي
+    
+    # English Standard - PS5 - Primary
+    EN_STD_PS5_PRIMARY_ACTIVE = "no"    # yas = العرض شغال | no = مقفول
+    EN_STD_PS5_PRIMARY_FAKE_PRICE = 0000 # السعر الوهمي
+    EN_STD_PS5_PRIMARY_REAL_PRICE = 0000 # السعر الحقيقي
+    
+    # English Standard - PS5 - Secondary
+    EN_STD_PS5_SECONDARY_ACTIVE = "yas"   # yas = العرض شغال | no = مقفول
+    EN_STD_PS5_SECONDARY_FAKE_PRICE = 1000 # السعر الوهمي
+    EN_STD_PS5_SECONDARY_REAL_PRICE = 750  # السعر الحقيقي
+    
+    # English Standard - PS4 - Full
+    EN_STD_PS4_FULL_ACTIVE = "no"       # yas = العرض شغال | no = مقفول
+    EN_STD_PS4_FULL_FAKE_PRICE = 0000    # السعر الوهمي
+    EN_STD_PS4_FULL_REAL_PRICE = 0000    # السعر الحقيقي
+    
+    # English Standard - PS4 - Primary
+    EN_STD_PS4_PRIMARY_ACTIVE = "yas"     # yas = العرض شغال | no = مقفول
+    EN_STD_PS4_PRIMARY_FAKE_PRICE = 1100 # السعر الوهمي
+    EN_STD_PS4_PRIMARY_REAL_PRICE = 900  # السعر الحقيقي
+    
+    # English Standard - PS4 - Secondary
+    EN_STD_PS4_SECONDARY_ACTIVE = "yas"  # yas = العرض شغال | no = مقفول
+    EN_STD_PS4_SECONDARY_FAKE_PRICE = 1000 # السعر الوهمي
+    EN_STD_PS4_SECONDARY_REAL_PRICE = 750 # السعر الحقيقي
+    
+    # 🇺🇸 ================ ENGLISH ULTIMATE EDITION ================
+    
+    # English Ultimate - PS5 - Full
+    EN_ULT_PS5_FULL_ACTIVE = "no"        # yas = العرض شغال | no = مقفول
+    EN_ULT_PS5_FULL_FAKE_PRICE = 0000    # السعر الوهمي
+    EN_ULT_PS5_FULL_REAL_PRICE = 0000    # السعر الحقيقي
+    
+    # English Ultimate - PS5 - Primary
+    EN_ULT_PS5_PRIMARY_ACTIVE = "no"    # yas = العرض شغال | no = مقفول
+    EN_ULT_PS5_PRIMARY_FAKE_PRICE = 0000 # السعر الوهمي
+    EN_ULT_PS5_PRIMARY_REAL_PRICE = 0000 # السعر الحقيقي
+    
+    # English Ultimate - PS5 - Secondary
+    EN_ULT_PS5_SECONDARY_ACTIVE = "yas"   # yas = العرض شغال | no = مقفول
+    EN_ULT_PS5_SECONDARY_FAKE_PRICE = 2200 # السعر الوهمي
+    EN_ULT_PS5_SECONDARY_REAL_PRICE = 1650 # السعر الحقيقي
+    
+    # English Ultimate - PS4 - Full
+    EN_ULT_PS4_FULL_ACTIVE = "no"       # yas = العرض شغال | no = مقفول
+    EN_ULT_PS4_FULL_FAKE_PRICE = 0000    # السعر الوهمي
+    EN_ULT_PS4_FULL_REAL_PRICE = 0000    # السعر الحقيقي
+    
+    # English Ultimate - PS4 - Primary
+    EN_ULT_PS4_PRIMARY_ACTIVE = "yas"     # yas = العرض شغال | no = مقفول
+    EN_ULT_PS4_PRIMARY_FAKE_PRICE = 1400 # السعر الوهمي
+    EN_ULT_PS4_PRIMARY_REAL_PRICE = 1050 # السعر الحقيقي
+    
+    # English Ultimate - PS4 - Secondary
+    EN_ULT_PS4_SECONDARY_ACTIVE = "yas"  # yas = العرض شغال | no = مقفول
+    EN_ULT_PS4_SECONDARY_FAKE_PRICE = 2200 # السعر الوهمي
+    EN_ULT_PS4_SECONDARY_REAL_PRICE = 1650 # السعر الحقيقي
+    
+    # 🎮 ================ XBOX EDITIONS ================
+    
+    # Xbox Standard - Full
+    XBOX_STD_FULL_ACTIVE = "no"          # yas = العرض شغال | no = مقفول
+    XBOX_STD_FULL_FAKE_PRICE = 0000      # السعر الوهمي
+    XBOX_STD_FULL_REAL_PRICE = 0000      # السعر الحقيقي
+    
+    # Xbox Ultimate - Full  
+    XBOX_ULT_FULL_ACTIVE = "no"         # yas = العرض شغال | no = مقفول
+    XBOX_ULT_FULL_FAKE_PRICE = 6200      # السعر الوهمي
+    XBOX_ULT_FULL_REAL_PRICE = 3800      # السعر الحقيقي
+    
+    # 🖥️ ================ PC EDITIONS ================
+    
+    # PC Standard (شهر) - Full
+    PC_STD_FULL_ACTIVE = "no"           # yas = العرض شغال | no = مقفول
+    PC_STD_FULL_FAKE_PRICE = 0000         # السعر الوهمي
+    PC_STD_FULL_REAL_PRICE = 0000           # السعر الحقيقي (مجاني)
+    
+    # PC Ultimate (سنة) - Full
+    PC_ULT_FULL_ACTIVE = "no"            # yas = العرض شغال | no = مقفول
+    PC_ULT_FULL_FAKE_PRICE = 0000        # السعر الوهمي
+    PC_ULT_FULL_REAL_PRICE = 0000        # السعر الحقيقي
+    
+    # 🖥️ ================ STEAM EDITIONS ================
+    
+    # Steam Standard - Full
+    STEAM_STD_FULL_ACTIVE = "no"         # yas = العرض شغال | no = مقفول
+    STEAM_STD_FULL_FAKE_PRICE = 2500     # السعر الوهمي
+    STEAM_STD_FULL_REAL_PRICE = 1400     # السعر الحقيقي
+    
+    # Steam Ultimate - Full
+    STEAM_ULT_FULL_ACTIVE = "no"        # yas = العرض شغال | no = مقفول
+    STEAM_ULT_FULL_FAKE_PRICE = 4200     # السعر الوهمي
+    STEAM_ULT_FULL_REAL_PRICE = 2600     # السعر الحقيقي
+    
+    # 📅 إعدادات العرض المنبثق
+    # ========================
+    SHOW_POPUP = "yas"                    # yas = يظهر البوب اب | no = مايظهرش
+    POPUP_TITLE = "🔥 عروض حصرية - وفر حتى 50%!"
+    POPUP_DESCRIPTION = "خصومات حقيقية لفترة محدودة - أسعار لن تتكرر!"
+    
+    # ⚠️ لا تغير الكود اللي تحت ده - ده بيطبق الإعدادات اللي فوق
+    # ===============================================================
+    
+    def calculate_discount(fake_price, real_price):
+        """حساب نسبة الخصم تلقائياً"""
+        if fake_price <= 0 or real_price < 0 or real_price >= fake_price:
+            return 0
+        return round(((fake_price - real_price) / fake_price) * 100)
+    
+    # تجميع كل العروض النشطة
+    active_offers = []
+    eligible_games = []
+    
+    if ALL_OFFERS_ACTIVE == "yas":
         
-        if final_score > 0.8:
-            confidence_level = 'very_high'
-        elif final_score > 0.6:
-            confidence_level = 'high'
-        elif final_score > 0.4:
-            confidence_level = 'medium'
-        else:
-            confidence_level = 'low'
+        # Arabic Standard offers
+        if AR_STD_PS5_FULL_ACTIVE == "yas":
+            discount = calculate_discount(AR_STD_PS5_FULL_FAKE_PRICE, AR_STD_PS5_FULL_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_AR_Standard", "platform": "PS5", "account": "Full", 
+                    "fake_price": AR_STD_PS5_FULL_FAKE_PRICE, "real_price": AR_STD_PS5_FULL_REAL_PRICE, "discount": discount
+                })
+                if "FC26_AR_Standard" not in eligible_games:
+                    eligible_games.append("FC26_AR_Standard")
+        
+        if AR_STD_PS5_PRIMARY_ACTIVE == "yas":
+            discount = calculate_discount(AR_STD_PS5_PRIMARY_FAKE_PRICE, AR_STD_PS5_PRIMARY_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_AR_Standard", "platform": "PS5", "account": "Primary",
+                    "fake_price": AR_STD_PS5_PRIMARY_FAKE_PRICE, "real_price": AR_STD_PS5_PRIMARY_REAL_PRICE, "discount": discount
+                })
+                if "FC26_AR_Standard" not in eligible_games:
+                    eligible_games.append("FC26_AR_Standard")
+        
+        if AR_STD_PS5_SECONDARY_ACTIVE == "yas":
+            discount = calculate_discount(AR_STD_PS5_SECONDARY_FAKE_PRICE, AR_STD_PS5_SECONDARY_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_AR_Standard", "platform": "PS5", "account": "Secondary",
+                    "fake_price": AR_STD_PS5_SECONDARY_FAKE_PRICE, "real_price": AR_STD_PS5_SECONDARY_REAL_PRICE, "discount": discount
+                })
+                if "FC26_AR_Standard" not in eligible_games:
+                    eligible_games.append("FC26_AR_Standard")
+        
+        if AR_STD_PS4_FULL_ACTIVE == "yas":
+            discount = calculate_discount(AR_STD_PS4_FULL_FAKE_PRICE, AR_STD_PS4_FULL_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_AR_Standard", "platform": "PS4", "account": "Full",
+                    "fake_price": AR_STD_PS4_FULL_FAKE_PRICE, "real_price": AR_STD_PS4_FULL_REAL_PRICE, "discount": discount
+                })
+                if "FC26_AR_Standard" not in eligible_games:
+                    eligible_games.append("FC26_AR_Standard")
+        
+        if AR_STD_PS4_PRIMARY_ACTIVE == "yas":
+            discount = calculate_discount(AR_STD_PS4_PRIMARY_FAKE_PRICE, AR_STD_PS4_PRIMARY_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_AR_Standard", "platform": "PS4", "account": "Primary",
+                    "fake_price": AR_STD_PS4_PRIMARY_FAKE_PRICE, "real_price": AR_STD_PS4_PRIMARY_REAL_PRICE, "discount": discount
+                })
+                if "FC26_AR_Standard" not in eligible_games:
+                    eligible_games.append("FC26_AR_Standard")
+        
+        if AR_STD_PS4_SECONDARY_ACTIVE == "yas":
+            discount = calculate_discount(AR_STD_PS4_SECONDARY_FAKE_PRICE, AR_STD_PS4_SECONDARY_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_AR_Standard", "platform": "PS4", "account": "Secondary",
+                    "fake_price": AR_STD_PS4_SECONDARY_FAKE_PRICE, "real_price": AR_STD_PS4_SECONDARY_REAL_PRICE, "discount": discount
+                })
+                if "FC26_AR_Standard" not in eligible_games:
+                    eligible_games.append("FC26_AR_Standard")
+        
+        # Arabic Ultimate offers
+        if AR_ULT_PS5_FULL_ACTIVE == "yas":
+            discount = calculate_discount(AR_ULT_PS5_FULL_FAKE_PRICE, AR_ULT_PS5_FULL_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_AR_Ultimate", "platform": "PS5", "account": "Full",
+                    "fake_price": AR_ULT_PS5_FULL_FAKE_PRICE, "real_price": AR_ULT_PS5_FULL_REAL_PRICE, "discount": discount
+                })
+                if "FC26_AR_Ultimate" not in eligible_games:
+                    eligible_games.append("FC26_AR_Ultimate")
+        
+        if AR_ULT_PS5_PRIMARY_ACTIVE == "yas":
+            discount = calculate_discount(AR_ULT_PS5_PRIMARY_FAKE_PRICE, AR_ULT_PS5_PRIMARY_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_AR_Ultimate", "platform": "PS5", "account": "Primary",
+                    "fake_price": AR_ULT_PS5_PRIMARY_FAKE_PRICE, "real_price": AR_ULT_PS5_PRIMARY_REAL_PRICE, "discount": discount
+                })
+                if "FC26_AR_Ultimate" not in eligible_games:
+                    eligible_games.append("FC26_AR_Ultimate")
+        
+        if AR_ULT_PS5_SECONDARY_ACTIVE == "yas":
+            discount = calculate_discount(AR_ULT_PS5_SECONDARY_FAKE_PRICE, AR_ULT_PS5_SECONDARY_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_AR_Ultimate", "platform": "PS5", "account": "Secondary",
+                    "fake_price": AR_ULT_PS5_SECONDARY_FAKE_PRICE, "real_price": AR_ULT_PS5_SECONDARY_REAL_PRICE, "discount": discount
+                })
+                if "FC26_AR_Ultimate" not in eligible_games:
+                    eligible_games.append("FC26_AR_Ultimate")
+        
+        if AR_ULT_PS4_FULL_ACTIVE == "yas":
+            discount = calculate_discount(AR_ULT_PS4_FULL_FAKE_PRICE, AR_ULT_PS4_FULL_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_AR_Ultimate", "platform": "PS4", "account": "Full",
+                    "fake_price": AR_ULT_PS4_FULL_FAKE_PRICE, "real_price": AR_ULT_PS4_FULL_REAL_PRICE, "discount": discount
+                })
+                if "FC26_AR_Ultimate" not in eligible_games:
+                    eligible_games.append("FC26_AR_Ultimate")
+        
+        if AR_ULT_PS4_PRIMARY_ACTIVE == "yas":
+            discount = calculate_discount(AR_ULT_PS4_PRIMARY_FAKE_PRICE, AR_ULT_PS4_PRIMARY_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_AR_Ultimate", "platform": "PS4", "account": "Primary",
+                    "fake_price": AR_ULT_PS4_PRIMARY_FAKE_PRICE, "real_price": AR_ULT_PS4_PRIMARY_REAL_PRICE, "discount": discount
+                })
+                if "FC26_AR_Ultimate" not in eligible_games:
+                    eligible_games.append("FC26_AR_Ultimate")
+        
+        if AR_ULT_PS4_SECONDARY_ACTIVE == "yas":
+            discount = calculate_discount(AR_ULT_PS4_SECONDARY_FAKE_PRICE, AR_ULT_PS4_SECONDARY_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_AR_Ultimate", "platform": "PS4", "account": "Secondary",
+                    "fake_price": AR_ULT_PS4_SECONDARY_FAKE_PRICE, "real_price": AR_ULT_PS4_SECONDARY_REAL_PRICE, "discount": discount
+                })
+                if "FC26_AR_Ultimate" not in eligible_games:
+                    eligible_games.append("FC26_AR_Ultimate")
+        
+        # English Standard offers
+        if EN_STD_PS5_FULL_ACTIVE == "yas":
+            discount = calculate_discount(EN_STD_PS5_FULL_FAKE_PRICE, EN_STD_PS5_FULL_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_EN_Standard", "platform": "PS5", "account": "Full",
+                    "fake_price": EN_STD_PS5_FULL_FAKE_PRICE, "real_price": EN_STD_PS5_FULL_REAL_PRICE, "discount": discount
+                })
+                if "FC26_EN_Standard" not in eligible_games:
+                    eligible_games.append("FC26_EN_Standard")
+        
+        if EN_STD_PS5_PRIMARY_ACTIVE == "yas":
+            discount = calculate_discount(EN_STD_PS5_PRIMARY_FAKE_PRICE, EN_STD_PS5_PRIMARY_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_EN_Standard", "platform": "PS5", "account": "Primary",
+                    "fake_price": EN_STD_PS5_PRIMARY_FAKE_PRICE, "real_price": EN_STD_PS5_PRIMARY_REAL_PRICE, "discount": discount
+                })
+                if "FC26_EN_Standard" not in eligible_games:
+                    eligible_games.append("FC26_EN_Standard")
+        
+        if EN_STD_PS5_SECONDARY_ACTIVE == "yas":
+            discount = calculate_discount(EN_STD_PS5_SECONDARY_FAKE_PRICE, EN_STD_PS5_SECONDARY_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_EN_Standard", "platform": "PS5", "account": "Secondary",
+                    "fake_price": EN_STD_PS5_SECONDARY_FAKE_PRICE, "real_price": EN_STD_PS5_SECONDARY_REAL_PRICE, "discount": discount
+                })
+                if "FC26_EN_Standard" not in eligible_games:
+                    eligible_games.append("FC26_EN_Standard")
+        
+        if EN_STD_PS4_FULL_ACTIVE == "yas":
+            discount = calculate_discount(EN_STD_PS4_FULL_FAKE_PRICE, EN_STD_PS4_FULL_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_EN_Standard", "platform": "PS4", "account": "Full",
+                    "fake_price": EN_STD_PS4_FULL_FAKE_PRICE, "real_price": EN_STD_PS4_FULL_REAL_PRICE, "discount": discount
+                })
+                if "FC26_EN_Standard" not in eligible_games:
+                    eligible_games.append("FC26_EN_Standard")
+        
+        if EN_STD_PS4_PRIMARY_ACTIVE == "yas":
+            discount = calculate_discount(EN_STD_PS4_PRIMARY_FAKE_PRICE, EN_STD_PS4_PRIMARY_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_EN_Standard", "platform": "PS4", "account": "Primary",
+                    "fake_price": EN_STD_PS4_PRIMARY_FAKE_PRICE, "real_price": EN_STD_PS4_PRIMARY_REAL_PRICE, "discount": discount
+                })
+                if "FC26_EN_Standard" not in eligible_games:
+                    eligible_games.append("FC26_EN_Standard")
+        
+        if EN_STD_PS4_SECONDARY_ACTIVE == "yas":
+            discount = calculate_discount(EN_STD_PS4_SECONDARY_FAKE_PRICE, EN_STD_PS4_SECONDARY_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_EN_Standard", "platform": "PS4", "account": "Secondary",
+                    "fake_price": EN_STD_PS4_SECONDARY_FAKE_PRICE, "real_price": EN_STD_PS4_SECONDARY_REAL_PRICE, "discount": discount
+                })
+                if "FC26_EN_Standard" not in eligible_games:
+                    eligible_games.append("FC26_EN_Standard")
+        
+        # English Ultimate offers
+        if EN_ULT_PS5_FULL_ACTIVE == "yas":
+            discount = calculate_discount(EN_ULT_PS5_FULL_FAKE_PRICE, EN_ULT_PS5_FULL_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_EN_Ultimate", "platform": "PS5", "account": "Full",
+                    "fake_price": EN_ULT_PS5_FULL_FAKE_PRICE, "real_price": EN_ULT_PS5_FULL_REAL_PRICE, "discount": discount
+                })
+                if "FC26_EN_Ultimate" not in eligible_games:
+                    eligible_games.append("FC26_EN_Ultimate")
+        
+        if EN_ULT_PS5_PRIMARY_ACTIVE == "yas":
+            discount = calculate_discount(EN_ULT_PS5_PRIMARY_FAKE_PRICE, EN_ULT_PS5_PRIMARY_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_EN_Ultimate", "platform": "PS5", "account": "Primary",
+                    "fake_price": EN_ULT_PS5_PRIMARY_FAKE_PRICE, "real_price": EN_ULT_PS5_PRIMARY_REAL_PRICE, "discount": discount
+                })
+                if "FC26_EN_Ultimate" not in eligible_games:
+                    eligible_games.append("FC26_EN_Ultimate")
+        
+        if EN_ULT_PS5_SECONDARY_ACTIVE == "yas":
+            discount = calculate_discount(EN_ULT_PS5_SECONDARY_FAKE_PRICE, EN_ULT_PS5_SECONDARY_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_EN_Ultimate", "platform": "PS5", "account": "Secondary",
+                    "fake_price": EN_ULT_PS5_SECONDARY_FAKE_PRICE, "real_price": EN_ULT_PS5_SECONDARY_REAL_PRICE, "discount": discount
+                })
+                if "FC26_EN_Ultimate" not in eligible_games:
+                    eligible_games.append("FC26_EN_Ultimate")
+        
+        if EN_ULT_PS4_FULL_ACTIVE == "yas":
+            discount = calculate_discount(EN_ULT_PS4_FULL_FAKE_PRICE, EN_ULT_PS4_FULL_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_EN_Ultimate", "platform": "PS4", "account": "Full",
+                    "fake_price": EN_ULT_PS4_FULL_FAKE_PRICE, "real_price": EN_ULT_PS4_FULL_REAL_PRICE, "discount": discount
+                })
+                if "FC26_EN_Ultimate" not in eligible_games:
+                    eligible_games.append("FC26_EN_Ultimate")
+        
+        if EN_ULT_PS4_PRIMARY_ACTIVE == "yas":
+            discount = calculate_discount(EN_ULT_PS4_PRIMARY_FAKE_PRICE, EN_ULT_PS4_PRIMARY_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_EN_Ultimate", "platform": "PS4", "account": "Primary",
+                    "fake_price": EN_ULT_PS4_PRIMARY_FAKE_PRICE, "real_price": EN_ULT_PS4_PRIMARY_REAL_PRICE, "discount": discount
+                })
+                if "FC26_EN_Ultimate" not in eligible_games:
+                    eligible_games.append("FC26_EN_Ultimate")
+        
+        if EN_ULT_PS4_SECONDARY_ACTIVE == "yas":
+            discount = calculate_discount(EN_ULT_PS4_SECONDARY_FAKE_PRICE, EN_ULT_PS4_SECONDARY_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_EN_Ultimate", "platform": "PS4", "account": "Secondary",
+                    "fake_price": EN_ULT_PS4_SECONDARY_FAKE_PRICE, "real_price": EN_ULT_PS4_SECONDARY_REAL_PRICE, "discount": discount
+                })
+                if "FC26_EN_Ultimate" not in eligible_games:
+                    eligible_games.append("FC26_EN_Ultimate")
+        
+        # Xbox offers
+        if XBOX_STD_FULL_ACTIVE == "yas":
+            discount = calculate_discount(XBOX_STD_FULL_FAKE_PRICE, XBOX_STD_FULL_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_XBOX_Standard", "platform": "Xbox", "account": "Full",
+                    "fake_price": XBOX_STD_FULL_FAKE_PRICE, "real_price": XBOX_STD_FULL_REAL_PRICE, "discount": discount
+                })
+                if "FC26_XBOX_Standard" not in eligible_games:
+                    eligible_games.append("FC26_XBOX_Standard")
+        
+        if XBOX_ULT_FULL_ACTIVE == "yas":
+            discount = calculate_discount(XBOX_ULT_FULL_FAKE_PRICE, XBOX_ULT_FULL_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_XBOX_Ultimate", "platform": "Xbox", "account": "Full",
+                    "fake_price": XBOX_ULT_FULL_FAKE_PRICE, "real_price": XBOX_ULT_FULL_REAL_PRICE, "discount": discount
+                })
+                if "FC26_XBOX_Ultimate" not in eligible_games:
+                    eligible_games.append("FC26_XBOX_Ultimate")
+        
+        # PC offers
+        if PC_STD_FULL_ACTIVE == "yas" and PC_STD_FULL_REAL_PRICE >= 0:  # PC مجاني ممكن يكون له عرض وهمي
+            discount = calculate_discount(PC_STD_FULL_FAKE_PRICE, PC_STD_FULL_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_PC_Standard", "platform": "PC", "account": "Full",
+                    "fake_price": PC_STD_FULL_FAKE_PRICE, "real_price": PC_STD_FULL_REAL_PRICE, "discount": discount
+                })
+                if "FC26_PC_Standard" not in eligible_games:
+                    eligible_games.append("FC26_PC_Standard")
+        
+        if PC_ULT_FULL_ACTIVE == "yas":
+            discount = calculate_discount(PC_ULT_FULL_FAKE_PRICE, PC_ULT_FULL_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_PC_Ultimate", "platform": "PC", "account": "Full",
+                    "fake_price": PC_ULT_FULL_FAKE_PRICE, "real_price": PC_ULT_FULL_REAL_PRICE, "discount": discount
+                })
+                if "FC26_PC_Ultimate" not in eligible_games:
+                    eligible_games.append("FC26_PC_Ultimate")
+        
+        # Steam offers
+        if STEAM_STD_FULL_ACTIVE == "yas":
+            discount = calculate_discount(STEAM_STD_FULL_FAKE_PRICE, STEAM_STD_FULL_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_STEAM_Standard", "platform": "Steam", "account": "Full",
+                    "fake_price": STEAM_STD_FULL_FAKE_PRICE, "real_price": STEAM_STD_FULL_REAL_PRICE, "discount": discount
+                })
+                if "FC26_STEAM_Standard" not in eligible_games:
+                    eligible_games.append("FC26_STEAM_Standard")
+        
+        if STEAM_ULT_FULL_ACTIVE == "yas":
+            discount = calculate_discount(STEAM_ULT_FULL_FAKE_PRICE, STEAM_ULT_FULL_REAL_PRICE)
+            if discount > 0:
+                active_offers.append({
+                    "game": "FC26_STEAM_Ultimate", "platform": "Steam", "account": "Full",
+                    "fake_price": STEAM_ULT_FULL_FAKE_PRICE, "real_price": STEAM_ULT_FULL_REAL_PRICE, "discount": discount
+                })
+                if "FC26_STEAM_Ultimate" not in eligible_games:
+                    eligible_games.append("FC26_STEAM_Ultimate")
     
     return {
-        'exists': final_result,
-        'method': 'ultimate_combined',
-        'confidence': confidence_level,
-        'score': round(positive_weight / total_weight * 100, 1) if total_weight > 0 else 0,
-        'methods_used': len(results),
-        'successful_methods': len(valid_results),
-        'details': results,
-        'message': f'تحليل شامل: {len(valid_results)} طرق نجحت من {len(results)} - نسبة الثقة {round(positive_weight / total_weight * 100, 1) if total_weight > 0 else 0}%'
+        "active_offer": {
+            "id": f"smart_pricing_2025",
+            "title": POPUP_TITLE,
+            "description": POPUP_DESCRIPTION,
+            "offers_list": active_offers,
+            "show_popup": SHOW_POPUP == "yas" and ALL_OFFERS_ACTIVE == "yas" and len(active_offers) > 0,
+            "popup_frequency": "once_per_session"
+        } if active_offers else None,
+        "offer_cards": eligible_games if active_offers else []
     }
 
-def validate_whatsapp_ultimate(phone):
-    """الدالة النهائية للتحقق المبتكر من الواتساب"""
-    if not phone:
-        return {'is_valid': False, 'error': 'يرجى إدخال رقم الهاتف'}
-    
-    normalized_phone = normalize_phone_number(phone)
-    
-    if not re.match(r'^\+[1-9]\d{7,14}$', normalized_phone):
-        return {'is_valid': False, 'error': 'تنسيق الرقم غير صحيح'}
-    
-    # التحقق بالطريقة المبتكرة
-    whatsapp_check = check_whatsapp_ultimate_method(normalized_phone)
-    
-    # الحصول على معلومات إضافية عن الرقم
-    try:
-        parsed_number = phonenumbers.parse(normalized_phone, None)
-        country = geocoder.description_for_number(parsed_number, "ar") or "غير معروف"
-        carrier_name = carrier.name_for_number(parsed_number, "ar") or "غير معروف"
-    except:
-        country = "غير معروف"
-        carrier_name = "غير معروف"
-    
-    if whatsapp_check['exists'] is True:
-        return {
-            'is_valid': True,
-            'formatted': normalized_phone,
-            'country': country,
-            'carrier': carrier_name,
-            'whatsapp_status': f'موجود ✅ ({whatsapp_check["confidence"]})',
-            'verification_method': whatsapp_check['method'],
-            'confidence': whatsapp_check['confidence'],
-            'score': whatsapp_check.get('score', 0),
-            'methods_analysis': whatsapp_check.get('details', []),
-            'message': whatsapp_check['message']
-        }
-    elif whatsapp_check['exists'] is False:
-        return {
-            'is_valid': False,
-            'error': f"غير موجود ❌ ({whatsapp_check['confidence']}) - {whatsapp_check['message']}",
-            'formatted': normalized_phone,
-            'verification_method': whatsapp_check['method'],
-            'confidence': whatsapp_check['confidence'],
-            'methods_analysis': whatsapp_check.get('details', [])
-        }
-    else:
-        return {
-            'is_valid': True,  # نقبل الرقم مع تحذير
-            'formatted': normalized_phone,
-            'country': country,
-            'carrier': carrier_name,
-            'whatsapp_status': f'غير مؤكد ⚠️ ({whatsapp_check["confidence"]})',
-            'verification_method': whatsapp_check['method'],
-            'confidence': whatsapp_check['confidence'],
-            'methods_analysis': whatsapp_check.get('details', []),
-            'message': f"رقم صحيح ولكن {whatsapp_check['message']}"
-        }
 
-# باقي دوال التطبيق
-def validate_mobile_payment(payment_number):
-    if not payment_number:
-        return False
-    clean_number = re.sub(r'\D', '', payment_number)
-    return len(clean_number) == 11 and clean_number.startswith(('010', '011', '012', '015'))
-
-def validate_card_number(card_number):
-    if not card_number:
-        return False
-    clean_number = re.sub(r'\D', '', card_number)
-    return len(clean_number) == 16 and clean_number.isdigit()
-
-def validate_instapay_link(link):
-    if not link:
-        return False, ""
-    url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+[^\s<>"{}|\\^`\[\].,;!?]'
-    urls = re.findall(url_pattern, link, re.IGNORECASE)
-    if not urls:
-        return False, ""
+# 🔥 دالة تطبيق الأسعار الذكية - حط الدالة دي بعد get_offers مباشرة
+def apply_offer_discount(prices, offers):
+    """تطبيق الأسعار الذكية مع الخصومات الوهمية"""
+    if not offers.get("active_offer") or not offers["active_offer"].get("offers_list"):
+        return prices
     
-    valid_domains = ['instapay.com.eg', 'instapay.app', 'app.instapay.com.eg']
+    offers_list = offers["active_offer"]["offers_list"]
     
-    for url in urls:
-        try:
-            parsed = urlparse(url.lower())
-            domain = parsed.netloc.replace('www.', '')
-            if any(valid_domain in domain for valid_domain in valid_domains) or 'instapay' in domain:
-                return True, url
-        except:
-            continue
-    return False, ""
-
-@app.before_request
-def before_request():
-    """تهيئة الجلسة - محدثة لحل مشاكل CSRF"""
-    if 'csrf_token' not in session:
-        session['csrf_token'] = generate_csrf_token()
-        session.permanent = True
-
-@app.route('/')
-def index():
-    """الصفحة الرئيسية - محدثة"""
-    # تأكد من وجود csrf token
-    if 'csrf_token' not in session:
-        session['csrf_token'] = generate_csrf_token()
-        session.permanent = True
+    for offer in offers_list:
+        game_id = offer["game"]
+        target_platform = offer["platform"]
+        target_account = offer["account"]
+        fake_price = offer["fake_price"]
+        real_price = offer["real_price"]
+        discount_percent = offer["discount"]
+        
+        if game_id in prices["games"]:
+            if target_platform in prices["games"][game_id]["platforms"]:
+                platform_data = prices["games"][game_id]["platforms"][target_platform]
+                if target_account in platform_data["accounts"]:
+                    account = platform_data["accounts"][target_account]
+                    
+                    # تطبيق الأسعار الذكية
+                    account["original_price"] = fake_price      # السعر الوهمي (اللي هيتشطب)
+                    account["price"] = real_price               # السعر الحقيقي (اللي العميل هيدفعه)
+                    account["discount_percentage"] = discount_percent  # نسبة الخصم المحسوبة
     
-    return render_template('index.html', csrf_token=session['csrf_token'])
-
-@app.route('/validate-whatsapp', methods=['POST'])
-def validate_whatsapp_endpoint():
-    """API للتحقق المبتكر من رقم الواتساب"""
-    try:
-        data = request.get_json()
-        phone = sanitize_input(data.get('phone', ''))
-        
-        if not phone:
-            return jsonify({'is_valid': False, 'error': 'يرجى إدخال رقم الهاتف'})
-        
-        # استخدام الطريقة المبتكرة النهائية
-        result = validate_whatsapp_ultimate(phone)
-        return jsonify(result)
-        
-    except Exception as e:
-        print(f"خطأ في التحقق من الواتساب: {str(e)}")
-        return jsonify({'is_valid': False, 'error': 'خطأ في الخادم'})
-
-@app.route('/update-profile', methods=['POST'])
-def update_profile():
-    """تحديث الملف الشخصي - محدثة مع البريد الإلكتروني المتعدد"""
-    try:
-        client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
-        
-        # التحقق من CSRF بطريقة محسنة
-        token = request.form.get('csrf_token')
-        session_token = session.get('csrf_token')
-        
-        print(f"🔍 CSRF Debug - Form Token: {token[:20] if token else 'None'}...")
-        print(f"🔍 CSRF Debug - Session Token: {session_token[:20] if session_token else 'None'}...")
-        
-        if not token or not session_token or token != session_token:
-            # إعادة توليد token جديد
-            session['csrf_token'] = generate_csrf_token()
-            return jsonify({
-                'success': False, 
-                'message': 'انتهت صلاحية الجلسة، يرجى إعادة تحميل الصفحة',
-                'error_code': 'csrf_expired',
-                'new_csrf_token': session['csrf_token']
-            }), 403
-        
-        # استقبال البيانات الأساسية
-        platform = sanitize_input(request.form.get('platform'))
-        whatsapp_number = sanitize_input(request.form.get('whatsapp_number'))
-        payment_method = sanitize_input(request.form.get('payment_method'))
-        payment_details = sanitize_input(request.form.get('payment_details'))
-        telegram_username = sanitize_input(request.form.get('telegram_username'))
-        
-        # استقبال البريد الإلكتروني المتعدد الجديد
-        email_addresses_json = sanitize_input(request.form.get('email_addresses', '[]'))
-        try:
-            email_addresses = json.loads(email_addresses_json) if email_addresses_json else []
-            # تنظيف وفلترة الإيميلات
-            email_addresses = [email.lower().strip() for email in email_addresses if email and '@' in email and '.' in email]
-            # إزالة المكررات والحد الأقصى
-            email_addresses = list(dict.fromkeys(email_addresses))  # إزالة المكررات مع الحفاظ على الترتيب
-            email_addresses = email_addresses[:6]  # الحد الأقصى 6 إيميلات
-            
-            # التحقق من صحة كل إيميل
-            valid_emails = []
-            for email in email_addresses:
-                if re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
-                    valid_emails.append(email)
-            email_addresses = valid_emails
-            
-        except Exception as e:
-            print(f"خطأ في معالجة الإيميلات: {str(e)}")
-            email_addresses = []
-        
-        print(f"📧 Email addresses received: {email_addresses}")
-        
-        # التحقق من البيانات المطلوبة
-        if not all([platform, whatsapp_number, payment_method]):
-            return jsonify({'success': False, 'message': 'Missing required fields'}), 400
-        
-        # التحقق المبتكر من الواتساب
-        whatsapp_validation = validate_whatsapp_ultimate(whatsapp_number)
-        if not whatsapp_validation.get('is_valid'):
-            return jsonify({
-                'success': False,
-                'message': f"رقم الواتساب غير صحيح: {whatsapp_validation.get('error', 'رقم غير صالح')}"
-            }), 400
-        
-        processed_payment_details = ""
-        
-        # التحقق من طرق الدفع
-        if payment_method in ['vodafone_cash', 'etisalat_cash', 'orange_cash', 'we_cash', 'bank_wallet']:
-            if not validate_mobile_payment(payment_details):
-                return jsonify({'success': False, 'message': 'Invalid mobile payment number'}), 400
-            processed_payment_details = re.sub(r'\D', '', payment_details)
-            
-        elif payment_method == 'tilda':
-            if not validate_card_number(payment_details):
-                return jsonify({'success': False, 'message': 'Invalid card number'}), 400
-            processed_payment_details = re.sub(r'\D', '', payment_details)
-            
-        elif payment_method == 'instapay':
-            is_valid, extracted_link = validate_instapay_link(payment_details)
-            if not is_valid:
-                return jsonify({'success': False, 'message': 'Invalid InstaPay link'}), 400
-            processed_payment_details = extracted_link
-        
-        # إنشاء بيانات المستخدم المحدثة
-        user_data = {
-            'platform': platform,
-            'whatsapp_number': whatsapp_validation['formatted'],
-            'whatsapp_info': {
-                'country': whatsapp_validation.get('country'),
-                'carrier': whatsapp_validation.get('carrier'),
-                'whatsapp_status': whatsapp_validation.get('whatsapp_status'),
-                'verification_method': whatsapp_validation.get('verification_method'),
-                'confidence': whatsapp_validation.get('confidence'),
-                'score': whatsapp_validation.get('score'),
-                'methods_analysis': whatsapp_validation.get('methods_analysis', [])
+    return prices
+# الأسعار الثابتة - مدمجة في الكود مباشرة
+def get_prices():
+    return {
+        "games": {
+            "FC26_EN_Standard": {
+                "name": "Standard Edition (English) 🇺🇸",
+                "platforms": {
+                    "PS5": {
+                        "name": "PlayStation PS/5",
+                        "icon": '''<div style="text-align: center; margin: 8px auto;">
+                            <i class="fab fa-playstation" style="color: #003087; font-size: 40px; line-height: 1;"></i>
+                        </div>''',
+                        "accounts": {
+                            "Full": {"name": "Full - حساب كامل", "price": 3200},
+                            "Primary": {"name": "Primary - تفعيل أساسي", "price": 1600},
+                            "Secondary": {"name": "Secondary - تسجيل دخول مؤقت", "price": 750}
+                        }
+                    },
+                    "PS4": {
+                        "name": "PlayStation PS/4",
+                        "icon": '''<div style="text-align: center; margin: 8px auto;">
+                            <i class="fab fa-playstation" style="color: #003087; font-size: 40px; line-height: 1;"></i>
+                        </div>''',
+                        "accounts": {
+                            "Full": {"name": "Full - حساب كامل", "price": 3200},
+                            "Primary": {"name": "Primary - تفعيل أساسي", "price": 900},
+                            "Secondary": {"name": "Secondary - تسجيل دخول مؤقت", "price": 750}
+                        }
+                    }
+                }
             },
-            'payment_method': payment_method,
-            'payment_details': processed_payment_details,
-            'telegram_username': telegram_username,
-            'email_addresses': email_addresses,  # البيانات الجديدة
-            'email_count': len(email_addresses),  # عدد الإيميلات
-            'email_details': {  # تفاصيل إضافية للإيميلات
-                'primary_email': email_addresses[0] if email_addresses else None,
-                'secondary_emails': email_addresses[1:] if len(email_addresses) > 1 else [],
-                'total_count': len(email_addresses),
-                'domains': list(set([email.split('@')[1] for email in email_addresses])) if email_addresses else []
+            "FC26_EN_Ultimate": {
+                "name": "Ultimate Edition (English) 🇺🇸",
+                "platforms": {
+                    "PS5": {
+                        "name": "PlayStation PS/5",
+                        "icon": '''<div style="text-align: center; margin: 8px auto; position: relative; display: inline-block;">
+                            <i class="fab fa-playstation" style="color: #003087; font-size: 40px; line-height: 1;"></i>
+                            <div style="position: absolute; top: -5px; right: -5px; background: #003087; color: white; font-size: 10px; padding: 2px 4px; border-radius: 10px; font-weight: bold; box-shadow: 0 0 8px rgba(0, 48, 135, 0.6);">ULT</div>
+                        </div>''',
+                        "accounts": {
+                            "Full": {"name": "Full - حساب كامل", "price": 4300},
+                            "Primary": {"name": "Primary - تفعيل أساسي", "price": 2000},
+                            "Secondary": {"name": "Secondary - تسجيل دخول مؤقت", "price": 1900}
+                        }
+                    },
+                    "PS4": {
+                        "name": "PlayStation PS/4", 
+                        "icon": '''<div style="text-align: center; margin: 8px auto; position: relative; display: inline-block;">
+                            <i class="fab fa-playstation" style="color: #003087; font-size: 40px; line-height: 1;"></i>
+                            <div style="position: absolute; top: -5px; right: -5px; background: #003087; color: white; font-size: 10px; padding: 2px 4px; border-radius: 10px; font-weight: bold; box-shadow: 0 0 8px rgba(0, 48, 135, 0.6);">ULT</div>
+                        </div>''',
+                        "accounts": {
+                            "Full": {"name": "Full - حساب كامل", "price": 4300},
+                            "Primary": {"name": "Primary - تفعيل أساسي", "price": 1050},
+                            "Secondary": {"name": "Secondary - تسجيل دخول مؤقت", "price": 1900}
+                        }
+                    }
+                }
             },
-            'created_at': datetime.now().isoformat(),
-            'updated_at': datetime.now().isoformat(),
-            'ip_address': hashlib.sha256(client_ip.encode()).hexdigest()[:10],
-            'user_agent': hashlib.sha256(request.headers.get('User-Agent', '').encode()).hexdigest()[:10]
-        }
-        
-        # حفظ في الذاكرة المؤقتة
-        user_id = hashlib.md5(f"{whatsapp_number}-{datetime.now().isoformat()}".encode()).hexdigest()[:12]
-        users_data[user_id] = user_data
-        
-        # طباعة البيانات المحفوظة للتأكيد
-        print(f"🔥 New Ultimate Profile Saved (ID: {user_id}):")
-        print(f"   📱 WhatsApp: {whatsapp_validation['formatted']}")
-        print(f"   🎯 Platform: {platform}")
-        print(f"   💳 Payment: {payment_method}")
-        print(f"   📧 Emails ({len(email_addresses)}): {email_addresses}")
-        print(f"   📊 Full Data: {json.dumps(user_data, indent=2, ensure_ascii=False)}")
-        
-        # توليد token جديد للأمان
-        session['csrf_token'] = generate_csrf_token()
-        
-        # تحضير الاستجابة المحسنة
-        response_data = {
-            'success': True,
-            'message': 'تم التحقق بالطرق المبتكرة وحفظ البيانات بنجاح!',
-            'user_id': user_id,
-            'new_csrf_token': session['csrf_token'],
-            'data': {
-                'platform': platform,
-                'whatsapp_number': whatsapp_validation['formatted'],
-                'whatsapp_info': user_data['whatsapp_info'],
-                'payment_method': payment_method,
-                'email_addresses': email_addresses,
-                'email_count': len(email_addresses),
-                'email_summary': {
-                    'primary': email_addresses[0] if email_addresses else None,
-                    'total': len(email_addresses),
-                    'domains': len(set([email.split('@')[1] for email in email_addresses])) if email_addresses else 0
+            "FC26_AR_Standard": {
+                "name": "Standard Edition (Arabic) 🇸🇦",
+                "platforms": {
+                    "PS5": {
+                        "name": "PlayStation PS/5",
+                        "icon": '''<div style="text-align: center; margin: 8px auto;">
+                            <i class="fab fa-playstation" style="color: #003087; font-size: 40px; line-height: 1;"></i>
+                        </div>''',
+                        "accounts": {
+                            "Full": {"name": "Full - حساب كامل", "price": 3600},
+                            "Primary": {"name": "Primary - تفعيل أساسي", "price": 1900},
+                            "Secondary": {"name": "Secondary - تسجيل دخول مؤقت", "price": 1000}
+                        }
+                    },
+                    "PS4": {
+                        "name": "PlayStation PS/4",
+                        "icon": '''<div style="text-align: center; margin: 8px auto;">
+                            <i class="fab fa-playstation" style="color: #003087; font-size: 40px; line-height: 1;"></i>
+                        </div>''', 
+                        "accounts": {
+                            "Full": {"name": "Full - حساب كامل", "price": 3600},
+                            "Primary": {"name": "Primary - تفعيل أساسي", "price": 1300},
+                            "Secondary": {"name": "Secondary - تسجيل دخول مؤقت", "price": 1000}
+                        }
+                    }
+                }
+            },
+            "FC26_AR_Ultimate": {
+                "name": "Ultimate Edition (Arabic) 🇸🇦",
+                "platforms": {
+                    "PS5": {
+                        "name": "PlayStation PS/5",
+                        "icon": '''<div style="text-align: center; margin: 8px auto; position: relative; display: inline-block;">
+                            <i class="fab fa-playstation" style="color: #003087; font-size: 40px; line-height: 1;"></i>
+                            <div style="position: absolute; top: -5px; right: -5px; background: #7b1fa2; color: white; font-size: 10px; padding: 2px 4px; border-radius: 10px; font-weight: bold; box-shadow: 0 0 8px rgba(123, 31, 162, 0.6);">ULT</div>
+                        </div>''',
+                        "accounts": {
+                            "Full": {"name": "Full - حساب كامل", "price": 5200},
+                            "Primary": {"name": "Primary - تفعيل أساسي", "price": 2200},
+                            "Secondary": {"name": "Secondary - تسجيل دخول مؤقت", "price": 2000}
+                        }
+                    },
+                    "PS4": {
+                        "name": "PlayStation PS/4",
+                        "icon": '''<div style="text-align: center; margin: 8px auto; position: relative; display: inline-block;">
+                            <i class="fab fa-playstation" style="color: #003087; font-size: 40px; line-height: 1;"></i>
+                            <div style="position: absolute; top: -5px; right: -5px; background: #7b1fa2; color: white; font-size: 10px; padding: 2px 4px; border-radius: 10px; font-weight: bold; box-shadow: 0 0 8px rgba(123, 31, 162, 0.6);">ULT</div>
+                        </div>''',
+                        "accounts": {
+                            "Full": {"name": "Full - حساب كامل", "price": 5200},
+                            "Primary": {"name": "Primary - تفعيل أساسي", "price": 1500},
+                            "Secondary": {"name": "Secondary - تسجيل دخول مؤقت", "price": 2000}
+                        }
+                    }
+                }
+            },
+            "FC26_XBOX_Standard": {
+                "name": "Xbox Standard Edition 🎮",
+                "platforms": {
+                    "Xbox": {
+                        "name": "Xbox Series X/S & Xbox One",
+                        "icon": '''<div style="text-align: center; margin: 8px auto;">
+                            <i class="fab fa-xbox" style="color: #107C10; font-size: 40px; line-height: 1;"></i>
+                        </div>''',
+                        "accounts": {
+                            "Full": {"name": "Full - حساب كامل", "price": 3200},
+
+                        }
+                    }
+                }
+            },
+            "FC26_XBOX_Ultimate": {
+                "name": "Xbox Ultimate Edition 🎮",
+                "platforms": {
+                    "Xbox": {
+                        "name": "Xbox Series X/S & Xbox One",
+                        "icon": '''<div style="text-align: center; margin: 8px auto; position: relative; display: inline-block;">
+                            <i class="fab fa-xbox" style="color: #107C10; font-size: 40px; line-height: 1;"></i>
+                            <div style="position: absolute; top: -5px; right: -5px; background: #ff8f00; color: white; font-size: 10px; padding: 2px 4px; border-radius: 10px; font-weight: bold; box-shadow: 0 0 8px rgba(255, 143, 0, 0.6);">ULT</div>
+                        </div>''',
+                        "accounts": {
+                            "Full": {"name": "Full - حساب كامل", "price": 4200},
+  
+                        }
+                    }
+                }
+            },
+            "FC26_PC_Standard": {
+                "name": "PC (شهر) (month)  🖥️",
+                "platforms": {
+                    "PC": {
+                        "name": "PC (EA PRO)",
+                        "icon": '''<svg width="40" height="40" viewBox="0 0 24 24" fill="#FF8C00" style="display: block; margin: 0 auto;">
+                            <rect x="2" y="4" width="20" height="12" rx="2" fill="#FF8C00"/>
+                            <rect x="4" y="6" width="16" height="8" fill="white"/>
+                            <rect x="8" y="18" width="8" height="2" fill="#FF8C00"/>
+                            <rect x="6" y="20" width="12" height="2" fill="#FF8C00"/>
+                        </svg>''',
+                        "accounts": {
+                            "Full": {"name": "Full - حساب كامل على حسابك الشخصي 🔐", "price": 750}
+                        }
+                    }
+                }
+            },
+            "FC26_PC_Ultimate": {
+                "name": "PC (سنة) (year)  🖥️",
+                "platforms": {
+                    "PC": {
+                        "name": "PC (EA PRO)",
+                        "icon": '''<div style="text-align: center; margin: 8px auto; position: relative; display: inline-block;">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="#FF8C00" style="display: block; margin: 0 auto;">
+                                <rect x="2" y="4" width="20" height="12" rx="2" fill="#FF8C00"/>
+                                <rect x="4" y="6" width="16" height="8" fill="white"/>
+                                <rect x="8" y="18" width="8" height="2" fill="#FF8C00"/>
+                                <rect x="6" y="20" width="12" height="2" fill="#FF8C00"/>
+                            </svg>
+                            <div style="position: absolute; top: -5px; right: -5px; background: #25D366; color: white; font-size: 10px; padding: 2px 4px; border-radius: 10px; font-weight: bold; box-shadow: 0 0 8px rgba(37, 211, 102, 0.6);">PRO</div>
+                        </div>''',
+                        "accounts": {
+                            "Full": {"name": "Full - حساب كامل على حسابك الشخصي 🔐", "price": 2800}
+                        }
+                    }
+                }
+            },
+            "FC26_STEAM_Standard": {
+                "name": "Steam Standard Edition 🖥️",
+                "platforms": {
+                    "Steam": {
+                        "name": "PC (STEAM)",
+                        "icon": '''<div style="text-align: center; margin: 8px auto;">
+                            <i class="fab fa-steam-symbol" style="font-size: 40px; color: #ff0000; background: rgba(0, 0, 0, 0.8); padding: 8px; border-radius: 50%; border: 3px solid #ff0000; box-shadow: 0 0 20px rgba(255, 0, 0, 0.6); transition: transform 0.3s ease, box-shadow 0.3s ease; line-height: 1;"></i>
+                        </div>''',
+                        "accounts": {
+                            "Full": {"name": "Full - حساب كامل مع First Email", "price": 1700}
+                        }
+                    }
+                }
+            },
+            "FC26_STEAM_Ultimate": {
+                "name": "Steam Ultimate Edition 🖥️",
+                "platforms": {
+                    "Steam": {
+                        "name": "PC (STEAM)",
+                        "icon": '''<div style="text-align: center; margin: 8px auto; position: relative; display: inline-block;">
+                            <i class="fab fa-steam-symbol" style="font-size: 40px; color: #ff0000; background: rgba(0, 0, 0, 0.8); padding: 8px; border-radius: 50%; border: 3px solid #ff0000; box-shadow: 0 0 20px rgba(255, 0, 0, 0.6); transition: transform 0.3s ease, box-shadow 0.3s ease; line-height: 1;"></i>
+                            <div style="position: absolute; top: -5px; right: -5px; background: #ff0000; color: white; font-size: 10px; padding: 2px 4px; border-radius: 10px; font-weight: bold; box-shadow: 0 0 8px rgba(255, 0, 0, 0.6);">ULT</div>
+                        </div>''',
+                        "accounts": {
+                            "Full": {"name": "Full - حساب كامل مع First Email", "price": 3000}
+                        }
+                    }
                 }
             }
+        },
+        "settings": {
+            "currency": "جنيه مصري",
+            "warranty": "1 سنة",
+            "delivery_time": "15 دقيقه كحد أقصى",
+            "whatsapp_number": "+201094591331"
         }
-        
-        return jsonify(response_data)
-        
-    except Exception as e:
-        print(f"Error updating profile: {str(e)}")
-        print(f"Error details: {repr(e)}")
-        return jsonify({'success': False, 'message': 'Internal server error'}), 500
+    }
 
+                       
+# Headers أمنية قوية
+@app.after_request
+def security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['Content-Security-Policy'] = "default-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://wa.me"
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
+    return response
 
-# دوال التليجرام محدثة
-def generate_telegram_code():
-    """توليد كود فريد للتليجرام"""
-    return secrets.token_urlsafe(6).upper().replace('_', '').replace('-', '')[:8]
+# تنظيف المدخلات
+def sanitize_input(text, max_length=100):
+    if not text:
+        return None
+    
+    text = str(text).strip()
+    
+    if len(text) > max_length:
+        return None
+    
+    text = re.sub(r'[<>"\';\\&]', '', text)
+    text = re.sub(r'(script|javascript|vbscript|onload|onerror)', '', text, flags=re.IGNORECASE)
+    
+    return text
 
-@app.route('/generate-telegram-code', methods=['POST'])
-def generate_telegram_code_endpoint():
-    """API لتوليد كود التليجرام - محدثة"""
+# 🔥 الصفحة الرئيسية المحدثة - هنا بتغير الدالة دي
+@app.route('/')
+@rate_limit(max_requests=25, window=60)
+def index():
     try:
-        data = request.get_json()
+        prices = get_prices()
+        offers = get_offers()
         
-        # التحقق من صحة البيانات الأساسية
-        platform = sanitize_input(data.get('platform', ''))
-        whatsapp_number = sanitize_input(data.get('whatsapp_number', ''))
+        # تطبيق العروض على الأسعار
+        prices = apply_offer_discount(prices, offers)
         
-        if not platform or not whatsapp_number:
-            return jsonify({
-                'success': False, 
-                'message': 'يرجى إكمال الملف الشخصي أولاً'
-            }), 400
+        logger.info("✅ تم تحميل الصفحة الرئيسية بنجاح مع العروض")
+        return render_template('index.html', prices=prices, offers=offers)
+    except Exception as e:
+        logger.error(f"❌ خطأ في الصفحة الرئيسية: {e}")
+        abort(500)
+
+# إنشاء رابط واتساب مباشر
+@app.route('/whatsapp', methods=['POST'])
+@rate_limit(max_requests=8, window=60)
+def create_whatsapp_link():
+    client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+    user_agent = request.headers.get('User-Agent', '')
+    
+    try:
+        # فحص Anti-spam
+        if not anti_spam_check(client_ip, user_agent):
+            return jsonify({'error': 'تم تجاوز الحد المسموح - يرجى المحاولة لاحقاً'}), 429
         
-        # توليد كود فريد
-        telegram_code = generate_telegram_code()
+        # تنظيف البيانات
+        game_type = sanitize_input(request.form.get('game_type'))
+        platform = sanitize_input(request.form.get('platform'))
+        account_type = sanitize_input(request.form.get('account_type'))
         
-        # حفظ البيانات في الذاكرة المؤقتة
-        telegram_codes[telegram_code] = {
-            'code': telegram_code,
-            'platform': platform,
-            'whatsapp_number': whatsapp_number,
-            'payment_method': data.get('payment_method', ''),
-            'payment_details': data.get('payment_details', ''),
-            'telegram_username': data.get('telegram_username', ''),
-            'created_at': datetime.now().isoformat(),
-            'used': False
-        }
+        if not all([game_type, platform, account_type]):
+            return jsonify({'error': 'يرجى اختيار جميع الخيارات أولاً'}), 400
         
-        # الحصول على username البوت من متغيرات البيئة
-        bot_username = os.environ.get('TELEGRAM_BOT_USERNAME', 'YourBotName_bot')
-        telegram_link = f"https://t.me/{bot_username}?start={telegram_code}"
+        # 🔥 تحميل الأسعار والعروض هنا
+        prices = get_prices()
+        offers = get_offers()
         
-        print(f"🤖 Generated Telegram Code: {telegram_code} for {whatsapp_number}")
+        # تطبيق العروض على الأسعار
+        prices = apply_offer_discount(prices, offers)
+        
+        if (game_type not in prices.get('games', {}) or
+            platform not in prices['games'][game_type].get('platforms', {}) or
+            account_type not in prices['games'][game_type]['platforms'][platform].get('accounts', {})):
+            logger.warning(f"🚨 اختيار منتج غير صحيح من IP: {client_ip}")
+            return jsonify({'error': 'اختيار المنتج غير صحيح'}), 400
+        
+        # بيانات المنتج
+        game_name = prices['games'][game_type]['name']
+        platform_name = prices['games'][game_type]['platforms'][platform]['name']
+        account_name = prices['games'][game_type]['platforms'][platform]['accounts'][account_type]['name']
+        price = prices['games'][game_type]['platforms'][platform]['accounts'][account_type]['price']
+        currency = prices.get('settings', {}).get('currency', 'جنيه')
+        
+        # إنشاء ID مرجعي
+        timestamp = str(int(time.time()))
+        reference_id = hashlib.md5(f"{timestamp}{client_ip}{game_type}{platform}".encode()).hexdigest()[:8].upper()
+        
+        # إنشاء رسالة الواتساب - بدون وقت الاستفسار
+        message = f"""🎮 *استفسار من {BUSINESS_NAME}*
+
+🆔 *المرجع:* {reference_id}
+
+🎯 *المطلوب:*
+• اللعبة: {game_name}
+
+• المنصة: {platform_name}
+
+• نوع الحساب: {account_name}
+
+• السعر: {format_number(price)} {currency}
+
+👋 *السلام عليكم، أريد الاستفسار عن هذا المنتج*
+
+شكراً 🌟"""
+        
+        # ترميز الرسالة للـ URL
+        encoded_message = urllib.parse.quote(message)
+        
+        # رقم الواتساب
+        whatsapp_number = prices.get('settings', {}).get('whatsapp_number', WHATSAPP_NUMBER)
+        clean_number = whatsapp_number.replace('+', '').replace('-', '').replace(' ', '')
+        
+        # إنشاء رابط الواتساب
+        whatsapp_url = f"https://wa.me/{clean_number}?text={encoded_message}"
+        
+        logger.info(f"✅ فتح واتساب: {reference_id} - {platform} {account_type} - {format_number(price)} {currency} - IP: {client_ip}")
         
         return jsonify({
             'success': True,
-            'code': telegram_code,
-            'telegram_link': telegram_link,
-            'message': f'تم إنشاء الكود: {telegram_code}'
+            'reference_id': reference_id,
+            'whatsapp_url': whatsapp_url,
+            'price': format_number(price),
+            'currency': currency,
+            'message': 'سيتم فتح الواتساب الآن...'
         })
         
     except Exception as e:
-        print(f"خطأ في توليد كود التليجرام: {str(e)}")
-        return jsonify({'success': False, 'message': 'خطأ في الخادم'})
+        logger.error(f"❌ خطأ في إنشاء رابط الواتساب: {e}")
+        return jsonify({'error': 'حدث خطأ في النظام - يرجى المحاولة مرة أخرى'}), 500
 
-def notify_website_telegram_linked(code, profile_data, chat_id, first_name, username):
-    """إشعار الموقع بنجاح ربط التليجرام"""
+# 🔥 API جديد للعروض - تضيف دي بعد get_prices_api
+@app.route('/api/offers')
+@rate_limit(max_requests=15, window=60)
+def get_offers_api():
     try:
-        # تحديث بيانات المستخدم
-        user_id = hashlib.md5(f"{profile_data['whatsapp_number']}-telegram-{code}".encode()).hexdigest()[:12]
-        
-        updated_user_data = {
-            **profile_data,
-            'telegram_linked': True,
-            'telegram_chat_id': chat_id,
-            'telegram_first_name': first_name,
-            'telegram_username_actual': username,
-            'telegram_linked_at': datetime.now().isoformat(),
-            'user_id': user_id
-        }
-        
-        # حفظ في بيانات المستخدمين
-        users_data[user_id] = updated_user_data
-        
-        print(f"🔗 Telegram Linked Successfully!")
-        print(f"   User: {first_name} (@{username})")
-        print(f"   WhatsApp: {profile_data['whatsapp_number']}")
-        print(f"   Platform: {profile_data['platform']}")
-        print(f"   Code: {code}")
-        print(f"   Chat ID: {chat_id}")
-        
-        return True
-        
+        offers = get_offers()
+        return jsonify(offers)
     except Exception as e:
-        print(f"خطأ في إشعار الموقع: {str(e)}")
-        return False
+        logger.error(f"❌ خطأ في API العروض: {e}")
+        return jsonify({'error': 'خطأ في النظام'}), 500
 
-@app.route('/telegram-webhook', methods=['POST'])
-def telegram_webhook():
-    """استقبال رسائل من التليجرام بوت - محدثة مع تفاصيل الدفع"""
+# API للحصول على الأسعار
+@app.route('/api/prices')
+@rate_limit(max_requests=15, window=60)
+def get_prices_api():
     try:
-        update = request.get_json()
-        print(f"🤖 Telegram Webhook received: {json.dumps(update, indent=2, ensure_ascii=False)}")
-        
-        if 'message' not in update:
-            return jsonify({'ok': True})
-        
-        message = update['message']
-        text = message.get('text', '').strip().upper()
-        chat_id = message['chat']['id']
-        username = message.get('from', {}).get('username', 'Unknown')
-        first_name = message.get('from', {}).get('first_name', 'مستخدم')
-        
-        # التحقق من كود /start
-        if text.startswith('/START'):
-            if ' ' in text:
-                code = text.replace('/START ', '').strip().upper()
-                print(f"🔍 Looking for /start code: {code}")
-                
-                # البحث عن الكود في الذاكرة
-                if code in telegram_codes:
-                    profile_data = telegram_codes[code]
-                    if not profile_data.get('used', False):
-                        # تحديث الكود كمستخدم
-                        telegram_codes[code]['used'] = True
-                        telegram_codes[code]['telegram_chat_id'] = chat_id
-                        telegram_codes[code]['telegram_username_actual'] = username
-                        
-                        # إرسال إشعار للموقع
-                        notify_website_telegram_linked(code, profile_data, chat_id, first_name, username)
-                        
-                        # تحديد نص الدفع
-                        payment_text = get_payment_display_text(profile_data['payment_method'], profile_data.get('payment_details', ''))
-                        
-                        # إرسال رسالة ترحيب مخصصة
-                        welcome_message = f"""🎮 أهلاً بك {first_name} في FC 26 Profile System!
-
-✅ تم ربط حسابك بنجاح!
-
-📋 بيانات ملفك الشخصي:
-🎯 المنصة: {profile_data['platform'].title()}
-📱 رقم الواتساب: {profile_data['whatsapp_number']}
-💳 طريقة الدفع: {profile_data['payment_method'].replace('_', ' ').title()}
-{payment_text}
-
-🔗 رابط الموقع: https://ea-fc-fifa.onrender.com/
-
-شكراً لاختيارك FC 26! 🏆"""
-                        
-                        send_telegram_message(chat_id, welcome_message.strip())
-                        print(f"✅ /start Code {code} activated for user {first_name} (@{username})")
-                        
-                    else:
-                        send_telegram_message(chat_id, f"""❌ هذا الكود ({code}) تم استخدامه من قبل.
-
-يرجى الحصول على كود جديد من الموقع:
-🔗 https://ea-fc-fifa.onrender.com/""")
-                        
-                else:
-                    send_telegram_message(chat_id, f"""❌ الكود ({code}) غير صحيح أو منتهي الصلاحية.
-
-يرجى الحصول على كود جديد من الموقع:
-🔗 https://ea-fc-fifa.onrender.com/""")
-            else:
-                # رسالة بداية عامة
-                send_telegram_message(chat_id, f"""🎮 مرحباً بك {first_name} في FC 26 Profile System!
-
-للربط مع حسابك، يرجى:
-1️⃣ الذهاب للموقع
-2️⃣ إكمال بيانات الملف الشخصي  
-3️⃣ الضغط على "ربط مع التليجرام"
-4️⃣ إرسال الكود الذي ستحصل عليه مباشرة (بدون /start)
-
-مثال: ABC123
-
-🔗 الموقع: https://ea-fc-fifa.onrender.com/
-
-شكراً! 🏆""")
-        
-        # التحقق من الكود المباشر (بدون /start)
-        elif len(text) >= 6 and len(text) <= 10 and text.isalnum():
-            code = text.upper()
-            print(f"🔍 Looking for direct code: {code}")
-            
-            # البحث عن الكود في الذاكرة
-            if code in telegram_codes:
-                profile_data = telegram_codes[code]
-                if not profile_data.get('used', False):
-                    # تحديث الكود كمستخدم
-                    telegram_codes[code]['used'] = True
-                    telegram_codes[code]['telegram_chat_id'] = chat_id
-                    telegram_codes[code]['telegram_username_actual'] = username
-                    
-                    # إرسال إشعار للموقع
-                    notify_website_telegram_linked(code, profile_data, chat_id, first_name, username)
-                    
-                    # تحديد نص الدفع
-                    payment_text = get_payment_display_text(profile_data['payment_method'], profile_data.get('payment_details', ''))
-                    
-                    # إرسال رسالة ترحيب مخصصة
-                    welcome_message = f"""🎮 أهلاً بك {first_name} في FC 26 Profile System!
-
-✅ تم ربط حسابك بنجاح بالكود: {code}
-
-📋 بيانات ملفك الشخصي:
-🎯 المنصة: {profile_data['platform'].title()}
-📱 رقم الواتساب: {profile_data['whatsapp_number']}
-💳 طريقة الدفع: {profile_data['payment_method'].replace('_', ' ').title()}
-{payment_text}
-
-🔗 رابط الموقع: https://ea-fc-fifa.onrender.com/
-
-شكراً لاختيارك FC 26! 🏆"""
-                    
-                    send_telegram_message(chat_id, welcome_message.strip())
-                    print(f"✅ Direct Code {code} activated for user {first_name} (@{username})")
-                    
-                else:
-                    send_telegram_message(chat_id, f"""❌ هذا الكود ({code}) تم استخدامه من قبل.
-
-يرجى الحصول على كود جديد من الموقع:
-🔗 https://ea-fc-fifa.onrender.com/""")
-                    
-            else:
-                send_telegram_message(chat_id, f"""❌ الكود ({code}) غير صحيح أو منتهي الصلاحية.
-
-يرجى الحصول على كود جديد من الموقع:
-🔗 https://ea-fc-fifa.onrender.com/
-
-💡 تلميح: أرسل الكود مباشرة بدون /start
-مثال: ABC123""")
-        
-        else:
-            # رد عام للرسائل الأخرى
-            send_telegram_message(chat_id, f"""🤖 مرحباً {first_name}! أنا بوت FC 26 Profile System.
-
-للتفاعل معي، يمكنك:
-📝 /start - البدء والمساعدة
-🔑 إرسال الكود مباشرة (مثال: ABC123)
-
-🔗 الموقع: https://ea-fc-fifa.onrender.com/""")
-            
-        return jsonify({'ok': True})
-        
+        prices = get_prices()
+        offers = get_offers()
+        # تطبيق العروض على الأسعار
+        prices = apply_offer_discount(prices, offers)
+        return jsonify(prices)
     except Exception as e:
-        print(f"خطأ في webhook التليجرام: {str(e)}")
-        return jsonify({'ok': True})
+        logger.error(f"❌ خطأ في API الأسعار: {e}")
+        return jsonify({'error': 'خطأ في النظام'}), 500
 
-def get_payment_display_text(payment_method, payment_details):
-    """تحديد نص عرض تفاصيل الدفع"""
-    if not payment_details:
-        return ""
-    
-    if payment_method in ['vodafone_cash', 'etisalat_cash', 'orange_cash', 'we_cash', 'bank_wallet']:
-        return f"رقم الدفع: {payment_details}"
-    elif payment_method == 'tilda':
-        return f"رقم البطاقة: {payment_details}"
-    elif payment_method == 'instapay':
-        return f"رابط الدفع: {payment_details}"
-    else:
-        return f"تفاصيل الدفع: {payment_details}"
+# Health check
+@app.route('/health')
+@app.route('/ping')
+def health_check():
+    return {'status': 'healthy', 'timestamp': datetime.now().isoformat()}, 200
 
-@app.route('/get-bot-username')
-def get_bot_username():
-    """الحصول على username البوت"""
-    bot_username = os.environ.get('TELEGRAM_BOT_USERNAME', 'YourBotName_bot')
-    return jsonify({'bot_username': bot_username})
+# Robots.txt
+@app.route('/robots.txt')
+def robots():
+    return '''User-agent: *
+Disallow: /admin/
+Disallow: /api/
+Crawl-delay: 10''', 200, {'Content-Type': 'text/plain'}
 
-def send_telegram_message(chat_id, text):
-    """إرسال رسالة عبر التليجرام بوت - محدثة"""
-    try:
-        bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
-        if not bot_token:
-            print("❌ TELEGRAM_BOT_TOKEN غير موجود في متغيرات البيئة")
-            return False
-        
-        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-        data = {
-            'chat_id': chat_id,
-            'text': text,
-            'parse_mode': 'HTML',
-            'reply_markup': {
-                'inline_keyboard': [[{
-                    'text': '🎮 فتح الموقع',
-                    'url': 'https://ea-fc-fifa.onrender.com/'
-                }]]
-            }
-        }
-        
-        response = requests.post(url, json=data, timeout=10)
-        result = response.json()
-        
-        if result.get('ok'):
-            print(f"✅ Message sent successfully to {chat_id}")
-            return True
-        else:
-            print(f"❌ Failed to send message: {result}")
-            return False
-        
-    except Exception as e:
-        print(f"خطأ في إرسال رسالة التليجرام: {str(e)}")
-        return False
-
-# route جديد لعرض البيانات المحفوظة (للاختبار)
-@app.route('/admin-data')
-def admin_data():
-    """عرض البيانات المحفوظة - للاختبار فقط"""
-    return jsonify({
-        'users_count': len(users_data),
-        'telegram_codes_count': len(telegram_codes),
-        'users_sample': list(users_data.keys())[:5],
-        'telegram_codes_sample': {k: {**v, 'used': v.get('used', False)} for k, v in list(telegram_codes.items())[:5]}
-    })
-
-@app.route('/check-telegram-status/<code>')
-def check_telegram_status(code):
-    """فحص حالة ربط التليجرام"""
-    try:
-        if code in telegram_codes:
-            code_data = telegram_codes[code]
-            return jsonify({
-                'success': True,
-                'linked': code_data.get('used', False),
-                'telegram_chat_id': code_data.get('telegram_chat_id'),
-                'telegram_username': code_data.get('telegram_username_actual'),
-                'linked_at': code_data.get('created_at')
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'message': 'Code not found'
-            })
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)})
-
-# route جديد لإعداد webhook التليجرام
-@app.route('/set-telegram-webhook')
-def set_telegram_webhook():
-    """إعداد webhook التليجرام"""
-    try:
-        bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
-        if not bot_token:
-            return jsonify({'success': False, 'message': 'TELEGRAM_BOT_TOKEN غير موجود'})
-        
-        webhook_url = f"https://ea-fc-fifa.onrender.com/telegram-webhook"
-        telegram_api_url = f"https://api.telegram.org/bot{bot_token}/setWebhook"
-        
-        response = requests.post(telegram_api_url, json={'url': webhook_url}, timeout=10)
-        result = response.json()
-        
-        if result.get('ok'):
-            return jsonify({
-                'success': True, 
-                'message': f'Webhook تم تعيينه بنجاح: {webhook_url}',
-                'result': result
-            })
-        else:
-            return jsonify({
-                'success': False, 
-                'message': 'فشل في تعيين webhook',
-                'result': result
-            })
-            
-    except Exception as e:
-        return jsonify({'success': False, 'message': f'خطأ: {str(e)}'})
+# معالجات الأخطاء
+@app.errorhandler(400)
+def bad_request(error):
+    return jsonify({'error': 'طلب غير صحيح'}), 400
 
 @app.errorhandler(404)
 def not_found(error):
-    return render_template('index.html'), 404
+    return "الصفحة غير موجودة", 404
+
+@app.errorhandler(429)
+def too_many_requests(error):
+    return "تم تجاوز عدد الطلبات المسموحة", 429
 
 @app.errorhandler(500)
 def internal_error(error):
-    return jsonify({'success': False, 'message': 'Internal server error'}), 500
+    logger.error(f"❌ خطأ داخلي: {error}")
+    return f"خطأ داخلي: {error}", 500
 
+# إضافة filter للـ Jinja2 لتنسيق الأرقام
+@app.template_filter('format_number')
+def format_number_filter(number):
+    return format_number(number)
+
+# تشغيل التطبيق
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 10000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    logger.info("🚀 تم تشغيل التطبيق بنجاح - الأسعار مدمجة في الكود مع فاصلة عشرية والعروض")
+    app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+else:
+    logger.info("🚀 تم تشغيل التطبيق عبر gunicorn - الأسعار مدمجة في الكود مع فاصلة عشرية والعروض")
+
