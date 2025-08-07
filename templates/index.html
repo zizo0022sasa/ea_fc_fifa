@@ -2950,31 +2950,57 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-// دوال أزرار العروض
+// دوال أزرار العروض المنبثقة
 function acceptOffers() {
+    console.log('🔥 المستخدم قبل العروض');
+    
     // إخفاء popup العروض
-    document.getElementById('offersPopup').style.display = 'none';
+    closeOfferModal();
     
     // عرض رسالة ترحيب
-    alert('🎉 ممتاز! تم قبول العروض بنجاح\n\nاختر المنتج اللي عايزه واستفيد من الخصومات الحصرية! 🔥');
+    showAlert('🎉 ممتاز! تم قبول العروض بنجاح<br>اختر المنتج اللي عايزه واستفيد من الخصومات الحصرية! 🔥', 'success');
     
-    // تمرير سلس للمنتجات
-    document.querySelector('.products-section').scrollIntoView({
-        behavior: 'smooth'
-    });
+    // تمرير سلس للمنتجات مع تأكيد إن العنصر موجود
+    setTimeout(() => {
+        const productsSection = document.querySelector('.products-section');
+        if (productsSection) {
+            productsSection.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    }, 500);
 }
 
 function declineOffers() {
+    console.log('👀 المستخدم رفض العروض');
+    
     // إخفاء popup العروض
-    document.getElementById('offersPopup').style.display = 'none';
+    closeOfferModal();
     
     // عرض رسالة مهذبة
-    alert('👀 لا مشكلة!\n\nيمكنك تصفح جميع المنتجات بالأسعار العادية');
+    showAlert('👀 لا مشكلة!<br>يمكنك تصفح جميع المنتجات بالأسعار العادية', 'success');
     
     // تمرير سلس للمنتجات
-    document.querySelector('.products-section').scrollIntoView({
-        behavior: 'smooth'
-    });
+    setTimeout(() => {
+        const productsSection = document.querySelector('.products-section');
+        if (productsSection) {
+            productsSection.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    }, 500);
+}
+
+// دالة إغلاق العرض المنبثق (تأكد إنها موجودة)
+function closeOfferModal() {
+    const overlay = document.getElementById('offerOverlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+        // حفظ إن المستخدم شاف العرض
+        localStorage.setItem('hasSeenOffer_' + (offersData?.active_offer?.id || 'default'), 'true');
+    }
 }
 
 .offer-platform {
