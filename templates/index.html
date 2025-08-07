@@ -2717,6 +2717,15 @@ function showAlert(message, type = 'success') {
 </script>
 
 <script>
+// دالة لتنسيق الأرقام مع فاصلة الآلاف
+function formatNumberWithCommas(number) {
+    const num = Number(number);
+    if (isNaN(num)) {
+        return number; // لو مش رقم، رجعه زي ما هو
+    }
+    return num.toLocaleString('en-US');
+}
+
 // Show offers popup with better error handling
 function showOffers() {
     console.log('🎯 بدء تحميل العروض...');
@@ -2754,19 +2763,20 @@ function showOffers() {
                         selectOffer(offer);
                     });
                     
-                    offerElement.innerHTML = `
-                        <div class="offer-title">${offer.title || 'عرض خاص'}</div>
-                        <div class="offer-description">${offer.description || 'احصل على خصم رائع'}</div>
-                        <div class="offer-price">
-                            <span class="fake-price">$${offer.fake_price || '0'}</span>
-                            <span class="real-price">$${offer.real_price || '0'}</span>
-                            <span class="discount-badge">${offer.discount_percentage || '0'}% خصم</span>
-                        </div>
-                        <div class="offer-validity">صالح حتى: ${offer.valid_until || 'غير محدود'}</div>
-                        <div class="text-center mt-2">
-                            <small style="color: #888;">👆 اضغط للاختيار</small>
-                        </div>
-                    `;
+// هذا هو الكود الجديد الذي يحل المشكلتين معاً
+offerElement.innerHTML = `
+    <div class="offer-title">${offer.title || 'عرض خاص'}</div>
+    <div class="offer-description">${offer.description || 'احصل على خصم رائع'}</div>
+    <div class="offer-price">
+        <span class="fake-price">${formatNumberWithCommas(offer.fake_price || '0')}</span>
+        <span class="real-price">${formatNumberWithCommas(offer.real_price || '0')}</span>
+        <span class="discount-badge">${offer.discount_percentage || '0'}% خصم</span>
+    </div>
+    <div class="offer-validity">صالح حتى: ${offer.valid_until || 'غير محدود'}</div>
+    <div class="text-center mt-2">
+        <small style="color: #888;">👆 اضغط للاختيار</small>
+    </div>
+`;
                     
                     offersContainer.appendChild(offerElement);
                 });
