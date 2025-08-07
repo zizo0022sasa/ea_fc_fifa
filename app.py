@@ -1051,6 +1051,79 @@ Disallow: /admin/
 Disallow: /api/
 Crawl-delay: 10''', 200, {'Content-Type': 'text/plain'}
 
+# 🔥 العروض المنبثقة - إضافة route مفقود
+@app.route('/get_offers')
+@rate_limit(max_requests=10, window=60)
+def get_offers_popup():
+    """API للعروض المنبثقة في الصفحة الرئيسية"""
+    try:
+        offers_data = get_offers()
+        
+        # تحويل العروض لصيغة مناسبة للـ popup
+        popup_offers = []
+        
+        if offers_data.get("active_offer") and offers_data["active_offer"].get("offers_list"):
+            for offer in offers_data["active_offer"]["offers_list"]:
+                # تحديد اسم اللعبة بالعربية
+                game_display_name = ""
+                if "AR_Standard" in offer["game"]:
+                    game_display_name = "🇸🇦 Standard Edition (Arabic)"
+                elif "AR_Ultimate" in offer["game"]:
+                    game_display_name = "🇸🇦 Ultimate Edition (Arabic)"
+                elif "EN_Standard" in offer["game"]:
+                    game_display_name = "🇺🇸 Standard Edition (English)"
+                elif "EN_Ultimate" in offer["game"]:
+                    game_display_name = "🇺🇸 Ultimate Edition (English)"
+                elif "XBOX_Standard" in offer["game"]:
+                    game_display_name = "🎮 Xbox Standard Edition"
+                elif "XBOX_Ultimate" in offer["game"]:
+                    game_display_name = "🎮 Xbox Ultimate Edition"
+                elif "PC_Standard" in offer["game"]:
+                    game_display_name = "🖥️ PC Standard (شهر)"
+                elif "PC_Ultimate" in offer["game"]:
+                    game_display_name = "🖥️ PC Ultimate (سنة)"
+                elif "STEAM_Standard" in offer["game"]:
+                    game_display_name = "🖥️ Steam Standard"
+                elif "STEAM_Ultimate" in offer["game"]:
+                    game_display_name = "🖥️ Steam Ultimate"
+                
+                # تحديد نوع الحساب بالعربية
+                account_display_name = ""
+                if offer["account"] == "Full":
+                    account_display_name = "حساب كامل"
+                elif offer["account"] == "Primary":
+                    account_display_name = "تفعيل أساسي"
+                elif offer["account"] == "Secondary":
+                    account_display_name = "تسجيل دخول مؤقت"
+                
+                popup_offers.append({
+                    "id": f"{offer['game']}_{offer['platform']}_{offer['account']}",
+                    "title": game_display_name,
+                    "description": f"{offer['platform']} • {account_display_name} - خصم حصري لفترة محدودة!",
+                    "fake_price": offer["fake_price"],
+                    "real_price": offer["real_price"], 
+                    "discount_percentage": offer["discount"],
+                    "valid_until": "نفاذ الكمية",
+                    # بيانات إضافية للتعامل مع الطلب
+                    "game_type": offer["game"],
+                    "platform": offer["platform"],
+                    "account_type": offer["account"]
+                })
+        
+        return jsonify({
+            "success": True,
+            "offers": popup_offers,
+            "total_offers": len(popup_offers)
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ خطأ في get_offers_popup: {e}")
+        return jsonify({
+            "success": False, 
+            "offers": [],
+            "error": "خطأ في تحميل العروض"
+        }), 500
+
 # معالجات الأخطاء
 @app.errorhandler(400)
 def bad_request(error):
