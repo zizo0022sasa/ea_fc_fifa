@@ -3065,6 +3065,51 @@ function closeOfferModal() {
     text-align: center;
 }
 
+// دوال أزرار العروض المنبثقة - إضافة جديدة
+function acceptOffers() {
+    console.log('🔥 قبول العروض');
+    
+    // إخفاء البوب أب
+    const offerOverlay = document.getElementById('offerOverlay');
+    if (offerOverlay) {
+        offerOverlay.style.display = 'none';
+    }
+    
+    // رسالة نجاح
+    alert('🎉 ممتاز! استفد من العروض الحصرية\nاختر المنتج اللي عايزه دلوقتي! 🔥');
+    
+    // الانتقال للمنتجات
+    const productsSection = document.querySelector('.products-section');
+    if (productsSection) {
+        productsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    // حفظ الاختيار
+    localStorage.setItem('acceptedOffers', 'true');
+}
+
+function declineOffers() {
+    console.log('👀 رفض العروض');
+    
+    // إخفاء البوب أب
+    const offerOverlay = document.getElementById('offerOverlay');
+    if (offerOverlay) {
+        offerOverlay.style.display = 'none';
+    }
+    
+    // رسالة مهذبة
+    alert('👀 تمام! يمكنك تصفح جميع المنتجات\nبالأسعار العادية');
+    
+    // الانتقال للمنتجات
+    const productsSection = document.querySelector('.products-section');
+    if (productsSection) {
+        productsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    // حفظ الاختيار
+    localStorage.setItem('declinedOffers', 'true');
+}
+
 console.log('🚀 تم تحميل نظام العروض بنجاح');
 </script>
 
