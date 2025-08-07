@@ -1925,54 +1925,49 @@ function closePopup() {
     document.getElementById('offersPopup').style.display = 'none';
 }
 
-// Select offer - النسخة المحسنة اللي بتربط كل حاجة ببعض
 function selectOffer(offer) {
     console.log('🎯 تم اختيار عرض:', offer);
     
+    // التأكد من وجود البيانات
     if (!offer.game_type || !offer.platform || !offer.account_type) {
-        alert('❌ بيانات العرض غير مكتملة، لا يمكن إرسال الطلب.');
+        console.error('❌ بيانات العرض ناقصة:', offer);
+        alert('❌ بيانات العرض غير مكتملة');
         return;
     }
     
-    const confirmMessage = `
-🎉 عرض رائع!
-
-📋 تفاصيل الطلب:
-• ${offer.title}
-• السعر: ${offer.real_price} جنيه
-
-💬 هل تريد تأكيد الطلب وفتح الواتساب الآن؟
-    `;
+    // تأثير بصري سريع
+    const popup = document.getElementById('offersPopup');
+    popup.style.background = 'rgba(0,255,0,0.1)';
+    setTimeout(() => popup.style.background = 'rgba(0,0,0,0.7)', 200);
     
-    if (confirm(confirmMessage)) {
-        const formData = new FormData();
-        formData.append('game_type', offer.game_type);
-        formData.append('platform', offer.platform);
-        formData.append('account_type', offer.account_type);
-        
-        fetch('/whatsapp', {
-            method: 'POST',
-            body: formData,
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert(`✅ تم تحضير الطلب بنجاح!\nسيتم فتح الواتساب الآن...`);
-                window.open(data.whatsapp_url, '_blank');
-            } else {
-                alert('❌ ' + (data.error || 'حدث خطأ في إرسال الطلب'));
-            }
-        })
-        .catch(error => {
-            console.error('خطأ في الشبكة:', error);
-            alert('❌ حدث خطأ في الاتصال بالشبكة.');
-        });
-    }
+    // استخدام نفس نظام الواتساب الموجود
+    const formData = new FormData();
+    formData.append('game_type', offer.game_type);
+    formData.append('platform', offer.platform);
+    formData.append('account_type', offer.account_type);
     
-    closePopup();
+    // إرسال الطلب
+    fetch('/whatsapp', {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`🎉 تم تحضير العرض!\nرقم المرجع: ${data.reference_id}\nالسعر: ${data.price} ${data.currency}\nسيتم فتح الواتساب الآن...`);
+            window.open(data.whatsapp_url, '_blank');
+        } else {
+            alert('❌ ' + (data.error || 'حدث خطأ في الطلب'));
+        }
+        closePopup();
+    })
+    .catch(error => {
+        console.error('خطأ في الشبكة:', error);
+        alert('❌ خطأ في الشبكة - جرب تاني');
+        closePopup();
+    });
 }
-// خلاص مفيش أقواس زيادة هنا
 </script>
 
 <body>
@@ -2905,16 +2900,39 @@ function selectOffer(offer) {
     closePopup();
 }
 
-// دالة للعروض التجريبية
 function selectDemoOffer(title, price, oldPrice) {
-    const discount = Math.round(((oldPrice - price) / oldPrice) * 100);
+    // تحديد نوع اللعبة حسب العنوان
+    let gameType = 'FC26_EN_Standard';
+    let platform = 'PS4';
+    let accountType = 'Primary';
     
-    selectOffer({
+    if (title.includes('Arabic')) {
+        gameType = 'FC26_AR_Standard';
+    }
+    if (title.includes('Ultimate')) {
+        gameType = gameType.replace('Standard', 'Ultimate');
+    }
+    if (title.includes('PS5')) {
+        platform = 'PS5';
+        accountType = 'Secondary';
+    }
+    if (title.includes('Steam')) {
+        gameType = 'FC26_STEAM_Standard';
+        platform = 'Steam';
+        accountType = 'Full';
+    }
+    
+    const offer = {
         title: title,
         real_price: price,
         fake_price: oldPrice,
-        discount_percentage: discount
-    });
+        discount_percentage: Math.round(((oldPrice - price) / oldPrice) * 100),
+        game_type: gameType,
+        platform: platform,
+        account_type: accountType
+    };
+    
+    selectOffer(offer);
 }
 
 // Close popup when clicking outside
