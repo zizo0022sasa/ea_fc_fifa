@@ -97,6 +97,7 @@ export async function handleTelegramLink() {
 /**
  * 📋 جمع بيانات النموذج للتليجرام
  */
+// ✅✅✅ هذا هو الكود الصحيح بعد التعديل ✅✅✅
 async function collectFormDataForTelegram() {
     const platform = document.getElementById('platform')?.value || '';
     const whatsapp = document.getElementById('whatsapp')?.value || '';
@@ -105,11 +106,12 @@ async function collectFormDataForTelegram() {
     
     return {
         platform: platform,
-        whatsapp_number: whatsapp,
+        whatsapp: whatsapp, // <--- تم تصحيح الاسم هنا
         payment_method: paymentMethod,
         payment_details: paymentDetails
     };
 }
+
 
 /**
  * 💳 الحصول على تفاصيل الدفع النشطة
