@@ -24,24 +24,19 @@ export async function handleTelegramLink() {
         console.error('❌ زر التليجرام غير موجود');
         return;
     }
-
-    // 🔥 التحقق المباشر من الصفحة (DOM) - هذا هو الحل
-    const selectedPlatformCard = document.querySelector('.platform-card.selected');
-    const isWhatsappVerified = document.querySelector('.phone-info.success-info') !== null;
-
-    console.log('📊 حالة التحقق المباشر:');
-    console.log('  - المنصة مختارة؟', !!selectedPlatformCard);
-    console.log('  - الواتساب مُتحقق منه؟', isWhatsappVerified);
-
+    
+    // التحقق من حالة التحقق (نستورد من النظام الخارجي)
+    const validationStates = await getValidationStatesFromMainSystem();
+    
+    // طباعة حالة التحقق للتشخيص
+    console.log('📊 حالة التحقق الحالية:', validationStates);
+    
     // ✅ التحقق من اكتمال البيانات
-    if (!selectedPlatformCard || !isWhatsappVerified) {
+    if (!validationStates.platform || !validationStates.whatsapp) {
         console.log('❌ البيانات غير مكتملة');
         handleIncompleteDataError(telegramBtn);
         return;
     }
-    
-    // ... باقي الدالة (يبدأ من console.log('✅ البيانات مكتملة...'))
-
     
     console.log('✅ البيانات مكتملة، بدء عملية الربط...');
     
@@ -455,6 +450,28 @@ function showTelegramNotification(message, type = 'info') {
         console.log(`🔔 ${type.toUpperCase()}: ${message}`);
         alert(message);
     }
+}
+
+/**
+ * 🔗 الحصول على حالات التحقق من النظام الرئيسي
+ */
+async function getValidationStatesFromMainSystem() {
+    // نحاول الوصول للمتغيرات العامة
+    if (typeof validationStates !== 'undefined') {
+        return validationStates;
+    }
+    
+    // إذا لم توجد، نفحص البيانات يدوياً
+    const platform = document.getElementById('platform')?.value || '';
+    const whatsapp = document.getElementById('whatsapp')?.value || '';
+    const phoneInfo = document.querySelector('.phone-info.success-info');
+    const paymentMethod = document.getElementById('payment_method')?.value || '';
+    
+    return {
+        platform: !!platform,
+        whatsapp: !!(whatsapp && phoneInfo),
+        paymentMethod: !!paymentMethod
+    };
 }
 
 /**
