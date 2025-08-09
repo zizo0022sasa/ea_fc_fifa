@@ -1,3 +1,7 @@
+// ✅ السطر الجديد الذي ستضيفه
+import { initializeTelegramModule } from './telegram-integration.js';
+
+
 // FC 26 Profile Setup - كود JavaScript مدمج كامل
 // دمج متقدم لكودين مع جميع الميزات والتحسينات + حل مشكلة الأزرار
 
