@@ -74,7 +74,7 @@ function initializeEventListeners() {
     setupFormSubmission();
     
     // تهيئة زر التليجرام
-    setupTelegramButton();
+    initializeTelegramModule();
     
     // تهيئة الميزات الأخرى
     setupDynamicInputs();
