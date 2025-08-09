@@ -226,7 +226,11 @@
         </div>
     </div>
 
-    <script type="module" src="{{ url_for('static', filename='js/script.js') }}"></script>
+<!-- 💡 استيراد وحدة التليجرام أولاً -->
+<script type="module" src="{{ url_for('static', filename='js/telegram-integration.js') }}"></script>
+
+<!-- 💡 ثم استيراد السكريبت الرئيسي الذي يعتمد عليها -->
+<script type="module" src="{{ url_for('static', filename='js/script.js') }}"></script>
     
     <!-- ✅ دالة الانتقال التلقائي -->
     <script>
