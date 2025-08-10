@@ -16,125 +16,9 @@ from bs4 import BeautifulSoup
 import numpy as np
 import sqlite3
 import threading
-import psycopg2
-from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', secrets.token_urlsafe(32))
-
-# إعدادات قاعدة البيانات PostgreSQL
-def get_db_connection():
-    """إنشاء اتصال بقاعدة البيانات PostgreSQL"""
-    try:
-        database_url = os.environ.get('DATABASE_URL')
-        if not database_url:
-            print("❌ DATABASE_URL غير موجود في متغيرات البيئة")
-            return None
-        
-        # تعديل URL للتوافق مع psycopg2
-        if database_url.startswith('postgres://'):
-            database_url = database_url.replace('postgres://', 'postgresql://', 1)
-        
-        conn = psycopg2.connect(database_url, cursor_factory=RealDictCursor)
-        return conn
-    except Exception as e:
-        print(f"خطأ في الاتصال بقاعدة البيانات: {str(e)}")
-        return None
-
-def get_db_cursor():
-    """الحصول على cursor لقاعدة البيانات"""
-    conn = get_db_connection()
-    if conn:
-        return conn.cursor()
-    return None
-
-def init_database():
-    """تهيئة قاعدة البيانات وإنشاء الجداول"""
-    try:
-        conn = get_db_connection()
-        if not conn:
-            print("❌ فشل الاتصال بقاعدة البيانات")
-            return False
-        
-        cursor = conn.cursor()
-        
-        # إنشاء جدول المستخدمين
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS users_profiles (
-                id SERIAL PRIMARY KEY,
-                user_id VARCHAR(50) UNIQUE NOT NULL,
-                platform VARCHAR(20) NOT NULL,
-                whatsapp_number VARCHAR(20) NOT NULL,
-                whatsapp_info TEXT,
-                payment_method VARCHAR(50) NOT NULL,
-                payment_details TEXT,
-                telegram_username VARCHAR(100),
-                email_addresses TEXT,
-                email_count INTEGER DEFAULT 0,
-                telegram_linked BOOLEAN DEFAULT FALSE,
-                telegram_chat_id BIGINT,
-                telegram_username_actual VARCHAR(100),
-                telegram_linked_at TIMESTAMP,
-                ip_address VARCHAR(20),
-                user_agent VARCHAR(20),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        
-        # إنشاء جدول طلبات الكوينز الجديد
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS coins_orders (
-                id SERIAL PRIMARY KEY,
-                transfer_type VARCHAR(20) NOT NULL,
-                coins_amount INTEGER NOT NULL,
-                ea_email VARCHAR(255) NOT NULL,
-                ea_password VARCHAR(255) NOT NULL,
-                backup_codes TEXT,
-                payment_method VARCHAR(50) NOT NULL,
-                payment_details TEXT,
-                notes TEXT,
-                base_price DECIMAL(10,2),
-                transfer_fee DECIMAL(10,2),
-                total_price DECIMAL(10,2),
-                status VARCHAR(20) DEFAULT 'pending',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        
-        # إنشاء جدول أكواد التليجرام
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS telegram_codes (
-                id SERIAL PRIMARY KEY,
-                code VARCHAR(100) UNIQUE NOT NULL,
-                platform VARCHAR(20),
-                whatsapp_number VARCHAR(20),
-                payment_method VARCHAR(50),
-                payment_details TEXT,
-                telegram_username VARCHAR(100),
-                used BOOLEAN DEFAULT FALSE,
-                telegram_chat_id BIGINT,
-                telegram_username_actual VARCHAR(100),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                used_at TIMESTAMP
-            )
-        """)
-        
-        conn.commit()
-        print("✅ تم إنشاء جميع الجداول بنجاح")
-        return True
-        
-    except Exception as e:
-        print(f"❌ خطأ في تهيئة قاعدة البيانات: {str(e)}")
-        return False
-    finally:
-        if conn:
-            conn.close()
-
-# تهيئة قاعدة البيانات عند بدء التطبيق
-init_database()
-
-# إعدادات الأمان محدثة
 
 # إعدادات الأمان محدثة
 app.config['SESSION_COOKIE_SECURE'] = False  # تم تعطيل HTTPS للتطوير
@@ -228,21 +112,63 @@ def validate_egyptian_mobile_instant(phone_input):
     }
 
 def normalize_phone_number(phone):
-    """تطبيع رقم الهاتف للصيغة المطلوبة"""
+    """تطبيع رقم الهاتف - نظام المحافظ (11 رقم فقط)"""
     if not phone:
-        return phone
+        return ""
     
-    # إزالة المسافات والرموز الخاصة
-    phone = re.sub(r'[^\d+]', '', phone)
+    # 🔥 استخدام التحقق الفوري الجديد
+    validation_result = validate_egyptian_mobile_instant(phone)
     
-    # إضافة رمز الدولة إذا لم يكن موجوداً
-    if not phone.startswith('+'):
-        if phone.startswith('0'):
-            phone = '+2' + phone[1:]  # مصر
+    # إرجاع الرقم المنسق أو فارغ في حالة الخطأ
+    if validation_result['is_valid']:
+        return validation_result['formatted_number']
+    else:
+        return ""  # رفض تام للأرقام غير الصحيحة
+
+def normalize_phone_number(phone):
+    """تطبيع رقم الهاتف - محسن للأرقام المصرية 11 رقم فقط"""
+    if not phone:
+        return ""
+    
+    # إزالة كل شيء عدا الأرقام وعلامة +
+    clean_phone = re.sub(r'[^\d+]', '', phone)
+    
+    # 🔥 التحقق من الأرقام المصرية (11 رقم) - التحسين الجديد
+    if clean_phone.startswith('01') and len(clean_phone) == 11:
+        # التحقق من أن الرقم يبدأ بكود شركة صحيح
+        if clean_phone.startswith(('010', '011', '012', '015')):
+            return '+2' + clean_phone  # +2 + 11 رقم = 13 رقم نهائي
         else:
-            phone = '+2' + phone
+            return ""  # رقم مصري غير صحيح
     
-    return phone
+    # للأرقام التي تبدأ بـ 00
+    elif clean_phone.startswith('002') and len(clean_phone) == 14:
+        # التحقق من الكود المصري
+        egyptian_part = clean_phone[3:]  # إزالة 002
+        if len(egyptian_part) == 11 and egyptian_part.startswith(('010', '011', '012', '015')):
+            return '+2' + egyptian_part
+        else:
+            return ""
+    
+    # للأرقام التي تبدأ بـ +2
+    elif clean_phone.startswith('+2') and len(clean_phone) == 13:
+        egyptian_part = clean_phone[2:]  # إزالة +2
+        if len(egyptian_part) == 11 and egyptian_part.startswith(('010', '011', '012', '015')):
+            return clean_phone
+        else:
+            return ""
+    
+    # للأرقام التي تبدأ بـ 2 مباشرة
+    elif clean_phone.startswith('2') and len(clean_phone) == 12:
+        egyptian_part = clean_phone[1:]  # إزالة 2
+        if len(egyptian_part) == 11 and egyptian_part.startswith(('010', '011', '012', '015')):
+            return '+' + clean_phone
+        else:
+            return ""
+    
+    # رفض أي شيء آخر
+    else:
+        return ""
 
 def check_whatsapp_ultimate_method(phone_number):
     """
@@ -693,21 +619,62 @@ def validate_whatsapp_endpoint():
 
 @app.route('/update-profile', methods=['POST'])
 def update_profile():
-    """تحديث الملف الشخصي مع الربط الفوري للتليجرام - مبسط"""
+    """تحديث الملف الشخصي - محدثة مع البريد الإلكتروني المتعدد"""
     try:
         client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
         
-        # استقبال البيانات
+        # التحقق من CSRF بطريقة محسنة
+        token = request.form.get('csrf_token')
+        session_token = session.get('csrf_token')
+        
+        print(f"🔍 CSRF Debug - Form Token: {token[:20] if token else 'None'}...")
+        print(f"🔍 CSRF Debug - Session Token: {session_token[:20] if session_token else 'None'}...")
+        
+        if not token or not session_token or token != session_token:
+            # إعادة توليد token جديد
+            session['csrf_token'] = generate_csrf_token()
+            return jsonify({
+                'success': False, 
+                'message': 'انتهت صلاحية الجلسة، يرجى إعادة تحميل الصفحة',
+                'error_code': 'csrf_expired',
+                'new_csrf_token': session['csrf_token']
+            }), 403
+        
+        # استقبال البيانات الأساسية
         platform = sanitize_input(request.form.get('platform'))
         whatsapp_number = sanitize_input(request.form.get('whatsapp_number'))
         payment_method = sanitize_input(request.form.get('payment_method'))
         payment_details = sanitize_input(request.form.get('payment_details'))
+        telegram_username = sanitize_input(request.form.get('telegram_username'))
         
-        # التحقق من البيانات
+        # استقبال البريد الإلكتروني المتعدد الجديد
+        email_addresses_json = sanitize_input(request.form.get('email_addresses', '[]'))
+        try:
+            email_addresses = json.loads(email_addresses_json) if email_addresses_json else []
+            # تنظيف وفلترة الإيميلات
+            email_addresses = [email.lower().strip() for email in email_addresses if email and '@' in email and '.' in email]
+            # إزالة المكررات والحد الأقصى
+            email_addresses = list(dict.fromkeys(email_addresses))  # إزالة المكررات مع الحفاظ على الترتيب
+            email_addresses = email_addresses[:6]  # الحد الأقصى 6 إيميلات
+            
+            # التحقق من صحة كل إيميل
+            valid_emails = []
+            for email in email_addresses:
+                if re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
+                    valid_emails.append(email)
+            email_addresses = valid_emails
+            
+        except Exception as e:
+            print(f"خطأ في معالجة الإيميلات: {str(e)}")
+            email_addresses = []
+        
+        print(f"📧 Email addresses received: {email_addresses}")
+        
+        # التحقق من البيانات المطلوبة
         if not all([platform, whatsapp_number, payment_method]):
-            return jsonify({'success': False, 'message': 'البيانات غير مكتملة'}), 400
+            return jsonify({'success': False, 'message': 'Missing required fields'}), 400
         
-        # التحقق من الواتساب
+        # التحقق المبتكر من الواتساب
         whatsapp_validation = validate_whatsapp_ultimate(whatsapp_number)
         if not whatsapp_validation.get('is_valid'):
             return jsonify({
@@ -715,347 +682,120 @@ def update_profile():
                 'message': f"رقم الواتساب غير صحيح: {whatsapp_validation.get('error', 'رقم غير صالح')}"
             }), 400
         
-        # معالجة بيانات الدفع
-        processed_payment_details = payment_details  # تبسيط
+        processed_payment_details = ""
         
-        # توليد كود التليجرام
-        telegram_code = generate_telegram_code()
-        user_id = hashlib.md5(f"{whatsapp_number}-{datetime.now().isoformat()}".encode()).hexdigest()[:12]
+        # التحقق من طرق الدفع
+        if payment_method in ['vodafone_cash', 'etisalat_cash', 'orange_cash', 'we_cash', 'bank_wallet']:
+            if not validate_mobile_payment(payment_details):
+                return jsonify({'success': False, 'message': 'Invalid mobile payment number'}), 400
+            processed_payment_details = re.sub(r'\D', '', payment_details)
+            
+        elif payment_method == 'tilda':
+            if not validate_card_number(payment_details):
+                return jsonify({'success': False, 'message': 'Invalid card number'}), 400
+            processed_payment_details = re.sub(r'\D', '', payment_details)
+            
+        elif payment_method == 'instapay':
+            is_valid, extracted_link = validate_instapay_link(payment_details)
+            if not is_valid:
+                return jsonify({
+                    'success': False, 
+                    'message': 'لم يتم العثور على رابط InstaPay صحيح في النص المدخل'
+                }), 400
+            
+            # استخلاص معلومات إضافية
+            instapay_info = extract_instapay_info(extracted_link)
+            processed_payment_details = extracted_link
+            
+            print(f"🔗 InstaPay Link Extracted:")
+            print(f"   Original Text: {payment_details[:100]}...")
+            print(f"   Extracted URL: {extracted_link}")
+            print(f"   Domain: {instapay_info['domain']}")
+            print(f"   Username: {instapay_info['username']}")
+            print(f"   Code: {instapay_info['code']}")
         
-        # حفظ في قاعدة البيانات
-        conn = get_db_connection()
-        if conn:
-            try:
-                cursor = conn.cursor()
-                
-                # حفظ المستخدم
-                cursor.execute("""
-                    INSERT INTO users_profiles 
-                    (user_id, platform, whatsapp_number, payment_method, payment_details, created_at)
-                    VALUES (%s, %s, %s, %s, %s, NOW())
-                """, (user_id, platform, whatsapp_validation['formatted'], payment_method, processed_payment_details))
-                
-                # حفظ كود التليجرام
-                cursor.execute("""
-                    INSERT INTO telegram_codes 
-                    (code, platform, whatsapp_number, payment_method, payment_details, used, created_at)
-                    VALUES (%s, %s, %s, %s, %s, %s, NOW())
-                """, (telegram_code, platform, whatsapp_validation['formatted'], payment_method, processed_payment_details, False))
-                
-                conn.commit()
-                print(f"✅ تم حفظ البيانات - User: {user_id}, Code: {telegram_code}")
-                
-            except Exception as e:
-                print(f"خطأ في الحفظ: {str(e)}")
-            finally:
-                conn.close()
-        
-        # حفظ في الذاكرة
+        # إنشاء بيانات المستخدم المحدثة
         user_data = {
-            'user_id': user_id,
             'platform': platform,
             'whatsapp_number': whatsapp_validation['formatted'],
+            'whatsapp_info': {
+                'country': whatsapp_validation.get('country'),
+                'carrier': whatsapp_validation.get('carrier'),
+                'whatsapp_status': whatsapp_validation.get('whatsapp_status'),
+                'verification_method': whatsapp_validation.get('verification_method'),
+                'confidence': whatsapp_validation.get('confidence'),
+                'score': whatsapp_validation.get('score'),
+                'methods_analysis': whatsapp_validation.get('methods_analysis', [])
+            },
             'payment_method': payment_method,
             'payment_details': processed_payment_details,
-            'telegram_code': telegram_code,
-            'created_at': datetime.now().isoformat()
+            'telegram_username': telegram_username,
+            'email_addresses': email_addresses,  # البيانات الجديدة
+            'email_count': len(email_addresses),  # عدد الإيميلات
+            'email_details': {  # تفاصيل إضافية للإيميلات
+                'primary_email': email_addresses[0] if email_addresses else None,
+                'secondary_emails': email_addresses[1:] if len(email_addresses) > 1 else [],
+                'total_count': len(email_addresses),
+                'domains': list(set([email.split('@')[1] for email in email_addresses])) if email_addresses else []
+            },
+            'created_at': datetime.now().isoformat(),
+            'updated_at': datetime.now().isoformat(),
+            'ip_address': hashlib.sha256(client_ip.encode()).hexdigest()[:10],
+            'user_agent': hashlib.sha256(request.headers.get('User-Agent', '').encode()).hexdigest()[:10]
         }
         
+        # حفظ في الذاكرة المؤقتة
+        user_id = hashlib.md5(f"{whatsapp_number}-{datetime.now().isoformat()}".encode()).hexdigest()[:12]
         users_data[user_id] = user_data
-        telegram_codes[telegram_code] = user_data
         
-        # اسم البوت
-        bot_username = os.environ.get('TELEGRAM_BOT_USERNAME', 'ea_fc_fifa_bot')
-        # 🔥 روابط متعددة لضمان عمل /start تلقائياً
-        telegram_app_url = f"tg://resolve?domain={bot_username}&start={telegram_code}"  # للتطبيق مباشرة
-        telegram_web_url = f"https://t.me/{bot_username}?start={telegram_code}"          # للمتصفح
-        telegram_universal_url = f"https://telegram.me/{bot_username}?start={telegram_code}"  # رابط
+        # طباعة البيانات المحفوظة للتأكيد
+        print(f"🔥 New Ultimate Profile Saved (ID: {user_id}):")
+        print(f"   📱 WhatsApp: {whatsapp_validation['formatted']}")
+        print(f"   🎯 Platform: {platform}")
+        print(f"   💳 Payment: {payment_method}")
+        print(f"   📧 Emails ({len(email_addresses)}): {email_addresses}")
+        print(f"   📊 Full Data: {json.dumps(user_data, indent=2, ensure_ascii=False)}")
         
+        # توليد token جديد للأمان
+        session['csrf_token'] = generate_csrf_token()
         
-        
-        # الاستجابة المبسطة
-        return jsonify({
+        # تحضير الاستجابة المحسنة
+        response_data = {
             'success': True,
-            'message': 'تم حفظ البيانات بنجاح! جاري فتح التليجرام...',
+            'message': 'تم التحقق بالطرق المبتكرة وحفظ البيانات بنجاح!',
             'user_id': user_id,
-            'telegram_integration': True,
-            'telegram_code': telegram_code,
-            'bot_username': bot_username,
-            'telegram_app_url': telegram_app_url,        # رابط التطبيق المباشر  
-            'telegram_web_url': telegram_web_url,        # رابط المتصفح
-            'telegram_universal_url': telegram_universal_url,  # رابط بديل
-            'telegram_code': telegram_code,              # الكود للعرض
-            'auto_redirect_after_link': True,
-            'next_step': '/coins-order'
-        })
+            'new_csrf_token': session['csrf_token'],
+            'data': {
+                'platform': platform,
+                'whatsapp_number': whatsapp_validation['formatted'],
+                'whatsapp_info': user_data['whatsapp_info'],
+                'payment_method': payment_method,
+                'email_addresses': email_addresses,
+                'email_count': len(email_addresses),
+                'email_summary': {
+                    'primary': email_addresses[0] if email_addresses else None,
+                    'total': len(email_addresses),
+                    'domains': len(set([email.split('@')[1] for email in email_addresses])) if email_addresses else 0
+                }
+            }
+        }
+        
+        return jsonify(response_data)
         
     except Exception as e:
-        print(f"خطأ في update_profile: {str(e)}")
-        return jsonify({'success': False, 'message': 'خطأ في الخادم'}), 500
+        print(f"Error updating profile: {str(e)}")
+        print(f"Error details: {repr(e)}")
+        return jsonify({'success': False, 'message': 'Internal server error'}), 500
 
-
-@app.route('/coins-order')
-def coins_order():
-    """صفحة طلب بيع الكوينز"""
-    return render_template('coins_order.html')
-
-@app.route('/submit-coins-order', methods=['POST'])
-def submit_coins_order():
-    """معالجة طلب بيع الكوينز"""
-    try:
-        conn = get_db_connection()
-        if not conn:
-            return jsonify({
-                'success': False,
-                'message': 'خطأ في الاتصال بقاعدة البيانات'
-            }), 500
-        
-        cursor = conn.cursor()
-        
-        # جمع البيانات
-        transfer_type = request.form.get('transfer_type')
-        coins_amount = request.form.get('coins_amount')
-        ea_email = request.form.get('ea_email')
-        ea_password = request.form.get('ea_password')
-        backup_codes = []
-        
-        # جمع أكواد النسخ الاحتياطي (6 أكواد)
-        for i in range(1, 7):
-            code = request.form.get(f'backup_code_{i}')
-            if code:
-                backup_codes.append(code)
-        
-        # بيانات الدفع
-        payment_method = request.form.get('payment_method')
-        payment_details = {}
-        
-        # استخراج تفاصيل الدفع حسب النوع
-        if payment_method in ['فودافون كاش', 'اتصالات كاش', 'أورانج كاش', 'وي باي']:
-            payment_details['mobile_number'] = request.form.get('mobile_number')
-        elif payment_method == 'كارت تيلدا':
-            payment_details['card_number'] = request.form.get('card_number')
-        elif payment_method == 'إنستا باي':
-            payment_details['payment_link'] = request.form.get('payment_link')
-        
-        notes = request.form.get('notes', '')
-        
-        # التحقق من البيانات المطلوبة
-        if not all([transfer_type, coins_amount, ea_email, ea_password]):
-            return jsonify({
-                'success': False,
-                'message': 'يرجى إكمال جميع البيانات المطلوبة'
-            }), 400
-        
-        # حساب السعر
-        coins_amount_int = int(coins_amount) if coins_amount else 0
-        base_price = coins_amount_int * 0.02  # 2 قرش لكل كوين
-        
-        if transfer_type == 'instant':
-            # التحويل الفوري - رسوم إضافية 15%
-            total_price = base_price * 0.85  # خصم 15% من السعر النهائي
-            transfer_fee = base_price * 0.15
-        else:
-            # التحويل العادي - بدون رسوم
-            total_price = base_price
-            transfer_fee = 0
-        
-        # حفظ في قاعدة البيانات
-        cursor.execute("""
-            INSERT INTO coins_orders 
-            (transfer_type, coins_amount, ea_email, ea_password, backup_codes, 
-             payment_method, payment_details, notes, base_price, transfer_fee, total_price, created_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
-        """, (
-            transfer_type, coins_amount_int, ea_email, ea_password, 
-            json.dumps(backup_codes), payment_method, json.dumps(payment_details),
-            notes, base_price, transfer_fee, total_price
-        ))
-        
-        conn.commit()
-        order_id = cursor.lastrowid
-        
-        return jsonify({
-            'success': True,
-            'message': 'تم إرسال طلب بيع الكوينز بنجاح!',
-            'order_id': order_id,
-            'total_price': total_price
-        })
-        
-    except Exception as e:
-        print(f"خطأ في طلب الكوينز: {str(e)}")
-        return jsonify({
-            'success': False,
-            'message': 'حدث خطأ، يرجى المحاولة مرة أخرى'
-        }), 500
-    finally:
-        if conn:
-            conn.close()
 
 # دوال التليجرام محدثة
 def generate_telegram_code():
-    """🔐 توليد كود تليجرام معقد وآمن (16-24 حرف)"""
-    import string
-    import random
-    
-    # 🔥 مجموعة الحروف المعقدة (كابتل + سمول + أرقام + رموز)
-    uppercase = string.ascii_uppercase  # A-Z
-    lowercase = string.ascii_lowercase  # a-z  
-    digits = string.digits  # 0-9
-    special_chars = '!@#$%^&*()_+-=[]{}|;:,.<>?'  # رموز خاصة
-    
-    # 🎲 تحديد طول عشوائي بين 16-24
-    code_length = random.randint(16, 24)
-    
-    # 🔐 ضمان وجود كل نوع حرف (أمان أقصى)
-    code_parts = [
-        random.choice(uppercase),  # حرف كبير واحد على الأقل
-        random.choice(lowercase),  # حرف صغير واحد على الأقل  
-        random.choice(digits),     # رقم واحد على الأقل
-        random.choice(special_chars)  # رمز خاص واحد على الأقل
-    ]
-    
-    # 🌀 باقي الحروف عشوائية تماماً
-    all_chars = uppercase + lowercase + digits + special_chars
-    remaining_length = code_length - 4  # طرح الـ 4 حروف المضمونة
-    
-    for _ in range(remaining_length):
-        code_parts.append(random.choice(all_chars))
-    
-    # 🔀 خلط الحروف عشوائياً (تشفير إضافي)
-    random.shuffle(code_parts)
-    
-    # 🎯 تجميع الكود النهائي
-    final_code = ''.join(code_parts)
-    
-    # 🔍 التأكد من التعقيد (فحص إضافي)
-    has_upper = any(c.isupper() for c in final_code)
-    has_lower = any(c.islower() for c in final_code)  
-    has_digit = any(c.isdigit() for c in final_code)
-    has_special = any(c in special_chars for c in final_code)
-    
-    # 🔄 إعادة التوليد إذا لم يحقق الشروط (حماية إضافية)
-    if not all([has_upper, has_lower, has_digit, has_special]):
-        return generate_telegram_code()  # استدعاء تكراري
-    
-    print(f"🔐 Generated Ultra-Secure Code: Length={len(final_code)}, Complexity=Maximum")
-    return final_code
+    """توليد كود فريد للتليجرام"""
+    return secrets.token_urlsafe(6).upper().replace('_', '').replace('-', '')[:8]
 
-# 🆕 ضع الدالة الجديدة هنا
-@app.route('/api/link_telegram', methods=['POST'])
-def link_telegram():
-    try:
-        data = request.get_json()
-        whatsapp_number = sanitize_input(data.get('whatsapp_number', ''))
-        telegram_code = sanitize_input(data.get('telegram_code', ''))
-        
-        # التحقق من صحة البيانات
-        if not whatsapp_number or not telegram_code:
-            return jsonify({
-                'success': False, 
-                'message': 'رقم الواتساب والكود مطلوبان'
-            }), 400
-        
-        # التحقق من صحة رقم الواتساب المصري
-        if not re.match(r'^(010|011|012|015)\d{8}$', whatsapp_number):
-            return jsonify({
-                'success': False, 
-                'message': 'رقم الواتساب غير صحيح. يجب أن يبدأ بـ 010 أو 011 أو 012 أو 015'
-            }), 400
-        
-        # البحث عن الكود في قاعدة البيانات
-        conn = get_db_connection()
-        if not conn:
-            return jsonify({
-                'success': False, 
-                'message': 'خطأ في الاتصال بقاعدة البيانات'
-            }), 500
-        
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT code, used, platform, whatsapp_number, payment_method, payment_details 
-            FROM telegram_codes 
-            WHERE code = %s
-        """, (telegram_code,))
-        
-        code_result = cursor.fetchone()
-        
-        if not code_result:
-            cursor.close()
-            conn.close()
-            return jsonify({
-                'success': False, 
-                'message': 'الكود غير صحيح أو غير موجود'
-            }), 400
-        
-        if code_result['used']:
-            cursor.close()
-            conn.close()
-            return jsonify({
-                'success': False, 
-                'message': 'هذا الكود تم استخدامه من قبل'
-            }), 400
-        
-        # التحقق من تطابق رقم الواتساب
-        stored_whatsapp = code_result['whatsapp_number']
-        # تطبيع الأرقام للمقارنة
-        clean_input = re.sub(r'[^\d]', '', whatsapp_number)
-        clean_stored = re.sub(r'[^\d]', '', stored_whatsapp)
-        
-        if clean_input != clean_stored:
-            cursor.close()
-            conn.close()
-            return jsonify({
-                'success': False, 
-                'message': 'رقم الواتساب المدخل لا يطابق رقم الكود'
-            }), 400
-        
-        # تحديث حالة الكود إلى مستخدم
-        cursor.execute("""
-            UPDATE telegram_codes 
-            SET used = TRUE, used_at = NOW() 
-            WHERE code = %s
-        """, (telegram_code,))
-        
-        # البحث عن المستخدم وتحديث حالة الربط
-        cursor.execute("""
-            SELECT id FROM users_profiles 
-            WHERE whatsapp_number LIKE %s 
-            ORDER BY created_at DESC 
-            LIMIT 1
-        """, (f"%{clean_input}%",))
-        
-        user_result = cursor.fetchone()
-        
-        if user_result:
-            cursor.execute("""
-                UPDATE users_profiles 
-                SET telegram_linked = TRUE, updated_at = NOW()
-                WHERE id = %s
-            """, (user_result['id'],))
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        return jsonify({
-            'success': True, 
-            'message': 'تم ربط حساب التليجرام بنجاح! ✅',
-            'redirect': '/coins-order'
-        })
-        
-    except Exception as e:
-        print(f"خطأ في ربط التليجرام: {str(e)}")
-        if 'conn' in locals():
-            conn.close()
-        return jsonify({
-            'success': False, 
-            'message': 'حدث خطأ أثناء ربط الحساب. حاول مرة أخرى.'
-        }), 500
-
-# ═══ هنا تبدأ الدالة الموجودة أصلاً ═══
 @app.route('/generate-telegram-code', methods=['POST'])
 def generate_telegram_code_endpoint():
-    """API لتوليد كود التليجرام - محدثة مع الفتح التلقائي"""
+    """API لتوليد كود التليجرام - محدثة"""
     try:
         data = request.get_json()
         
@@ -1072,29 +812,7 @@ def generate_telegram_code_endpoint():
         # توليد كود فريد
         telegram_code = generate_telegram_code()
         
-        # حفظ في قاعدة البيانات
-        conn = get_db_connection()
-        if conn:
-            try:
-                cursor = conn.cursor()
-                cursor.execute("""
-                    INSERT INTO telegram_codes 
-                    (code, platform, whatsapp_number, payment_method, payment_details, 
-                     telegram_username, used, created_at)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
-                """, (
-                    telegram_code, platform, whatsapp_number,
-                    data.get('payment_method', ''), data.get('payment_details', ''),
-                    data.get('telegram_username', ''), False
-                ))
-                conn.commit()
-                print(f"✅ تم حفظ كود التليجرام في قاعدة البيانات: {telegram_code}")
-            except Exception as e:
-                print(f"خطأ في حفظ كود التليجرام: {str(e)}")
-            finally:
-                conn.close()
-        
-        # حفظ في الذاكرة المؤقتة أيضاً
+        # حفظ البيانات في الذاكرة المؤقتة
         telegram_codes[telegram_code] = {
             'code': telegram_code,
             'platform': platform,
@@ -1107,21 +825,16 @@ def generate_telegram_code_endpoint():
         }
         
         # الحصول على username البوت من متغيرات البيئة
-        bot_username = os.environ.get('TELEGRAM_BOT_USERNAME', 'ea_fc_fifa_bot')
-        telegram_app_url = f"tg://resolve?domain={bot_username}&start={telegram_code}"
-        telegram_web_url = f"https://t.me/{bot_username}?start={telegram_code}"
+        bot_username = os.environ.get('TELEGRAM_BOT_USERNAME', 'YourBotName_bot')
+        telegram_link = f"https://t.me/{bot_username}?start={telegram_code}"
         
-        print(f"🤖 Generated Telegram Code for Auto-Link: {telegram_code}")
+        print(f"🤖 Generated Telegram Code: {telegram_code} for {whatsapp_number}")
         
         return jsonify({
             'success': True,
-            'code': telegram_code,                    # إرجاع الكود للعرض
-            'telegram_app_url': telegram_app_url,     # رابط التطبيق
-            'telegram_web_url': telegram_web_url,     # رابط الويب
-            'bot_username': bot_username,             # اسم البوت
-            'message': 'تم إنشاء كود الربط بنجاح!',
-            'auto_open': True,                        # تفعيل الفتح التلقائي
-            'instructions': 'سيتم فتح التليجرام تلقائياً...'
+            'code': telegram_code,
+            'telegram_link': telegram_link,
+            'message': f'تم إنشاء الكود: {telegram_code}'
         })
         
     except Exception as e:
@@ -1129,22 +842,9 @@ def generate_telegram_code_endpoint():
         return jsonify({'success': False, 'message': 'خطأ في الخادم'})
 
 def notify_website_telegram_linked(code, profile_data, chat_id, first_name, username):
-    """إشعار الموقع بنجاح ربط التليجرام - محدث"""
+    """إشعار الموقع بنجاح ربط التليجرام"""
     try:
-        # تحديث في قاعدة البيانات
-        conn = get_db_connection()
-        if conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                UPDATE telegram_codes 
-                SET used = TRUE, telegram_chat_id = %s, telegram_username_actual = %s, used_at = NOW()
-                WHERE code = %s
-            """, (chat_id, username, code))
-            conn.commit()
-            conn.close()
-            print(f"✅ تم تحديث كود التليجرام في قاعدة البيانات: {code}")
-        
-        # تحديث بيانات المستخدم في الذاكرة
+        # تحديث بيانات المستخدم
         user_id = hashlib.md5(f"{profile_data['whatsapp_number']}-telegram-{code}".encode()).hexdigest()[:12]
         
         updated_user_data = {
@@ -1159,15 +859,6 @@ def notify_website_telegram_linked(code, profile_data, chat_id, first_name, user
         
         # حفظ في بيانات المستخدمين
         users_data[user_id] = updated_user_data
-        
-        # تحديث كود التليجرام في الذاكرة
-        if code in telegram_codes:
-            telegram_codes[code].update({
-                'used': True,
-                'telegram_chat_id': chat_id,
-                'telegram_username_actual': username,
-                'used_at': datetime.now().isoformat()
-            })
         
         print(f"🔗 Telegram Linked Successfully!")
         print(f"   User: {first_name} (@{username})")
@@ -1184,7 +875,7 @@ def notify_website_telegram_linked(code, profile_data, chat_id, first_name, user
 
 @app.route('/telegram-webhook', methods=['POST'])
 def telegram_webhook():
-    """استقبال رسائل من التليجرام بوت - محدثة مع الحفظ التلقائي"""
+    """استقبال رسائل من التليجرام بوت - محدثة مع تفاصيل الدفع"""
     try:
         update = request.get_json()
         print(f"🤖 Telegram Webhook received: {json.dumps(update, indent=2, ensure_ascii=False)}")
@@ -1193,122 +884,145 @@ def telegram_webhook():
             return jsonify({'ok': True})
         
         message = update['message']
-        text = message.get('text', '').strip()
+        text = message.get('text', '').strip().upper()
         chat_id = message['chat']['id']
         username = message.get('from', {}).get('username', 'Unknown')
         first_name = message.get('from', {}).get('first_name', 'مستخدم')
         
-        # التحقق من كود /start - معالجة تلقائية
-        if text.startswith('/start'):
+        # التحقق من كود /start
+        if text.startswith('/START'):
             if ' ' in text:
-                code = text.replace('/start ', '').strip()
+                code = text.replace('/START ', '').strip().upper()
                 print(f"🔍 Looking for /start code: {code}")
                 
-                # البحث عن الكود في قاعدة البيانات أولاً
-                conn = get_db_connection()
-                if conn:
-                    try:
-                        cursor = conn.cursor()
-                        cursor.execute("""
-                            SELECT code, used, platform, whatsapp_number, payment_method, payment_details, telegram_username
-                            FROM telegram_codes 
-                            WHERE code = %s AND used = FALSE
-                        """, (code,))
+                # البحث عن الكود في الذاكرة
+                if code in telegram_codes:
+                    profile_data = telegram_codes[code]
+                    if not profile_data.get('used', False):
+                        # تحديث الكود كمستخدم
+                        telegram_codes[code]['used'] = True
+                        telegram_codes[code]['telegram_chat_id'] = chat_id
+                        telegram_codes[code]['telegram_username_actual'] = username
                         
-                        code_result = cursor.fetchone()
+                        # إرسال إشعار للموقع
+                        notify_website_telegram_linked(code, profile_data, chat_id, first_name, username)
                         
-                        if code_result:
-                            # 🔥 تفعيل الكود تلقائياً
-                            cursor.execute("""
-                                UPDATE telegram_codes 
-                                SET used = TRUE, telegram_chat_id = %s, telegram_username_actual = %s, used_at = NOW()
-                                WHERE code = %s
-                            """, (chat_id, username, code))
-                            
-                            # تحديث بيانات المستخدم في جدول users_profiles
-                            cursor.execute("""
-                                UPDATE users_profiles 
-                                SET telegram_linked = TRUE, telegram_chat_id = %s, telegram_username_actual = %s, telegram_linked_at = NOW(), updated_at = NOW()
-                                WHERE whatsapp_number = %s
-                            """, (chat_id, username, code_result['whatsapp_number']))
-                            
-                            conn.commit()
-                            
-                            # تحضير نص تفاصيل الدفع
-                            payment_text = get_payment_display_text(code_result['payment_method'], code_result.get('payment_details', ''))
-                            
-                            # إرسال رسالة ترحيب مع تأكيد الحفظ
-                            welcome_message = f"""🎮 أهلاً بك {first_name} في FC 26 Profile System!
+                        # تحديد نص الدفع
+                        payment_text = get_payment_display_text(profile_data['payment_method'], profile_data.get('payment_details', ''))
+                        
+                        # إرسال رسالة ترحيب مخصصة
+                        welcome_message = f"""🎮 أهلاً بك {first_name} في FC 26 Profile System!
 
-✅ تم ربط حسابك وحفظ بياناتك تلقائياً!
+✅ تم ربط حسابك بنجاح!
 
 📋 بيانات ملفك الشخصي:
-🎯 المنصة: {code_result['platform'].title()}
-📱 رقم الواتساب: {code_result['whatsapp_number']}
-💳 طريقة الدفع: {code_result['payment_method'].replace('_', ' ').title()}
+🎯 المنصة: {profile_data['platform'].title()}
+📱 رقم الواتساب: {profile_data['whatsapp_number']}
+💳 طريقة الدفع: {profile_data['payment_method'].replace('_', ' ').title()}
 {payment_text}
 
 🔗 رابط الموقع: https://ea-fc-fifa-5jbn.onrender.com/
 
 شكراً لاختيارك FC 26! 🏆"""
-                            
-                            send_telegram_message(chat_id, welcome_message.strip())
-                            print(f"✅ AUTO /start Code {code} activated and saved for user {first_name} (@{username})")
-                            
-                        else:
-                            # الكود غير موجود أو مستخدم
-                            send_telegram_message(chat_id, f"""❌ الكود ({code}) غير صحيح أو تم استخدامه من قبل.
+                        
+                        send_telegram_message(chat_id, welcome_message.strip())
+                        print(f"✅ /start Code {code} activated for user {first_name} (@{username})")
+                        
+                    else:
+                        send_telegram_message(chat_id, f"""❌ هذا الكود ({code}) تم استخدامه من قبل.
 
 يرجى الحصول على كود جديد من الموقع:
 🔗 https://ea-fc-fifa-5jbn.onrender.com/""")
-                            
-                    except Exception as e:
-                        print(f"خطأ في معالجة الكود: {str(e)}")
-                        send_telegram_message(chat_id, "حدث خطأ أثناء معالجة الكود. حاول مرة أخرى.")
-                    finally:
-                        conn.close()
-                
+                        
                 else:
-                    # البحث في الذاكرة كبديل
-                    if code in telegram_codes:
-                        profile_data = telegram_codes[code]
-                        if not profile_data.get('used', False):
-                            # تحديث الكود كمستخدم
-                            telegram_codes[code]['used'] = True
-                            telegram_codes[code]['telegram_chat_id'] = chat_id
-                            telegram_codes[code]['telegram_username_actual'] = username
-                            
-                            # إرسال رسالة نجاح
-                            send_telegram_message(chat_id, f"✅ تم ربط وحفظ حسابك تلقائياً! مرحباً {first_name}")
-                            print(f"✅ Memory /start Code {code} activated for user {first_name}")
-                        else:
-                            send_telegram_message(chat_id, "❌ هذا الكود تم استخدامه من قبل.")
-                    else:
-                        send_telegram_message(chat_id, "❌ الكود غير صحيح.")
+                    send_telegram_message(chat_id, f"""❌ الكود ({code}) غير صحيح أو منتهي الصلاحية.
+
+يرجى الحصول على كود جديد من الموقع:
+🔗 https://ea-fc-fifa-5jbn.onrender.com/""")
             else:
                 # رسالة بداية عامة
                 send_telegram_message(chat_id, f"""🎮 مرحباً بك {first_name} في FC 26 Profile System!
 
-للربط التلقائي:
-1️⃣ اذهب للموقع وأكمل بياناتك
-2️⃣ اضغط "فتح التليجرام" 
-3️⃣ سيتم الربط والحفظ تلقائياً!
+للربط مع حسابك، يرجى:
+1️⃣ الذهاب للموقع
+2️⃣ إكمال بيانات الملف الشخصي  
+3️⃣ الضغط على "ربط مع التليجرام"
+4️⃣ إرسال الكود الذي ستحصل عليه مباشرة (بدون /start)
 
-🔗 الموقع: https://ea-fc-fifa-5jbn.onrender.com/""")
+مثال: ABC123
+
+🔗 الموقع: https://ea-fc-fifa-5jbn.onrender.com/
+
+شكراً! 🏆""")
+        
+        # التحقق من الكود المباشر (بدون /start)
+        elif len(text) >= 6 and len(text) <= 10 and text.isalnum():
+            code = text.upper()
+            print(f"🔍 Looking for direct code: {code}")
+            
+            # البحث عن الكود في الذاكرة
+            if code in telegram_codes:
+                profile_data = telegram_codes[code]
+                if not profile_data.get('used', False):
+                    # تحديث الكود كمستخدم
+                    telegram_codes[code]['used'] = True
+                    telegram_codes[code]['telegram_chat_id'] = chat_id
+                    telegram_codes[code]['telegram_username_actual'] = username
+                    
+                    # إرسال إشعار للموقع
+                    notify_website_telegram_linked(code, profile_data, chat_id, first_name, username)
+                    
+                    # تحديد نص الدفع
+                    payment_text = get_payment_display_text(profile_data['payment_method'], profile_data.get('payment_details', ''))
+                    
+                    # إرسال رسالة ترحيب مخصصة
+                    welcome_message = f"""🎮 أهلاً بك {first_name} في FC 26 Profile System!
+
+✅ تم ربط حسابك بنجاح بالكود: {code}
+
+📋 بيانات ملفك الشخصي:
+🎯 المنصة: {profile_data['platform'].title()}
+📱 رقم الواتساب: {profile_data['whatsapp_number']}
+💳 طريقة الدفع: {profile_data['payment_method'].replace('_', ' ').title()}
+{payment_text}
+
+🔗 رابط الموقع: https://ea-fc-fifa-5jbn.onrender.com/
+
+شكراً لاختيارك FC 26! 🏆"""
+                    
+                    send_telegram_message(chat_id, welcome_message.strip())
+                    print(f"✅ Direct Code {code} activated for user {first_name} (@{username})")
+                    
+                else:
+                    send_telegram_message(chat_id, f"""❌ هذا الكود ({code}) تم استخدامه من قبل.
+
+يرجى الحصول على كود جديد من الموقع:
+🔗 https://ea-fc-fifa-5jbn.onrender.com/""")
+                    
+            else:
+                send_telegram_message(chat_id, f"""❌ الكود ({code}) غير صحيح أو منتهي الصلاحية.
+
+يرجى الحصول على كود جديد من الموقع:
+🔗 https://ea-fc-fifa-5jbn.onrender.com/
+
+💡 تلميح: أرسل الكود مباشرة بدون /start
+مثال: ABC123""")
         
         else:
             # رد عام للرسائل الأخرى
-            send_telegram_message(chat_id, f"""🤖 مرحباً {first_name}! 
+            send_telegram_message(chat_id, f"""🤖 مرحباً {first_name}! أنا بوت FC 26 Profile System.
 
-استخدم الموقع للربط التلقائي:
-🔗 https://ea-fc-fifa-5jbn.onrender.com/""")
+للتفاعل معي، يمكنك:
+📝 /start - البدء والمساعدة
+🔑 إرسال الكود مباشرة (مثال: ABC123)
+
+🔗 الموقع: https://ea-fc-fifa-5jbn.onrender.com/""")
             
         return jsonify({'ok': True})
         
     except Exception as e:
         print(f"خطأ في webhook التليجرام: {str(e)}")
         return jsonify({'ok': True})
-
 
 def get_payment_display_text(payment_method, payment_details):
     """تحديد نص عرض تفاصيل الدفع"""
@@ -1327,7 +1041,7 @@ def get_payment_display_text(payment_method, payment_details):
 @app.route('/get-bot-username')
 def get_bot_username():
     """الحصول على username البوت"""
-    bot_username = os.environ.get('TELEGRAM_BOT_USERNAME', 'ea_fc_fifa_bot')
+    bot_username = os.environ.get('TELEGRAM_BOT_USERNAME', 'YourBotName_bot')
     return jsonify({'bot_username': bot_username})
 
 def send_telegram_message(chat_id, text):
@@ -1378,30 +1092,8 @@ def admin_data():
 
 @app.route('/check-telegram-status/<code>')
 def check_telegram_status(code):
-    """فحص حالة ربط التليجرام - محدث"""
+    """فحص حالة ربط التليجرام"""
     try:
-        # البحث في قاعدة البيانات أولاً
-        conn = get_db_connection()
-        if conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT used, telegram_chat_id, telegram_username_actual, used_at
-                FROM telegram_codes 
-                WHERE code = %s
-            """, (code,))
-            result = cursor.fetchone()
-            conn.close()
-            
-            if result:
-                return jsonify({
-                    'success': True,
-                    'linked': result['used'],
-                    'telegram_chat_id': result['telegram_chat_id'],
-                    'telegram_username': result['telegram_username_actual'],
-                    'linked_at': result['used_at'].isoformat() if result['used_at'] else None
-                })
-        
-        # البحث في الذاكرة كبديل
         if code in telegram_codes:
             code_data = telegram_codes[code]
             return jsonify({
@@ -1418,61 +1110,6 @@ def check_telegram_status(code):
             })
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
-
-@app.route('/create-telegram-code', methods=['POST'])
-def create_telegram_code_endpoint():
-    """توليد كود التليجرام للربط (الـ endpoint المفقود)"""
-    try:
-        data = request.get_json()
-        
-        # التحقق من البيانات
-        whatsapp_number = normalize_phone_number(data.get('whatsapp_number', ''))
-        if not whatsapp_number:
-            return jsonify({'success': False, 'message': 'رقم الواتساب غير صحيح'}), 400
-        
-        # توليد الكود (استخدام الدالة المساعدة)
-        telegram_code = generate_telegram_code()
-        
-        # حفظ البيانات في قاعدة البيانات
-        user_data = {
-            'platform': sanitize_input(data.get('platform')),
-            'whatsapp_number': whatsapp_number,
-            'payment_method': sanitize_input(data.get('payment_method')),
-            'payment_details': sanitize_input(data.get('payment_details')),
-            'telegram_username': sanitize_input(data.get('telegram_username', ''))
-        }
-        
-        conn = get_db_connection()
-        if conn:
-            try:
-                cursor = conn.cursor()
-                cursor.execute(
-                    "INSERT INTO telegram_codes (code, user_data) VALUES (%s, %s)",
-                    (telegram_code, json.dumps(user_data))
-                )
-                conn.commit()
-            except Exception as e:
-                print(f"❌ خطأ في حفظ الكود: {str(e)}")
-                return jsonify({'success': False, 'message': 'خطأ في الحفظ'}), 500
-            finally:
-                conn.close()
-        
-        # إرجاع معلومات الربط
-        bot_username = os.environ.get('TELEGRAM_BOT_USERNAME', 'ea_fc_fifa_bot')
-        
-        return jsonify({
-            'success': True,
-            'message': 'تم إنشاء الكود بنجاح!',
-            'telegram_code': telegram_code,
-            'telegram_app_url': f"tg://resolve?domain={bot_username}&start={telegram_code}",
-            'telegram_web_url': f"https://t.me/{bot_username}?start={telegram_code}",
-            'bot_username': bot_username
-        })
-        
-    except Exception as e:
-        print(f"❌ خطأ في create_telegram_code_endpoint: {str(e)}")
-        return jsonify({'success': False, 'message': 'خطأ في الخادم'}), 500
-
 
 # route جديد لإعداد webhook التليجرام
 @app.route('/set-telegram-webhook')
