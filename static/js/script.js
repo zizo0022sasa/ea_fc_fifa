@@ -1,8 +1,5 @@
-import { initializeTelegramModule } from './telegram-integration.js';
-
-
 // FC 26 Profile Setup - كود JavaScript مدمج كامل
-// دمج متقدم لكودين مع جميع الميزات والتحسينات + حل مشكلة الأزرار
+// دمج متقدم لكودين مع جميع الميزات والتحسينات
 
 // متغيرات عامة
 let isSubmitting = false;
@@ -17,369 +14,22 @@ let validationStates = {
     platform: false
 };
 
-// متغيرات البريد الإلكتروني
-let emailAddresses = [];
-const maxEmails = 6;
-
-// 🔧 تهيئة التطبيق مع ضمان التحميل الكامل - حل مشكلة الأزرار
+// تهيئة التطبيق
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Starting FC 26 Profile Setup - Fixed Buttons Version...');
+    // إنشاء الجسيمات المتحركة
+    createParticles();
     
-    // انتظار قصير للتأكد من تحميل كامل عناصر DOM
-    setTimeout(() => {
-        initializeApp();
-    }, 100);
+    // تهيئة جميع مستمعي الأحداث
+    initializeEventListeners();
+    
+    // تحسين الأداء للهواتف
+    if (window.innerWidth <= 768) {
+        optimizeForMobile();
+    }
+    
+    // تهيئة الميزات المتقدمة
+    initializeAdvancedFeatures();
 });
-
-function initializeApp() {
-    console.log('🔧 Initializing app components...');
-    
-    try {
-        // إنشاء الجسيمات المتحركة
-        createParticles();
-        
-        // تهيئة جميع مستمعي الأحداث - الحل الرئيسي
-        initializeEventListeners();
-        
-        // تحسين الأداء للهواتف
-        if (window.innerWidth <= 768) {
-            optimizeForMobile();
-        }
-        
-        // تهيئة الميزات المتقدمة
-        initializeAdvancedFeatures();
-        
-        console.log('✅ App initialized successfully with fixed buttons!');
-        
-    } catch (error) {
-        console.error('❌ Error during app initialization:', error);
-    }
-}
-
-// 🚀 الحل الرئيسي لمشكلة الأزرار - مأخوذ من كود صحبك
-function initializeEventListeners() {
-    console.log('🎯 Setting up event listeners with button fix...');
-    
-    // تهيئة أزرار المنصات - الحل الأساسي
-    setupPlatformButtons();
-    
-    // تهيئة أزرار طرق الدفع - الحل الأساسي  
-    setupPaymentButtons();
-    
-    // تهيئة حقل الواتساب
-    setupWhatsAppInput();
-    
-    // تهيئة النموذج
-    setupFormSubmission();
-    
-    // تهيئة زر التليجرام
-    initializeTelegramModule();
-    
-    // تهيئة الميزات الأخرى
-    setupDynamicInputs();
-    setupEnterKeyHandling();
-    
-    console.log('✅ All event listeners set up successfully with button fixes!');
-}
-
-// 🎮 حل مشكلة أزرار المنصات - مع إصلاح التمرير الكامل
-function setupPlatformButtons() {
-    console.log('🎮 Setting up platform buttons with SCROLL fix...');
-    
-    const platformCards = document.querySelectorAll('.platform-card');
-    
-    if (platformCards.length === 0) {
-        console.warn('⚠️ No platform cards found!');
-        return;
-    }
-    
-    platformCards.forEach((card, index) => {
-        console.log(`Setting up platform card ${index + 1}:`, card.dataset.platform);
-        
-        // إزالة مستمعين قدامى
-        const newCard = card.cloneNode(true);
-        card.parentNode.replaceChild(newCard, card);
-        
-        // ✅ متغيرات لتتبع اللمس
-        let touchStartY = 0;
-        let touchStartTime = 0;
-        let hasMoved = false;
-        
-        // مستمع النقر العادي للكمبيوتر
-        newCard.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            handlePlatformSelection(this);
-        });
-        
-        // ✅ الحل الذكي: تتبع بداية اللمس
-        newCard.addEventListener('touchstart', function(e) {
-            // حفظ موضع اللمس والوقت
-            touchStartY = e.touches[0].clientY;
-            touchStartTime = Date.now();
-            hasMoved = false;
-            
-            // تأثير بصري خفيف
-            this.style.transition = 'transform 0.1s ease, opacity 0.1s ease';
-            this.style.transform = 'scale(0.98)';
-            this.style.opacity = '0.9';
-            
-        }, { passive: true }); // 🔥 passive: true = يسمح بالتمرير
-        
-        // ✅ تتبع حركة اللمس
-        newCard.addEventListener('touchmove', function(e) {
-            const currentY = e.touches[0].clientY;
-            const moveDistance = Math.abs(currentY - touchStartY);
-            
-            // إذا تحرك أكثر من 10 بكسل = تمرير
-            if (moveDistance > 10) {
-                hasMoved = true;
-                // إزالة التأثير البصري
-                this.style.transform = '';
-                this.style.opacity = '';
-            }
-        }, { passive: true });
-        
-        // ✅ معالجة نهاية اللمس
-        newCard.addEventListener('touchend', function(e) {
-            e.preventDefault(); // منع النقر المزدوج فقط
-            
-            const touchEndTime = Date.now();
-            const touchDuration = touchEndTime - touchStartTime;
-            
-            // إزالة التأثير البصري
-            this.style.transform = '';
-            this.style.opacity = '';
-            
-            // ✅ شروط الاختيار الذكية
-            if (!hasMoved && touchDuration < 300) {
-                // لمسة سريعة بدون حركة = اختيار
-                handlePlatformSelection(this);
-            }
-            // إذا تحرك = تمرير عادي ولا نفعل شيء
-            
-        }, { passive: false }); // نحتاج منع النقر المزدوج فقط
-        
-        // معالج الإلغاء (عند مغادرة المنطقة)
-        newCard.addEventListener('touchcancel', function(e) {
-            this.style.transform = '';
-            this.style.opacity = '';
-            hasMoved = false;
-        }, { passive: true });
-    });
-    
-    console.log(`✅ ${platformCards.length} platform buttons fixed for scrolling and clicking`);
-}
-
-// 💳 حل مشكلة أزرار الدفع - مع إصلاح التمرير الكامل
-function setupPaymentButtons() {
-    console.log('💳 Setting up payment buttons with SCROLL fix...');
-    
-    const paymentButtons = document.querySelectorAll('.payment-btn');
-    
-    if (paymentButtons.length === 0) {
-        console.warn('⚠️ No payment buttons found!');
-        return;
-    }
-    
-    paymentButtons.forEach((btn, index) => {
-        console.log(`Setting up payment button ${index + 1}:`, btn.dataset.value);
-        
-        // إزالة مستمعين قدامى
-        const newBtn = btn.cloneNode(true);
-        btn.parentNode.replaceChild(newBtn, btn);
-        
-        // ✅ متغيرات لتتبع اللمس
-        let touchStartY = 0;
-        let touchStartTime = 0;
-        let hasMoved = false;
-        
-        // مستمع النقر العادي للكمبيوتر
-        newBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            handlePaymentSelection(this);
-        });
-        
-        // ✅ الحل الذكي: تتبع بداية اللمس
-        newBtn.addEventListener('touchstart', function(e) {
-            // حفظ موضع اللمس والوقت
-            touchStartY = e.touches[0].clientY;
-            touchStartTime = Date.now();
-            hasMoved = false;
-            
-            // تأثير بصري خفيف
-            this.style.transition = 'transform 0.1s ease, opacity 0.1s ease';
-            this.style.transform = 'scale(0.98)';
-            this.style.opacity = '0.9';
-            
-        }, { passive: true }); // 🔥 passive: true = يسمح بالتمرير
-        
-        // ✅ تتبع حركة اللمس  
-        newBtn.addEventListener('touchmove', function(e) {
-            const currentY = e.touches[0].clientY;
-            const moveDistance = Math.abs(currentY - touchStartY);
-            
-            // إذا تحرك أكثر من 10 بكسل = تمرير
-            if (moveDistance > 10) {
-                hasMoved = true;
-                // إزالة التأثير البصري
-                this.style.transform = '';
-                this.style.opacity = '';
-            }
-        }, { passive: true });
-        
-        // ✅ معالجة نهاية اللمس
-        newBtn.addEventListener('touchend', function(e) {
-            e.preventDefault(); // منع النقر المزدوج فقط
-            
-            const touchEndTime = Date.now();
-            const touchDuration = touchEndTime - touchStartTime;
-            
-            // إزالة التأثير البصري
-            this.style.transform = '';
-            this.style.opacity = '';
-            
-            // ✅ شروط الاختيار الذكية
-            if (!hasMoved && touchDuration < 300) {
-                // لمسة سريعة بدون حركة = اختيار
-                handlePaymentSelection(this);
-            }
-            // إذا تحرك = تمرير عادي ولا نفعل شيء
-            
-        }, { passive: false }); // نحتاج منع النقر المزدوج فقط
-        
-        // معالج الإلغاء (عند مغادرة المنطقة)
-        newBtn.addEventListener('touchcancel', function(e) {
-            this.style.transform = '';
-            this.style.opacity = '';
-            hasMoved = false;
-        }, { passive: true });
-    });
-    
-    console.log(`✅ ${paymentButtons.length} payment buttons fixed for scrolling and clicking`);
-}
-
-
-// 🎮 معالجة اختيار المنصة - محسن من كود صحبك
-function handlePlatformSelection(card) {
-    console.log('🎮 Platform selected:', card.dataset.platform);
-    
-    const platform = card.dataset.platform;
-    
-    // إزالة التحديد من جميع البطاقات
-    document.querySelectorAll('.platform-card').forEach(c => {
-        c.classList.remove('selected');
-        c.style.transform = '';
-        c.style.boxShadow = '';
-    });
-    
-    // تحديد البطاقة المختارة
-    card.classList.add('selected');
-    card.style.transform = 'scale(1.05)';
-    card.style.boxShadow = '0 8px 25px rgba(255, 144, 0, 0.4)';
-    
-    // حفظ القيمة
-    const platformInput = document.getElementById('platform');
-    if (platformInput) {
-        platformInput.value = platform;
-        console.log('✅ Platform saved:', platform);
-    }
-    
-    // تحديث حالة التحقق
-    validationStates.platform = true;
-    checkFormValidity();
-    
-    // اهتزاز للهواتف
-    if (navigator.vibrate) {
-        navigator.vibrate([50, 30, 50]);
-    }
-    
-    // إشعار بصري
-    showNotification(`تم اختيار منصة ${getPlatformDisplayName(platform)}`, 'success');
-}
-
-// 💳 معالجة اختيار الدفع - محسن من كود صحبك
-function handlePaymentSelection(btn) {
-    console.log('💳 Payment selected:', btn.dataset.value);
-    
-    const paymentType = btn.dataset.type;
-    const paymentValue = btn.dataset.value;
-    
-    // إزالة التحديد من جميع الأزرار
-    document.querySelectorAll('.payment-btn').forEach(b => {
-        b.classList.remove('selected');
-        b.style.transform = '';
-        b.style.background = '';
-    });
-    
-    // تحديد الزر المختار
-    btn.classList.add('selected');
-    btn.style.transform = 'scale(1.03)';
-    
-    // حفظ القيمة
-    const paymentMethodInput = document.getElementById('payment_method');
-    if (paymentMethodInput) {
-        paymentMethodInput.value = paymentValue;
-        console.log('✅ Payment method saved:', paymentValue);
-    }
-    
-    // إخفاء جميع الحقول الديناميكية
-    document.querySelectorAll('.dynamic-input').forEach(input => {
-        input.classList.remove('show');
-        input.style.display = 'none';
-    });
-    
-    // إظهار الحقل المناسب
-    showPaymentInputField(paymentType);
-    
-    // تحديث حالة التحقق
-    validationStates.paymentMethod = true;
-    checkFormValidity();
-    
-    // اهتزاز للهواتف
-    if (navigator.vibrate) {
-        navigator.vibrate([30, 20, 30]);
-    }
-    
-    // إشعار بصري
-    showNotification(`تم اختيار ${paymentValue}`, 'success');
-}
-
-function showPaymentInputField(paymentType) {
-    let targetInputId;
-    
-    switch(paymentType) {
-        case 'mobile':
-            targetInputId = 'mobile-input';
-            break;
-        case 'card':
-            targetInputId = 'card-input';
-            break;
-        case 'link':
-            targetInputId = 'link-input';
-            break;
-        default:
-            console.warn('Unknown payment type:', paymentType);
-            return;
-    }
-    
-    const targetInput = document.getElementById(targetInputId);
-    if (targetInput) {
-        setTimeout(() => {
-            targetInput.style.display = 'block';
-            targetInput.classList.add('show');
-            
-            const inputField = targetInput.querySelector('input');
-            if (inputField) {
-                inputField.required = true;
-                inputField.focus();
-            }
-        }, 200);
-        
-        console.log('✅ Payment input field shown:', targetInputId);
-    }
-}
 
 // إنشاء الجسيمات المتحركة للخلفية
 function createParticles() {
@@ -600,9 +250,126 @@ function clearPhoneInfo() {
     });
 }
 
-// إعداد حقل رقم الواتساب
-function setupWhatsAppInput() {
+// تهيئة جميع مستمعي الأحداث
+function initializeEventListeners() {
+    // عناصر النموذج الأساسية
+    const platformCards = document.querySelectorAll('.platform-card');
+    const paymentButtons = document.querySelectorAll('.payment-btn');
     const whatsappInput = document.getElementById('whatsapp');
+    const form = document.getElementById('profileForm');
+
+    // معالجة اختيار المنصة
+    setupPlatformSelection(platformCards);
+    
+    // معالجة اختيار طريقة الدفع
+    setupPaymentSelection(paymentButtons);
+    
+    // معالجة رقم الواتساب
+    setupWhatsAppInput(whatsappInput);
+    
+    // معالجة الحقول الديناميكية
+    setupDynamicInputs();
+    
+    // معالجة إرسال النموذج
+    setupFormSubmission(form);
+    
+    // تهيئة الميزات المتقدمة
+    initializeTooltips();
+    initializeAnimations();
+    
+    // منع إرسال النموذج بالضغط على Enter
+    setupEnterKeyHandling();
+}
+
+// إعداد اختيار المنصة
+function setupPlatformSelection(platformCards) {
+    platformCards.forEach(card => {
+        card.addEventListener('click', function() {
+            // إزالة التحديد من الكل
+            platformCards.forEach(c => c.classList.remove('selected'));
+            
+            // تحديد البطاقة المضغوطة
+            this.classList.add('selected');
+            const platformInput = document.getElementById('platform');
+            if (platformInput) {
+                platformInput.value = this.dataset.platform;
+            }
+            
+            // تحديث حالة التحقق
+            validationStates.platform = true;
+            
+            // إضافة تأثير اهتزاز خفيف (للهواتف)
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+            
+            checkFormValidity();
+        });
+    });
+}
+
+// إعداد اختيار طريقة الدفع
+function setupPaymentSelection(paymentButtons) {
+    paymentButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            paymentButtons.forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            
+            const paymentType = this.dataset.type;
+            const paymentValue = this.dataset.value;
+            
+            const paymentMethodInput = document.getElementById('payment_method');
+            if (paymentMethodInput) {
+                paymentMethodInput.value = paymentValue;
+            }
+            
+            // إخفاء جميع الحقول الديناميكية
+            document.querySelectorAll('.dynamic-input').forEach(input => {
+                input.classList.remove('show');
+                const inputField = input.querySelector('input');
+                if (inputField) {
+                    inputField.required = false;
+                    inputField.value = '';
+                }
+            });
+            
+            // إخفاء رسائل الخطأ
+            document.querySelectorAll('.error-message-field').forEach(error => {
+                error.classList.remove('show');
+            });
+            
+            // إظهار الحقل المناسب
+            const targetInput = document.getElementById(paymentType + '-input');
+            if (targetInput) {
+                setTimeout(() => {
+                    targetInput.classList.add('show');
+                    const inputField = targetInput.querySelector('input');
+                    if (inputField) {
+                        inputField.required = true;
+                        
+                        // تركيز تلقائي للهواتف
+                        if (window.innerWidth <= 768) {
+                            setTimeout(() => {
+                                inputField.focus();
+                            }, 300);
+                        }
+                    }
+                }, 150);
+            }
+            
+            // اهتزاز للهواتف
+            if (navigator.vibrate) {
+                navigator.vibrate(30);
+            }
+            
+            // إعادة التحقق من طرق الدفع
+            setTimeout(validatePaymentMethod, 200);
+        });
+    });
+}
+
+// إعداد حقل رقم الواتساب
+function setupWhatsAppInput(whatsappInput) {
     if (!whatsappInput) return;
     
     // معالجة الإدخال مع التحقق الفوري
@@ -718,10 +485,6 @@ function setupDynamicInputs() {
         }
     });
     
-    // نظام تيلدا المحسن - تنسيق متطور للبطاقات
-    initializeTeldaCardSystem();
-}
-
 // نظام تيلدا المحسن - تنسيق متطور للبطاقات
 function initializeTeldaCardSystem() {
     const teldaInput = document.getElementById('telda_card') || document.getElementById('card-number');
@@ -895,123 +658,60 @@ function updateTeldaProgressBar(input, length) {
     }
 }
 
-// التحقق الشامل من طرق الدفع - FIXED للتيلدا وإنستا باي
-function validatePaymentMethod() {
-    console.log('🔍 Checking payment method validation...');
-    
-    // الحصول على طريقة الدفع المختارة
-    const selectedPaymentMethod = document.getElementById('payment_method')?.value;
-    console.log('Selected payment method:', selectedPaymentMethod);
-    
-    if (!selectedPaymentMethod) {
-        console.log('❌ No payment method selected');
-        validationStates.paymentMethod = false;
-        return false;
-    }
-    
-    // ✅ التحقق الذكي حسب نوع الدفع المختار
-    let hasValidPayment = false;
-    let activeInput = null;
-    
-    // البحث عن الحقل النشط بناءً على طريقة الدفع
-    if (['vodafone_cash', 'etisalat_cash', 'orange_cash', 'we_cash', 'bank_wallet'].includes(selectedPaymentMethod)) {
-        // محافظ إلكترونية - البحث في mobile-number
-        activeInput = document.getElementById('mobile-number');
-        console.log('Checking mobile wallet input:', activeInput?.value);
-        
-    } else if (selectedPaymentMethod === 'tilda') {
-        // كارت تيلدا - البحث في card-number  
-        activeInput = document.getElementById('card-number');
-        console.log('Checking Telda card input:', activeInput?.value);
-        
-    } else if (selectedPaymentMethod === 'instapay') {
-        // إنستا باي - البحث في payment-link
-        activeInput = document.getElementById('payment-link');
-        console.log('Checking InstaPay link input:', activeInput?.value);
-    }
-    
-    // ✅ التحقق من الحقل النشط فقط
-    if (activeInput && activeInput.closest('.dynamic-input').classList.contains('show')) {
-        const inputValue = activeInput.value.trim();
-        console.log('Active input value:', inputValue);
-        
-        if (inputValue) {
-            // التحقق من صحة القيمة المدخلة
-            const isInputValid = validatePaymentInput(activeInput);
-            console.log('Input validation result:', isInputValid);
-            
-            if (isInputValid) {
-                hasValidPayment = true;
-                console.log('✅ Valid payment data found!');
-            } else {
-                console.log('❌ Invalid payment data');
-            }
-        } else {
-            console.log('⚠️ Input is empty');
-        }
-    } else {
-        console.log('❌ No active input found or input not visible');
-    }
-    
-    // ✅ تحديث حالة التحقق
-    validationStates.paymentMethod = hasValidPayment;
-    console.log('Final payment validation state:', hasValidPayment);
-    
-    return hasValidPayment;
+// معالجة خاصة لكارت تيلدا (تنسيق الأرقام) - استبدال الكود القديم
+initializeTeldaCardSystem();
 }
 
-// ✅ أضف الدالة دي في أي مكان في الكود (بعد الدوال الموجودة)
+// التحقق من صحة حقول الدفع
 function validatePaymentInput(input) {
     const value = input.value.trim();
     const inputId = input.id;
     let isValid = false;
     let errorMessage = '';
     
-    console.log(`🔍 Validating ${inputId} with value:`, value);
-    
     if (!value) {
         updateValidationUI(input, true, ''); // فارغ = صحيح للحقول الاختيارية
         return true;
     }
     
-    // ✅ التحقق المحسن من المحافظ الإلكترونية (11 رقم)
-    if (inputId === 'mobile-number') {
+    // التحقق من المحافظ الإلكترونية (11 رقم)
+    if (['vodafone_cash', 'etisalat_cash', 'orange_cash', 'we_pay', 
+         'fawry', 'aman', 'masary', 'bee', 'mobile-number'].includes(inputId)) {
         isValid = /^01[0125][0-9]{8}$/.test(value) && value.length === 11;
         errorMessage = isValid ? '' : 'رقم المحفظة يجب أن يكون 11 رقم ويبدأ بـ 010، 011، 012، أو 015';
-        console.log('Mobile validation:', isValid);
     }
-    // ✅ التحقق المحسن من كارت تيلدا (16 رقم)
-    else if (inputId === 'card-number') {
-        // إزالة الشرطات والمسافات
-        const numbersOnly = value.replace(/[-\s]/g, '');
+    // التحقق من كارت تيلدا (16 رقم)
+    else if (['telda_card', 'card-number'].includes(inputId)) {
+        const numbersOnly = value.replace(/\s/g, '');
         isValid = /^\d{16}$/.test(numbersOnly);
         errorMessage = isValid ? '' : 'رقم كارت تيلدا يجب أن يكون 16 رقم';
-        console.log('Telda card validation:', isValid, 'Numbers only:', numbersOnly);
     }
-    // ✅ التحقق الذكي من رابط إنستا باي (مع الاستخلاص)
-    else if (inputId === 'payment-link') {
-        const extractedLink = extractInstapayLink(value);
-        isValid = !!extractedLink;
-        errorMessage = isValid ? '' : 'لم يتم العثور على رابط InstaPay صحيح في النص';
-        console.log('InstaPay validation:', isValid, 'Extracted:', extractedLink);
-        
-        // تحديث قيمة الحقل للرابط المستخلص إذا كان مختلف
-        if (isValid && extractedLink && extractedLink !== value) {
-            input.value = extractedLink;
-            showInstapayExtractionNotice(input, value, extractedLink);
-            console.log('Updated input value to extracted link');
-        }
-        
-        // عرض معلومات الرابط
-        if (isValid && extractedLink) {
-            const linkInfo = extractInstapayInfo(extractedLink);
-            showInstapayLinkInfo(input, linkInfo);
-        }
+    // التحقق من رابط إنستا باي
+    else if (['instapay_link', 'payment-link'].includes(inputId)) {
+        isValid = isValidInstaPayLink(value);
+        errorMessage = isValid ? '' : 'رابط إنستا باي غير صحيح';
     }
     
     updateValidationUI(input, isValid, errorMessage);
-    console.log(`✅ ${inputId} validation result:`, isValid);
     return isValid;
+}
+
+// التحقق الشامل من طرق الدفع
+function validatePaymentMethod() {
+    const paymentInputs = document.querySelectorAll('input[name$="_cash"], input[name="telda_card"], input[name="instapay_link"], .dynamic-input.show input');
+    let hasValidPayment = false;
+    
+    paymentInputs.forEach(input => {
+        if (validatePaymentInput(input)) {
+            const value = input.value.trim();
+            if (value) {
+                hasValidPayment = true;
+            }
+        }
+    });
+    
+    validationStates.paymentMethod = hasValidPayment;
+    return hasValidPayment;
 }
 
 // التحقق من صحة رابط إنستا باي
@@ -1067,8 +767,6 @@ function updateValidationUI(input, isValid, message) {
 
 // التحقق الشامل من صحة النموذج
 function checkFormValidity() {
-    console.log('🔍 Checking complete form validity...');
-    
     // التحقق من جميع المتطلبات
     const platform = document.getElementById('platform')?.value;
     const whatsapp = document.getElementById('whatsapp')?.value;
@@ -1076,25 +774,20 @@ function checkFormValidity() {
     
     // تحديث حالات التحقق
     validationStates.platform = !!platform;
-    console.log('Platform valid:', validationStates.platform);
     
     // التحقق من صحة الواتساب من المعلومات المعروضة
     const phoneInfo = document.querySelector('.phone-info.success-info');
     validationStates.whatsapp = !!(whatsapp && phoneInfo);
-    console.log('WhatsApp valid:', validationStates.whatsapp);
     
-    // ✅ التحقق المحسن من طرق الدفع
+    // التحقق من طرق الدفع
     validatePaymentMethod();
-    console.log('Payment method valid:', validationStates.paymentMethod);
     
     // التحقق النهائي
     const isValid = validationStates.platform && validationStates.whatsapp && validationStates.paymentMethod;
-    console.log('🎯 Final form validity:', isValid);
     
     updateSubmitButton(isValid);
     return isValid;
 }
-
 
 // تحديث زر الإرسال
 function updateSubmitButton(isValid = null) {
@@ -1121,8 +814,7 @@ function updateSubmitButton(isValid = null) {
 }
 
 // إعداد إرسال النموذج
-function setupFormSubmission() {
-    const form = document.getElementById('profileForm');
+function setupFormSubmission(form) {
     if (!form) return;
     
     form.addEventListener('submit', handleFormSubmit);
@@ -1165,7 +857,7 @@ async function handleFormSubmit(e) {
     // تحديث زر الإرسال
     if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ والربط...';
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
     }
     
     // اهتزاز للهواتف
@@ -1176,14 +868,27 @@ async function handleFormSubmit(e) {
     try {
         const formData = new FormData(e.target);
         
-        const response = await fetch('/update-profile', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': getCSRFToken()
-            }
-        });
+        // محاولة كلا الـ endpoints
+        let response;
+        try {
+            response = await fetch('/update-profile', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': getCSRFToken()
+                }
+            });
+        } catch (e) {
+            response = await fetch('/submit_profile', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': getCSRFToken()
+                }
+            });
+        }
         
         const result = await response.json();
         
@@ -1191,19 +896,19 @@ async function handleFormSubmit(e) {
         if (loading) loading.classList.remove('show');
         if (loadingSpinner) loadingSpinner.style.display = 'none';
         
-        // ✅ الكود الجديد المبسط - استبدل به الجزء المحذوف
         if (response.ok && result.success) {
-            // عرض رسالة النجاح
+            // رسالة النجاح المحسنة
             let successText = '✅ تم حفظ بياناتك بنجاح!';
-            if (result.data && result.data.whatsapp_number) {
-                successText += `<br><small>رقم الواتساب: ${result.data.whatsapp_number}</small>`;
+            if (result.data && result.data.whatsapp_info) {
+                const info = result.data.whatsapp_info;
+                successText += `<br><small>رقم الواتساب: ${result.data.whatsapp_number}<br>البلد: ${info.country} | الشركة: ${info.carrier}</small>`;
             }
             
             if (successMessage) {
                 successMessage.innerHTML = successText;
                 successMessage.classList.add('show');
             } else {
-                showNotification('تم إرسال البيانات بنجاح!', 'success');
+                showNotification('تم إرسال البيانات بنجاح! سيتم التواصل معك قريباً', 'success');
             }
             
             // اهتزاز نجاح
@@ -1211,10 +916,12 @@ async function handleFormSubmit(e) {
                 navigator.vibrate([200, 100, 200]);
             }
             
-            // الانتقال التلقائي بعد ثانيتين
+            // إعادة تعيين النموذج بعد النجاح
             setTimeout(() => {
-                window.location.href = result.next_step || '/coins-order';
+                console.log('تم حفظ البيانات بنجاح:', result.data);
+                // يمكن إضافة إعادة توجيه هنا إذا لزم الأمر
             }, 2000);
+            
         } else {
             const errorText = result.message || 'حدث خطأ غير متوقع';
             if (errorMessage) {
@@ -1570,6 +1277,386 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// تصدير الوظائف للاستخدام الخارجي أو الاختبار
+window.FC26ProfileSetup = {
+    validateWhatsAppReal,
+    validatePaymentMethod,
+    showNotification,
+    clearValidationStates,
+    checkFormValidity,
+    updateSubmitButton
+};
+
+// رسالة تأكيد التهيئة
+console.log('FC 26 Profile Setup - تم تهيئة JavaScript المدمج بنجاح');
+
+// متغيرات للتليجرام محدثة
+let currentTelegramCode = null;
+let telegramStatusChecker = null;
+let correctBotUsername = null;
+
+// تحميل username البوت الصحيح
+async function loadBotUsername() {
+    try {
+        const response = await fetch('/get-bot-username');
+        const result = await response.json();
+        correctBotUsername = result.bot_username;
+        console.log('✅ Bot username loaded:', correctBotUsername);
+    } catch (error) {
+        console.error('❌ Failed to load bot username:', error);
+        correctBotUsername = 'YourBotName_bot'; // fallback
+    }
+}
+
+// دالة توليد كود التليجرام - محدثة
+async function generateTelegramCode() {
+    const telegramBtn = document.getElementById('telegramBtn');
+    const telegramCodeResult = document.getElementById('telegramCodeResult');
+    
+    // التحقق من البيانات الأساسية
+    const platform = document.getElementById('platform')?.value;
+    const whatsappNumber = document.getElementById('whatsapp')?.value;
+    
+    if (!platform || !whatsappNumber) {
+        showNotification('يرجى إكمال الملف الشخصي أولاً (المنصة ورقم الواتساب)', 'error');
+        return;
+    }
+    
+    // حالة التحميل
+    telegramBtn.classList.add('generating');
+    telegramBtn.disabled = true;
+    telegramBtn.innerHTML = `
+        <div class="telegram-btn-content">
+            <i class="fas fa-spinner fa-spin telegram-icon"></i>
+            <div class="telegram-text">
+                <span class="telegram-title">⚡ جاري إنشاء الرابط</span>
+                <span class="telegram-subtitle">انتظر لحظة...</span>
+            </div>
+        </div>
+    `;
+    
+    try {
+        const formData = {
+            platform: platform,
+            whatsapp_number: whatsappNumber,
+            payment_method: document.getElementById('payment_method')?.value || '',
+            payment_details: document.querySelector('.dynamic-input.show input')?.value || ''
+        };
+        
+        console.log('📤 Generating Telegram code with data:', formData);
+        
+        const response = await fetch('/generate-telegram-code', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const result = await response.json();
+        console.log('📥 Telegram code result:', result);
+        
+        if (result.success) {
+            // حفظ الكود
+            currentTelegramCode = result.code;
+            document.getElementById('generatedCode').textContent = result.code;
+            
+            // تحديث زر التليجرام ليصبح زر فتح مباشر
+            telegramBtn.innerHTML = `
+                <div class="telegram-btn-content">
+                    <i class="fab fa-telegram telegram-icon"></i>
+                    <div class="telegram-text">
+                        <span class="telegram-title">📱 فتح التليجرام والربط</span>
+                        <span class="telegram-subtitle">اضغط للربط التلقائي</span>
+                    </div>
+                </div>
+            `;
+            
+            // تغيير وظيفة الزر للفتح المباشر
+            telegramBtn.onclick = function() {
+                openTelegramAppDirect();
+            };
+            
+            // إظهار منطقة الكود (بدون زر النسخ)
+            telegramCodeResult.innerHTML = `
+                <div class="code-container">
+                    <div class="code-header">
+                        <i class="fas fa-rocket"></i>
+                        <span>جاهز للربط التلقائي</span>
+                    </div>
+                    <div class="generated-code">${result.code}</div>
+                    <div class="telegram-actions">
+                        <button type="button" class="telegram-open-btn-big" onclick="openTelegramAppDirect()">
+                            <i class="fab fa-telegram"></i>
+                            🚀 فتح التليجرام والربط الآن
+                        </button>
+                    </div>
+                    <div class="telegram-instructions">
+                        <div class="single-step">
+                            ⚡ اضغط الزر وسيتم الربط التلقائي!
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            telegramCodeResult.style.display = 'block';
+            setTimeout(() => {
+                telegramCodeResult.classList.add('show');
+                
+                // تمرير تلقائي
+                telegramCodeResult.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }, 100);
+            
+            // اهتزاز نجاح
+            if (navigator.vibrate) {
+                navigator.vibrate([100, 50, 100]);
+            }
+            
+            showNotification(`✅ جاهز للربط! الكود: ${result.code}`, 'success');
+            
+        } else {
+            showNotification(result.message || 'خطأ في إنشاء الكود', 'error');
+            resetTelegramButton();
+        }
+        
+    } catch (error) {
+        console.error('خطأ في توليد كود التليجرام:', error);
+        showNotification('خطأ في الاتصال، يرجى المحاولة مرة أخرى', 'error');
+        resetTelegramButton();
+    }
+    
+    // إزالة حالة التحميل
+    telegramBtn.classList.remove('generating');
+    telegramBtn.disabled = false;
+}
+
+// دالة فتح التليجرام المباشر - الربط التلقائي
+function openTelegramAppDirect() {
+    const code = currentTelegramCode || document.getElementById('generatedCode').textContent;
+    
+    if (!code) {
+        showNotification('❌ لا يوجد كود للربط', 'error');
+        return;
+    }
+    
+    if (!correctBotUsername) {
+        showNotification('جاري تحميل معلومات البوت...', 'info');
+        loadBotUsername().then(() => {
+            openTelegramAppDirect();
+        });
+        return;
+    }
+    
+    // تجميد واجهة المستخدم
+    const telegramCodeResult = document.getElementById('telegramCodeResult');
+    const allButtons = document.querySelectorAll('button');
+    
+    if (telegramCodeResult) {
+        telegramCodeResult.style.opacity = '0.6';
+        telegramCodeResult.style.pointerEvents = 'none';
+    }
+    
+    allButtons.forEach(btn => {
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+    });
+    
+    // روابط التليجرام
+    const telegramAppUrl = `tg://resolve?domain=${correctBotUsername}&start=${code}`;
+    const telegramWebUrl = `https://t.me/${correctBotUsername}?start=${code}`;
+    
+    console.log('🚀 AUTO-LINKING Telegram:', correctBotUsername, 'Code:', code);
+    
+    // فتح التليجرام حسب النوع
+    if (navigator.userAgent.match(/(iPhone|iPad|iPod|Android)/i)) {
+        // للهواتف - محاولة التطبيق أولاً ثم الويب
+        const tempLink = document.createElement('a');
+        tempLink.href = telegramAppUrl;
+        tempLink.style.display = 'none';
+        document.body.appendChild(tempLink);
+        tempLink.click();
+        document.body.removeChild(tempLink);
+        
+        setTimeout(() => {
+            window.open(telegramWebUrl, '_blank');
+        }, 800);
+    } else {
+        // للكمبيوتر - فتح الرابط مباشرة
+        window.open(telegramWebUrl, '_blank');
+    }
+    
+    // رسائل الربط التلقائي
+    showNotification('🚀 فتح التليجرام...', 'info');
+    
+    setTimeout(() => {
+        showNotification('⚡ جاري الربط التلقائي...', 'info');
+    }, 1500);
+    
+    setTimeout(() => {
+        showNotification('🔗 انتظار تأكيد الربط...', 'info');
+    }, 3000);
+    
+    // بدء فحص الربط التلقائي
+    startAutoTelegramLinking(code);
+}
+
+// نظام الربط التلقائي المطور
+function startAutoTelegramLinking(code) {
+    let attemptCount = 0;
+    const maxAttempts = 45; // 2.25 دقيقة
+    
+    const autoLinker = setInterval(async () => {
+        attemptCount++;
+        
+        try {
+            const response = await fetch(`/check-telegram-status/${code}`);
+            const result = await response.json();
+            
+            if (result.success && result.linked) {
+                // نجح الربط!
+                clearInterval(autoLinker);
+                console.log('🎉 AUTO-LINK SUCCESS!');
+                
+                // إظهار النجاح الفوري
+                showUltimateSuccess();
+                return;
+            }
+            
+            // تحديثات الحالة
+            if (attemptCount === 5) {
+                showNotification('📡 البحث عن الربط...', 'info');
+            } else if (attemptCount === 10) {
+                showNotification('🔍 فحص حالة الاتصال...', 'info');
+            } else if (attemptCount === 20) {
+                showNotification('⏳ يرجى التأكد من إرسال الكود للبوت', 'info');
+            } else if (attemptCount === 30) {
+                showNotification('⚠️ تأكد من فتح التليجرام وإرسال الكود', 'info');
+            }
+            
+        } catch (error) {
+            console.error('خطأ في الربط التلقائي:', error);
+        }
+        
+        // انتهاء المحاولات
+        if (attemptCount >= maxAttempts) {
+            clearInterval(autoLinker);
+            showTimeoutError();
+        }
+        
+    }, 3000); // فحص كل 3 ثوان
+}
+
+// عرض النجاح النهائي
+function showUltimateSuccess() {
+    // إخفاء كل شيء فوراً
+    const loading = document.getElementById('loading');
+    const formContainer = document.querySelector('.container');
+    
+    if (loading) loading.classList.remove('show');
+    if (formContainer) {
+        formContainer.style.opacity = '0';
+        formContainer.style.transform = 'scale(0.95)';
+    }
+    
+    // إظهار شاشة النجاح الكاملة
+    setTimeout(() => {
+        const successOverlay = document.getElementById('telegramSuccessOverlay');
+        if (successOverlay) {
+            successOverlay.classList.add('show');
+            
+            // منع التمرير
+            document.body.style.overflow = 'hidden';
+            
+            // تحديث المحتوى
+            const successContainer = successOverlay.querySelector('.success-container');
+            if (successContainer) {
+                successContainer.innerHTML = `
+                    <div class="success-animation">
+                        <i class="fas fa-check-circle success-mega-icon"></i>
+                    </div>
+                    <h2 class="success-title">🎉 تم ربط حسابك بنجاح!</h2>
+                    <p class="success-subtitle">
+                        ✅ تم حفظ ملفك الشخصي بأمان<br>
+                        💾 تم حفظ جميع معلوماتك<br>
+                        🚀 مرحباً بك في عالم FC 26!
+                    </p>
+                    <div class="success-actions">
+                        <button type="button" class="success-btn" onclick="closeSuccessOverlay()">
+                            <i class="fas fa-home"></i>
+                            العودة للرئيسية
+                        </button>
+                    </div>
+                `;
+            }
+            
+            // تأثيرات بصرية قوية
+            if (navigator.vibrate) {
+                navigator.vibrate([300, 100, 300, 100, 500]);
+            }
+        }
+    }, 800);
+    
+    // رسائل الاحتفال المتتالية
+    showNotification('🎉 تم الربط بنجاح!', 'success');
+    
+    setTimeout(() => {
+        showNotification('💾 تم حفظ ملفك الشخصي!', 'success');
+    }, 1200);
+    
+    setTimeout(() => {
+        showNotification('✅ تم حفظ معلوماتك بأمان!', 'success');
+    }, 2400);
+    
+    setTimeout(() => {
+        showNotification('🏆 مرحباً بك في FC 26!', 'success');
+    }, 3600);
+}
+
+// عرض خطأ انتهاء الوقت
+function showTimeoutError() {
+    showNotification('⏰ انتهت مهلة الربط التلقائي - يرجى المحاولة مرة أخرى', 'error');
+    
+    // إعادة تفعيل الواجهة
+    const telegramCodeResult = document.getElementById('telegramCodeResult');
+    const allButtons = document.querySelectorAll('button');
+    
+    if (telegramCodeResult) {
+        telegramCodeResult.style.opacity = '1';
+        telegramCodeResult.style.pointerEvents = 'auto';
+    }
+    
+    allButtons.forEach(btn => {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+    });
+    
+    resetTelegramButton();
+}
+
+// إعادة تعيين زر التليجرام
+function resetTelegramButton() {
+    const telegramBtn = document.getElementById('telegramBtn');
+    if (telegramBtn) {
+        telegramBtn.innerHTML = `
+            <div class="telegram-btn-content">
+                <i class="fab fa-telegram telegram-icon"></i>
+                <div class="telegram-text">
+                    <span class="telegram-title">📱 ربط مع التليجرام</span>
+                    <span class="telegram-subtitle">احصل على كود فوري وادخل للبوت</span>
+                </div>
+            </div>
+        `;
+        telegramBtn.onclick = function() {
+            generateTelegramCode();
+        };
+        telegramBtn.disabled = false;
+        telegramBtn.classList.remove('generating');
+    }
+}
 
 // دالة إغلاق شاشة النجاح محدثة
 function closeSuccessOverlay() {
@@ -1619,6 +1706,47 @@ function playSuccessSound() {
         console.log('Sound not supported');
     }
 }
+
+// دالة مساعدة لفحص حالة الربط المتقدم
+async function checkAdvancedTelegramStatus(code) {
+    try {
+        const response = await fetch(`/check-telegram-status/${code}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Cache-Control': 'no-cache'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const result = await response.json();
+        return result;
+        
+    } catch (error) {
+        console.error('Status check error:', error);
+        return { success: false, linked: false, error: error.message };
+    }
+}
+
+// تنظيف جميع مؤقتات التليجرام
+function cleanupTelegramTimers() {
+    if (telegramStatusChecker) {
+        clearInterval(telegramStatusChecker);
+        telegramStatusChecker = null;
+    }
+}
+
+// إضافة مستمع لتنظيف المؤقتات عند إغلاق الصفحة
+window.addEventListener('beforeunload', function() {
+    cleanupTelegramTimers();
+});
+
+// نظام إدارة البريد الإلكتروني المتعدد
+let emailAddresses = [];
+const maxEmails = 6; // الحد الأقصى للإيميلات
 
 // إضافة بريد إلكتروني جديد
 function addNewEmail() {
@@ -1785,376 +1913,254 @@ function isValidEmail(email) {
     return emailRegex.test(email);
 }
 
-// دوال مساعدة إضافية
-function getPlatformDisplayName(platform) {
-    const names = {
-        'playstation': 'PlayStation',
-        'xbox': 'Xbox', 
-        'pc': 'PC'
-    };
-    return names[platform] || platform;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// 🔗 نظام استخلاص روابط InstaPay الذكي المحسن
-// ═══════════════════════════════════════════════════════════════
-
-/**
- * 🎯 الدالة الرئيسية: استخلاص روابط InstaPay الذكي من النصوص المركبة
- */
-function extractInstapayLink(inputText) {
-    if (!inputText) {
-        return null;
+// إضافة مستمع للمفتاح Enter في حقل الإيميل
+document.addEventListener('DOMContentLoaded', function() {
+    const emailInput = document.getElementById('newEmailInput');
+    if (emailInput) {
+        emailInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addNewEmail();
+            }
+        });
+        
+        // التحقق أثناء الكتابة
+        emailInput.addEventListener('input', function() {
+            const email = this.value.trim();
+            if (email && !isValidEmail(email)) {
+                this.style.borderColor = '#EF4444';
+            } else {
+                this.style.borderColor = '';
+            }
+        });
     }
     
-    console.log('🔍 Extracting InstaPay link from text:', inputText);
+    // إضافة رسالة فارغة في البداية
+    if (emailAddresses.length === 0) {
+        addEmptyMessage();
+    }
+});
+
+console.log('🔗 Telegram system updated - Auto-link with single button');
+
+// ═══════════════════════════════════════════════════════════════
+// 🔗 نظام استخلاص روابط InstaPay الذكي - إضافة جديدة
+// ═══════════════════════════════════════════════════════════════
+
+// التحقق والاستخلاص الفوري لروابط InstaPay
+function validateInstapayInput(input) {
+    const text = input.value.trim();
+    const container = input.closest('.form-group');
     
-    // تنظيف النص من الأسطر الجديدة والمسافات الزائدة
-    const cleanText = inputText.trim().replace(/\n/g, ' ').replace(/\r/g, ' ').replace(/\s+/g, ' ');
+    // إزالة المعاينة السابقة
+    const existingPreview = container.querySelector('.instapay-preview');
+    if (existingPreview) {
+        existingPreview.remove();
+    }
     
-    // 🔥 أنماط البحث المتقدمة لروابط InstaPay
-    const instapayPatterns = [
-        // النمط الأساسي لـ ipn.eg (الأكثر شيوعاً)
+    if (!text) {
+        updateValidationUI(input, true, '');
+        return true;
+    }
+    
+    // محاولة استخلاص الرابط
+    const extractedLink = extractInstapayLink(text);
+    
+    if (extractedLink) {
+        // إنشاء معاينة الرابط
+        createInstapayPreview(container, extractedLink, text);
+        updateValidationUI(input, true, '✓ تم استخلاص رابط InstaPay');
+        return true;
+    } else {
+        updateValidationUI(input, false, 'لم يتم العثور على رابط InstaPay صحيح');
+        return false;
+    }
+}
+
+// استخلاص رابط InstaPay من النص (JavaScript)
+function extractInstapayLink(text) {
+    const patterns = [
         /https?:\/\/(?:www\.)?ipn\.eg\/S\/[^\/\s]+\/instapay\/[A-Za-z0-9]+/gi,
-        
-        // أنماط أخرى
         /https?:\/\/(?:www\.)?instapay\.com\.eg\/[^\s<>"{}|\\^`\[\]]+/gi,
         /https?:\/\/(?:www\.)?app\.instapay\.com\.eg\/[^\s<>"{}|\\^`\[\]]+/gi,
         /https?:\/\/(?:www\.)?instapay\.app\/[^\s<>"{}|\\^`\[\]]+/gi,
         /https?:\/\/(?:www\.)?ipn\.eg\/[^\s<>"{}|\\^`\[\]]+/gi,
-        /https?:\/\/(?:www\.)?pay\.instapay\.com\.eg\/[^\s<>"{}|\\^`\[\]]+/gi,
     ];
     
-    let extractedLinks = [];
-    
-    // البحث باستخدام كل نمط
-    for (const pattern of instapayPatterns) {
-        const matches = cleanText.match(pattern) || [];
-        extractedLinks = extractedLinks.concat(matches);
-    }
-    
-    // إزالة المكررات
-    const uniqueLinks = [...new Set(extractedLinks)];
-    
-    // تنظيف وفلترة الروابط
-    const validLinks = [];
-    for (const link of uniqueLinks) {
-        // تنظيف العلامات من النهاية
-        const cleanedLink = link.replace(/[.,;!?]+$/, '').trim();
-        
-        if (isValidInstapayUrl(cleanedLink)) {
-            validLinks.push(cleanedLink);
-        }
-    }
-    
-    // إرجاع أفضل رابط
-    if (validLinks.length > 0) {
-        const bestLink = selectBestInstapayLink(validLinks);
-        console.log('✅ Found InstaPay link:', bestLink);
-        return bestLink;
-    }
-    
-    console.log('❌ No valid InstaPay link found');
-    return null;
-}
-
-/**
- * 🔍 التحقق من صحة رابط InstaPay
- */
-function isValidInstapayUrl(url) {
-    if (!url || (!url.startsWith('http://') && !url.startsWith('https://'))) {
-        return false;
-    }
-    
-    const validDomains = [
-        'ipn.eg',
-        'instapay.com.eg',
-        'app.instapay.com.eg',
-        'instapay.app',
-        'pay.instapay.com.eg'
-    ];
-    
-    try {
-        const urlObj = new URL(url.toLowerCase());
-        const domain = urlObj.hostname.replace('www.', '');
-        
-        // التحقق من النطاق والطول والمعرف
-        const domainValid = validDomains.some(validDomain => domain.includes(validDomain));
-        const lengthValid = url.length >= 20;
-        const hasIdentifier = urlObj.pathname.length > 3;
-        
-        return domainValid && lengthValid && hasIdentifier;
-        
-    } catch (error) {
-        console.warn('Error validating URL:', error);
-        return false;
-    }
-}
-
-/**
- * 🏆 اختيار أفضل رابط
- */
-function selectBestInstapayLink(links) {
-    if (!links || links.length === 0) {
-        return "";
-    }
-    
-    const priorityDomains = [
-        'ipn.eg/S/',  // أولوية عليا
-        'instapay.com.eg',
-        'app.instapay.com.eg', 
-        'instapay.app'
-    ];
-    
-    // بحث حسب الأولوية
-    for (const priority of priorityDomains) {
-        for (const link of links) {
-            if (link.toLowerCase().includes(priority)) {
+    for (const pattern of patterns) {
+        const matches = text.match(pattern);
+        if (matches && matches.length > 0) {
+            // تنظيف الرابط من العلامات في النهاية
+            let link = matches[0].replace(/[.,;!?]+$/, '');
+            if (isValidInstapayUrl(link)) {
                 return link;
             }
         }
     }
     
-    return links[0];
+    return null;
 }
 
-/**
- * 📊 استخلاص معلومات الرابط
- */
-function extractInstapayInfo(url) {
-    const info = {
-        url: url,
-        domain: '',
-        username: '',
-        code: '',
-        type: 'unknown'
-    };
+// التحقق من صحة رابط InstaPay (JavaScript)
+function isValidInstapayUrl(url) {
+    if (!url || (!url.startsWith('http://') && !url.startsWith('https://'))) {
+        return false;
+    }
     
+    const validDomains = ['ipn.eg', 'instapay.com.eg', 'app.instapay.com.eg', 'instapay.app'];
+    const lowerUrl = url.toLowerCase();
+    
+    return validDomains.some(domain => lowerUrl.includes(domain)) && url.length >= 20;
+}
+
+// إنشاء معاينة الرابط المستخلص
+function createInstapayPreview(container, extractedLink, originalText) {
+    const previewDiv = document.createElement('div');
+    previewDiv.className = 'instapay-preview';
+    
+    previewDiv.innerHTML = `
+        <div class="preview-header">
+            <i class="fas fa-link"></i>
+            <span>تم استخلاص رابط InstaPay</span>
+        </div>
+        <div class="extracted-link">
+            <div class="link-label">الرابط المستخلص:</div>
+            <div class="link-url">${extractedLink}</div>
+        </div>
+        <div class="preview-actions">
+            <button type="button" class="test-link-btn" onclick="testInstapayLink('${extractedLink}')">
+                <i class="fas fa-external-link-alt"></i>
+                اختبار الرابط
+            </button>
+            <button type="button" class="copy-link-btn" onclick="copyInstapayLink('${extractedLink}')">
+                <i class="fas fa-copy"></i>
+                نسخ الرابط
+            </button>
+        </div>
+    `;
+    
+    container.appendChild(previewDiv);
+    
+    // انيميشن الظهور
+    setTimeout(() => {
+        previewDiv.classList.add('show');
+    }, 100);
+}
+
+// اختبار رابط InstaPay
+function testInstapayLink(url) {
+    window.open(url, '_blank');
+    showNotification('تم فتح الرابط في تبويب جديد', 'info');
+}
+
+// نسخ رابط InstaPay
+async function copyInstapayLink(url) {
     try {
-        const urlObj = new URL(url);
-        info.domain = urlObj.hostname.replace('www.', '');
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(url);
+        } else {
+            // طريقة احتياطية
+            const textArea = document.createElement('textarea');
+            textArea.value = url;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+        }
         
-        // استخلاص معلومات ipn.eg
-        if (info.domain.includes('ipn.eg')) {
-            const pathParts = urlObj.pathname.split('/').filter(part => part);
-            if (pathParts.length >= 4 && pathParts[0] === 'S') {
-                info.username = pathParts[1];
-                info.code = pathParts[3] || '';
-                info.type = 'standard';
-            }
+        showNotification('تم نسخ الرابط بنجاح!', 'success');
+        
+        if (navigator.vibrate) {
+            navigator.vibrate([50, 50, 50]);
         }
         
     } catch (error) {
-        console.warn('Error extracting InstaPay info:', error);
+        showNotification('فشل في نسخ الرابط', 'error');
     }
-    
-    return info;
 }
 
-/**
- * ✅ التحقق من حقل InstaPay مع الاستخلاص الذكي
- */
-function validateInstapayInput(inputElement) {
-    const inputValue = inputElement.value.trim();
-    console.log('🔍 Validating InstaPay input:', inputValue);
-    
-    if (!inputValue) {
-        updateInstapayUI(inputElement, true, '');
-        return true;
-    }
-    
-    // محاولة استخلاص الرابط
-    const extractedLink = extractInstapayLink(inputValue);
-    
-    if (extractedLink) {
-        // رابط صحيح موجود
-        if (extractedLink !== inputValue) {
-            // تحديث الحقل وإظهار الإشعار
-            inputElement.value = extractedLink;
-            showInstapayExtractionNotice(inputElement, inputValue, extractedLink);
-        }
+// تحديث نظام الاستماع لحقل InstaPay
+function initializeInstapayListener() {
+    const instapayInput = document.getElementById('payment-link');
+    if (instapayInput) {
+        // إزالة المستمعين القدامى
+        instapayInput.removeEventListener('input', validateInstapayInput);
+        instapayInput.removeEventListener('paste', validateInstapayInput);
         
-        const linkInfo = extractInstapayInfo(extractedLink);
-        updateInstapayUI(inputElement, true, '✅ رابط InstaPay صحيح');
-        showInstapayLinkInfo(inputElement, linkInfo);
-        return true;
+        // إضافة المستمعين الجدد
+        instapayInput.addEventListener('input', function() {
+            validateInstapayInput(this);
+        });
         
-    } else {
-        // لا يوجد رابط صحيح
-        updateInstapayUI(inputElement, false, 'لم يتم العثور على رابط InstaPay صحيح في النص');
-        return false;
+        instapayInput.addEventListener('paste', function() {
+            // تأخير قصير للسماح بلصق النص
+            setTimeout(() => {
+                validateInstapayInput(this);
+            }, 100);
+        });
+        
+        console.log('🔗 InstaPay input listener initialized');
     }
 }
 
-/**
- * 💡 إشعار الاستخلاص الذكي
- */
-function showInstapayExtractionNotice(inputElement, originalText, extractedLink) {
-    const container = inputElement.closest('.form-group') || inputElement.parentNode;
+// تحديث دالة setupDynamicInputs لتشمل InstaPay
+const originalSetupDynamicInputs = setupDynamicInputs;
+setupDynamicInputs = function() {
+    // استدعاء الدالة الأصلية
+    originalSetupDynamicInputs();
     
-    // إزالة إشعارات سابقة
-    const existingNotice = container.querySelector('.instapay-extraction-notice');
-    if (existingNotice) existingNotice.remove();
-    
-    const noticeDiv = document.createElement('div');
-    noticeDiv.className = 'instapay-extraction-notice success-notice';
-    noticeDiv.innerHTML = `
-        <div class="extraction-content">
-            <i class="fas fa-magic"></i>
-            <span>تم استخلاص رابط InstaPay من النص بنجاح!</span>
-            <div class="extraction-details">
-                <small>النص الأصلي: "${originalText.substring(0, 50)}${originalText.length > 50 ? '...' : ''}"</small>
-                <br>
-                <small>الرابط المستخلص: "${extractedLink}"</small>
-            </div>
-        </div>
-    `;
-    
-    // إضافة CSS للإشعار
-    noticeDiv.style.cssText = `
-        background: linear-gradient(135deg, #10B981, #059669);
-        color: white;
-        padding: 12px 16px;
-        margin: 8px 0;
-        border-radius: 8px;
-        font-size: 14px;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-        opacity: 0;
-        transform: translateY(-10px);
-        transition: all 0.3s ease;
-    `;
-    
-    container.appendChild(noticeDiv);
-    
-    setTimeout(() => {
-        noticeDiv.style.opacity = '1';
-        noticeDiv.style.transform = 'translateY(0)';
-    }, 100);
-    
-    // اهتزاز للهواتف
-    if (navigator.vibrate) {
-        navigator.vibrate([100, 50, 100]);
-    }
-    
-    // إزالة تلقائية
-    setTimeout(() => {
-        noticeDiv.style.opacity = '0';
-        noticeDiv.style.transform = 'translateY(-10px)';
-        setTimeout(() => {
-            if (noticeDiv.parentNode) {
-                noticeDiv.remove();
-            }
-        }, 300);
-    }, 5000);
-}
-
-/**
- * 📋 عرض معلومات الرابط
- */
-function showInstapayLinkInfo(inputElement, linkInfo) {
-    const container = inputElement.closest('.form-group') || inputElement.parentNode;
-    
-    // إزالة معلومات سابقة
-    const existingInfo = container.querySelector('.instapay-link-info');
-    if (existingInfo) existingInfo.remove();
-    
-    const infoDiv = document.createElement('div');
-    infoDiv.className = 'instapay-link-info';
-    infoDiv.innerHTML = `
-        <div class="link-info-content">
-            <div class="info-header">
-                <i class="fas fa-link"></i>
-                <span>معلومات رابط InstaPay</span>
-            </div>
-            <div class="link-details">
-                <div><strong>النطاق:</strong> ${linkInfo.domain}</div>
-                ${linkInfo.username ? `<div><strong>اسم المستخدم:</strong> ${linkInfo.username}</div>` : ''}
-                ${linkInfo.code ? `<div><strong>كود الدفع:</strong> ${linkInfo.code}</div>` : ''}
-                <div><strong>نوع الرابط:</strong> ${linkInfo.type === 'standard' ? 'رابط قياسي' : 'رابط مخصص'}</div>
-            </div>
-        </div>
-    `;
-    
-    // إضافة CSS للمعلومات
-    infoDiv.style.cssText = `
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 6px;
-        padding: 10px;
-        margin: 8px 0;
-        font-size: 13px;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    `;
-    
-    container.appendChild(infoDiv);
-    
-    setTimeout(() => {
-        infoDiv.style.opacity = '1';
-    }, 200);
-}
-
-/**
- * 🎨 تحديث UI للحقل
- */
-function updateInstapayUI(inputElement, isValid, message) {
-    const container = inputElement.closest('.form-group');
-    if (!container) return;
-    
-    // إزالة حالات سابقة
-    container.classList.remove('valid', 'invalid');
-    inputElement.classList.remove('valid', 'invalid');
-    
-    // إزالة رسائل سابقة
-    const existingError = container.querySelector('.error-message');
-    const existingSuccess = container.querySelector('.success-message');
-    if (existingError) existingError.remove();
-    if (existingSuccess) existingSuccess.remove();
-    
-    if (message) {
-        if (isValid) {
-            container.classList.add('valid');
-            inputElement.classList.add('valid');
-            if (message.includes('✅')) {
-                const successMsg = document.createElement('div');
-                successMsg.className = 'success-message';
-                successMsg.textContent = message;
-                successMsg.style.cssText = 'color: #10B981; font-size: 12px; margin-top: 4px;';
-                container.appendChild(successMsg);
-            }
-        } else {
-            container.classList.add('invalid');
-            inputElement.classList.add('invalid');
-            const errorMsg = document.createElement('div');
-            errorMsg.className = 'error-message';
-            errorMsg.textContent = message;
-            errorMsg.style.cssText = 'color: #DC2626; font-size: 12px; margin-top: 4px;';
-            container.appendChild(errorMsg);
-        }
-    } else if (isValid) {
-        container.classList.add('valid');
-        inputElement.classList.add('valid');
-    }
-}
-
-console.log('🚀 InstaPay Smart Link Extraction System - Enhanced Version Loaded!');
-
-
-// تصدير الوظائف للاستخدام الخارجي أو الاختبار
-window.FC26ProfileSetup = {
-    validateWhatsAppReal,
-    validatePaymentMethod,
-    showNotification,
-    clearValidationStates,
-    checkFormValidity,
-    updateSubmitButton
+    // إضافة مستمع InstaPay
+    initializeInstapayListener();
 };
 
-// رسالة تأكيد التهيئة
-console.log('🎮 FC 26 Profile Setup - Fixed Buttons Version Loaded Successfully!');
-console.log('✅ Platform buttons: FIXED');
-console.log('✅ Payment buttons: FIXED');
-console.log('✅ All original features: PRESERVED');
-console.log('🔧 Ready for copy-paste: 2000+ lines maintained');
+// إضافة تحديث validatePaymentInput لدعم استخلاص InstaPay
+const originalValidatePaymentInput = validatePaymentInput;
+validatePaymentInput = function(input) {
+    const value = input.value.trim();
+    const inputId = input.id;
+    let isValid = false;
+    let errorMessage = '';
+    
+    if (!value) {
+        updateValidationUI(input, true, '');
+        return true;
+    }
+    
+    // التحقق من المحافظ الإلكترونية (11 رقم)
+    if (['vodafone_cash', 'etisalat_cash', 'orange_cash', 'we_pay', 
+         'fawry', 'aman', 'masary', 'bee', 'mobile-number'].includes(inputId)) {
+        isValid = /^01[0125][0-9]{8}$/.test(value) && value.length === 11;
+        errorMessage = isValid ? '' : 'رقم المحفظة يجب أن يكون 11 رقم ويبدأ بـ 010، 011، 012، أو 015';
+    }
+    // التحقق من كارت تيلدا (16 رقم)
+    else if (['telda_card', 'card-number'].includes(inputId)) {
+        const numbersOnly = value.replace(/\s/g, '');
+        isValid = /^\d{16}$/.test(numbersOnly);
+        errorMessage = isValid ? '' : 'رقم كارت تيلدا يجب أن يكون 16 رقم';
+    }
+    // التحقق من رابط إنستا باي - النسخة المحدثة
+    else if (['instapay_link', 'payment-link'].includes(inputId)) {
+        const extractedLink = extractInstapayLink(value);
+        isValid = !!extractedLink;
+        errorMessage = isValid ? '' : 'لم يتم العثور على رابط InstaPay صحيح';
+        
+        // تحديث قيمة الحقل للرابط المستخلص
+        if (isValid && extractedLink !== value) {
+            input.value = extractedLink;
+        }
+    }
+    
+    updateValidationUI(input, isValid, errorMessage);
+    return isValid;
+};
 
-// ═══ النهاية - لا تضع أي شيء بعد هذا ═══
+// تحديث دالة isValidInstaPayLink لاستخدام النظام الجديد
+isValidInstaPayLink = function(link) {
+    return !!extractInstapayLink(link);
+};
+
+console.log('🚀 InstaPay Smart Link Extraction System - Initialized');
