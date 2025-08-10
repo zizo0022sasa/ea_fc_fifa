@@ -18,18 +18,18 @@
         <div class="loading-text">جاري حفظ البيانات...</div>
     </div>
 
-    <!-- شاشة نجاح الربط المبسطة -->
-    <div class="success-overlay" id="successOverlay" style="display: none;">
+    <!-- شاشة نجاح الربط الكاملة -->
+    <div class="telegram-success-overlay" id="telegramSuccessOverlay" style="display: none;">
         <div class="success-container">
             <div class="success-animation">
                 <i class="fas fa-check-circle success-mega-icon"></i>
             </div>
-            <h2 class="success-title">🎉 تم حفظ بياناتك بنجاح!</h2>
-            <p class="success-subtitle">✅ تم حفظ ملفك الشخصي بأمان<br>💾 تم حفظ جميع معلوماتك<br>🚀 مرحباً بك في عالم FC 26!</p>
+<h2 class="success-title">🎉 تم ربط حسابك بنجاح!</h2>
+<p class="success-subtitle">✅ تم حفظ ملفك الشخصي بأمان<br>💾 تم حفظ جميع معلوماتك<br>🚀 مرحباً بك في عالم FC 26!</p>
             <div class="success-actions">
-                <button type="button" class="success-btn" onclick="proceedToNextStep()">
-                    <i class="fas fa-arrow-right"></i>
-                    متابعة
+                <button type="button" class="success-btn" onclick="closeSuccessOverlay()">
+                    <i class="fas fa-home"></i>
+                    العودة للرئيسية
                 </button>
             </div>
         </div>
@@ -161,52 +161,80 @@
                 </div>
             </div>
 
-            <!-- قسم البريد الإلكتروني -->
-            <div class="form-group">
-                <label>
-                    <i class="fas fa-envelope"></i>
-                    البريد الإلكتروني (اختياري)
-                </label>
-                <div class="emails-container" id="emailsContainer">
-                    <!-- هنا هتظهر الإيميلات -->
-                </div>
-                
-                <div class="add-email-section">
-                    <div class="email-input-wrapper">
-                        <input 
-                            type="email" 
-                            id="newEmailInput" 
-                            class="form-input email-input" 
-                            placeholder="مثال: your.email@gmail.com"
-                            autocomplete="email"
-                        >
-                        <button type="button" class="add-email-btn" onclick="addNewEmail()">
-                            <i class="fas fa-plus"></i>
-                            إضافة بريد إلكتروني
-                        </button>
-                    </div>
-                    <div class="email-info">
-                        <i class="fas fa-info-circle"></i>
-                        يمكنك إضافة عدة عناوين بريد إلكتروني للتواصل
-                    </div>
-                </div>
-                
-                <!-- حقل مخفي لحفظ الإيميلات -->
-                <input type="hidden" name="email_addresses" id="emailAddressesInput" value="">
-            </div>
+<!-- قسم البريد الإلكتروني الجديد -->
+<div class="form-group">
+    <label>
+        <i class="fas fa-envelope"></i>
+        البريد الإلكتروني (اختياري)
+    </label>
+    <div class="emails-container" id="emailsContainer">
+        <!-- هنا هتظهر الإيميلات -->
+    </div>
+    
+    <div class="add-email-section">
+        <div class="email-input-wrapper">
+            <input 
+                type="email" 
+                id="newEmailInput" 
+                class="form-input email-input" 
+                placeholder="مثال: your.email@gmail.com"
+                autocomplete="email"
+            >
+            <button type="button" class="add-email-btn" onclick="addNewEmail()">
+                <i class="fas fa-plus"></i>
+                إضافة بريد إلكتروني
+            </button>
+        </div>
+        <div class="email-info">
+            <i class="fas fa-info-circle"></i>
+            يمكنك إضافة عدة عناوين بريد إلكتروني للتواصل
+        </div>
+    </div>
+    
+    <!-- حقل مخفي لحفظ الإيميلات -->
+    <input type="hidden" name="email_addresses" id="emailAddressesInput" value="">
+</div>
 
-            <!-- ✅ زر التليجرام الوحيد المبسط -->
-            <div class="telegram-section">
-                <button type="button" class="telegram-btn" id="telegram-link-btn">
-                    <div class="telegram-btn-content">
-                        <i class="fab fa-telegram telegram-icon"></i>
-                        <div class="telegram-text">
-                            <span class="telegram-title">📱 ربط مع التليجرام</span>
-                            <span class="telegram-subtitle">احصل على كود فوري وادخل للبوت</span>
-                        </div>
-                    </div>
+<!-- زر التليجرام المحدث -->
+<div class="telegram-section">
+    <button type="button" class="telegram-btn" id="telegramBtn" onclick="generateTelegramCode()">
+        <div class="telegram-btn-content">
+            <i class="fab fa-telegram telegram-icon"></i>
+            <div class="telegram-text">
+                <span class="telegram-title">📱 ربط مع التليجرام</span>
+                <span class="telegram-subtitle">احصل على كود فوري وادخل للبوت</span>
+            </div>
+        </div>
+    </button>
+    
+    <!-- نتيجة الكود المبسطة -->
+    <div class="telegram-code-result" id="telegramCodeResult" style="display: none;">
+        <div class="code-container">
+            <div class="code-header">
+                <i class="fas fa-key"></i>
+                <span>كود الربط التلقائي</span>
+            </div>
+            
+            <!-- الكود المخفي للنظام -->
+            <div class="generated-code" id="generatedCode" style="display: none;"></div>
+            
+            <!-- زر واحد فقط -->
+            <div class="telegram-actions">
+                <button type="button" class="telegram-open-btn" id="telegramOpenBtn" onclick="openTelegramApp()">
+                    <i class="fab fa-telegram"></i>
+                    فتح التليجرام والربط
                 </button>
             </div>
+            
+            <!-- تعليمات مبسطة -->
+            <div class="telegram-instructions">
+                <div class="single-step">
+                    ⚡ اضغط "فتح التليجرام" وسيتم الربط التلقائي!
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
             <button type="submit" class="submit-btn" id="submitBtn" disabled>
                 💾 حفظ التغييرات
@@ -226,15 +254,6 @@
         </div>
     </div>
 
-<!-- 💡 استيراد وحدة التليجرام أولاً -->
-<script type="module" src="{{ url_for('static', filename='js/telegram-integration.js') }}"></script>
-<script type="module" src="{{ url_for('static', filename='js/script.js') }}"></script>
-    
-    <!-- ✅ دالة الانتقال التلقائي -->
-    <script>
-        function proceedToNextStep() {
-            window.location.href = '/coins-order';
-        }
-    </script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>
