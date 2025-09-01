@@ -1,0 +1,16 @@
+# متطلبات بوت التليجرام الاحترافي
+python-telegram-bot==21.0.1
+requests==2.31.0
+urllib3==2.1.0
+aiohttp==3.9.1
+asyncio==3.4.3
+
+# للأمان والتشفير
+cryptography==41.0.7
+certifi==2023.11.17
+
+# للسجلات والتحليل
+python-dateutil==2.8.2
+
+# لإدارة البيانات
+jsonschema==4.20.0
