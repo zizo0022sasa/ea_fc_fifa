@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔥 EA FC FIFA Bot - واجهة الاختبار</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+            animation: slideUp 0.5s ease;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+        
+        .features {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .features h2 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        
+        .feature-item:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .feature-icon {
+            font-size: 1.5em;
+        }
+        
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            text-align: center;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-right: 4px solid #2196f3;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .info-box h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+        
+        .code-box {
+            background: #263238;
+            color: #aed581;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        
+        .footer {
+            text-align: center;
+            color: #666;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4caf50;
+            animation: blink 2s infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes blink {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            🔥 EA FC FIFA Bot System
+            <span class="status-indicator"></span>
+        </h1>
+        <p class="subtitle">النظام المصري الاحترافي الكامل 🇪🇬</p>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">2</div>
+                <div class="stat-label">البوتات النشطة</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">∞</div>
+                <div class="stat-label">حسابات ممكنة</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">تشغيل مستمر</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">آمن ومحمي</div>
+            </div>
+        </div>
+        
+        <div class="features">
+            <h2>✨ المميزات الرئيسية</h2>
+            <div class="feature-list">
+                <div class="feature-item">
+                    <span class="feature-icon">🤖</span>
+                    <span>بوت تليجرام احترافي متكامل</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">🔥</span>
+                    <span>إنشاء حسابات تلقائياً</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">📊</span>
+                    <span>إحصائيات مفصلة وسجلات</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">⚙️</span>
+                    <span>إعدادات متقدمة قابلة للتخصيص</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">🔐</span>
+                    <span>حماية كاملة بصلاحيات الأدمن</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">🔔</span>
+                    <span>إشعارات فورية للعمليات</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-box">
+            <h3>📱 معلومات بوت التليجرام</h3>
+            <p><strong>Token:</strong> 7958170099:AAHttiDXnc_aHcdPrmZUTnD-rn9w1LD4T6I</p>
+            <p><strong>Admin ID:</strong> 1124247595</p>
+            <p><strong>الحالة:</strong> شغال ✅</p>
+        </div>
+        
+        <div class="buttons">
+            <button class="btn btn-primary pulse" onclick="alert('البوت شغال بنجاح! 🚀')">
+                🚀 اختبار البوت
+            </button>
+            <a href="https://github.com/zizo0022sasa/ea_fc_fifa" class="btn btn-success" target="_blank">
+                📂 GitHub Repository
+            </a>
+            <button class="btn btn-warning" onclick="showCommands()">
+                📋 عرض الأوامر
+            </button>
+        </div>
+        
+        <div class="code-box">
+            <strong>تشغيل البوت:</strong><br>
+            $ python telegram_bot.py<br><br>
+            <strong>أو باستخدام supervisor:</strong><br>
+            $ supervisorctl start telegram_bot
+        </div>
+        
+        <div class="footer">
+            <p>👨‍💻 تم التطوير بواسطة: <strong>@zizo0022sasa</strong></p>
+            <p>صُنع بكل حب في مصر 🇪🇬 ❤️</p>
+        </div>
+    </div>
+    
+    <script>
+        function showCommands() {
+            alert(`
+🎮 أوامر البوت:
+━━━━━━━━━━━━━━
+/start - بدء البوت
+/stop - إيقاف البوت  
+/stats - عرض الإحصائيات
+/help - المساعدة
+
+✨ القوائم التفاعلية:
+• طلب جديد
+• تشغيل تلقائي
+• الإحصائيات
+• الإعدادات
+• السجلات
+• المساعدة
+            `);
+        }
+        
+        // تأثير الكتابة
+        setTimeout(() => {
+            console.log('%c🔥 EA FC FIFA Bot System', 'font-size: 24px; color: #667eea; font-weight: bold;');
+            console.log('%cالنظام جاهز للعمل!', 'font-size: 16px; color: #4caf50;');
+        }, 1000);
+    </script>
+</body>
+</html>
