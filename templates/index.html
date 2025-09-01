@@ -1,259 +1,0 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FC 26 Profile Setup</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <!-- خلفية الجسيمات -->
-    <div class="particles-bg" id="particlesBg"></div>
-
-    <!-- شاشة التحميل -->
-    <div class="loading" id="loading">
-        <div class="spinner"></div>
-        <div class="loading-text">جاري حفظ البيانات...</div>
-    </div>
-
-    <!-- شاشة نجاح الربط الكاملة -->
-    <div class="telegram-success-overlay" id="telegramSuccessOverlay" style="display: none;">
-        <div class="success-container">
-            <div class="success-animation">
-                <i class="fas fa-check-circle success-mega-icon"></i>
-            </div>
-<h2 class="success-title">🎉 تم ربط حسابك بنجاح!</h2>
-<p class="success-subtitle">✅ تم حفظ ملفك الشخصي بأمان<br>💾 تم حفظ جميع معلوماتك<br>🚀 مرحباً بك في عالم FC 26!</p>
-            <div class="success-actions">
-                <button type="button" class="success-btn" onclick="closeSuccessOverlay()">
-                    <i class="fas fa-home"></i>
-                    العودة للرئيسية
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div class="container">
-        <div class="header">
-            <h1>🎮 FC 26 - EA SPORTS</h1>
-            <p>إعداد الملف الشخصي</p>
-        </div>
-
-        <form id="profileForm" method="POST" action="/update-profile">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-            
-            <!-- اختيار المنصة -->
-            <div class="platforms-section">
-                <h2 class="section-title">🎯 اختر منصة اللعب</h2>
-                <div class="platforms-grid">
-                    <div class="platform-card" data-platform="playstation">
-                        <i class="fab fa-playstation platform-icon playstation"></i>
-                        <h3>PlayStation</h3>
-                    </div>
-                    <div class="platform-card" data-platform="xbox">
-                        <i class="fab fa-xbox platform-icon xbox"></i>
-                        <h3>Xbox</h3>
-                    </div>
-                    <div class="platform-card" data-platform="pc">
-                        <i class="fas fa-desktop platform-icon pc"></i>
-                        <h3>PC</h3>
-                    </div>
-                </div>
-                <input type="hidden" name="platform" id="platform" required>
-            </div>
-
-            <!-- رقم الواتساب -->
-            <div class="form-group">
-                <label for="whatsapp">
-                    <i class="fab fa-whatsapp whatsapp-logo"></i>
-                    رقم الواتساب
-                </label>
-                <input 
-                    type="tel" 
-                    id="whatsapp" 
-                    name="whatsapp_number" 
-                    class="form-input" 
-                    placeholder="مثال: +201012345678 أو 01012345678"
-                    required
-                >
-            </div>
-
-            <!-- طرق الدفع -->
-            <div class="form-group">
-                <label>💳 طريقة الدفع المفضلة</label>
-                <div class="payment-methods">
-                    <button type="button" class="payment-btn" data-value="vodafone_cash" data-type="mobile">
-                        <span class="payment-logo vodafone-logo"></span>
-                        فودافون كاش
-                    </button>
-                    <button type="button" class="payment-btn" data-value="etisalat_cash" data-type="mobile">
-                        <span class="payment-logo etisalat-logo"></span>
-                        اتصالات كاش
-                    </button>
-                    <button type="button" class="payment-btn" data-value="orange_cash" data-type="mobile">
-                        <span class="payment-logo orange-logo"></span>
-                        أورانج كاش
-                    </button>
-                    <button type="button" class="payment-btn" data-value="we_cash" data-type="mobile">
-                        <span class="payment-logo we-logo"></span>
-                        وي كاش
-                    </button>
-                    <button type="button" class="payment-btn" data-value="bank_wallet" data-type="mobile">
-                        <span class="payment-logo bank-logo"></span>
-                        محفظة بنكية
-                    </button>
-                    <button type="button" class="payment-btn" data-value="tilda" data-type="card">
-                        <span class="payment-logo tilda-logo"></span>
-                        تيلدا
-                    </button>
-                    <button type="button" class="payment-btn" data-value="instapay" data-type="link">
-                        <span class="payment-logo instapay-logo"></span>
-                        إنستا باي
-                    </button>
-                </div>
-                <input type="hidden" name="payment_method" id="payment_method" required>
-
-                <!-- الحقول الديناميكية -->
-                <div class="dynamic-input" id="mobile-input">
-                    <label for="mobile-number">📱 رقم الهاتف (11 رقم بدون مسافات)</label>
-                    <input 
-                        type="tel" 
-                        id="mobile-number" 
-                        name="payment_details" 
-                        class="form-input" 
-                        placeholder="مثال: 01012345678"
-                        maxlength="11"
-                    >
-                    <div class="error-message-field" id="mobile-error">
-                        ❌ الرقم غير صحيح، يرجى إدخال الرقم بدون مسافات (11 رقم يبدأ بـ 010/011/012/015)
-                    </div>
-                </div>
-
-                <div class="dynamic-input" id="card-input">
-                    <label for="card-number">💳 رقم البطاقة (16 رقم - يُسمح بمسافات أو شرطات)</label>
-                    <input 
-                        type="text" 
-                        id="card-number" 
-                        name="payment_details" 
-                        class="form-input" 
-                        placeholder="مثال: 1234 5678 9012 3456 أو 1234-5678-9012-3456"
-                        maxlength="22"
-                    >
-                    <div class="error-message-field" id="card-error">
-                        ❌ رقم البطاقة غير صحيح، يجب أن يكون 16 رقماً
-                    </div>
-                </div>
-
-                <div class="dynamic-input" id="link-input">
-                    <label for="payment-link">🔗 رابط إنستا باي (سيتم استخلاص الرابط تلقائياً)</label>
-                    <input 
-                        type="text" 
-                        id="payment-link" 
-                        name="payment_details" 
-                        class="form-input" 
-                        placeholder="مثال: هذا رابطي https://instapay.com/pay/123456 للدفع"
-                    >
-                    <div class="error-message-field" id="link-error">
-                        ❌ لم يتم العثور على رابط صحيح، يرجى التأكد من وجود رابط يبدأ بـ https://
-                    </div>
-                </div>
-            </div>
-
-<!-- قسم البريد الإلكتروني الجديد -->
-<div class="form-group">
-    <label>
-        <i class="fas fa-envelope"></i>
-        البريد الإلكتروني (اختياري)
-    </label>
-    <div class="emails-container" id="emailsContainer">
-        <!-- هنا هتظهر الإيميلات -->
-    </div>
-    
-    <div class="add-email-section">
-        <div class="email-input-wrapper">
-            <input 
-                type="email" 
-                id="newEmailInput" 
-                class="form-input email-input" 
-                placeholder="مثال: your.email@gmail.com"
-                autocomplete="email"
-            >
-            <button type="button" class="add-email-btn" onclick="addNewEmail()">
-                <i class="fas fa-plus"></i>
-                إضافة بريد إلكتروني
-            </button>
-        </div>
-        <div class="email-info">
-            <i class="fas fa-info-circle"></i>
-            يمكنك إضافة عدة عناوين بريد إلكتروني للتواصل
-        </div>
-    </div>
-    
-    <!-- حقل مخفي لحفظ الإيميلات -->
-    <input type="hidden" name="email_addresses" id="emailAddressesInput" value="">
-</div>
-
-<!-- زر التليجرام المحدث -->
-<div class="telegram-section">
-    <button type="button" class="telegram-btn" id="telegramBtn" onclick="generateTelegramCode()">
-        <div class="telegram-btn-content">
-            <i class="fab fa-telegram telegram-icon"></i>
-            <div class="telegram-text">
-                <span class="telegram-title">📱 ربط مع التليجرام</span>
-                <span class="telegram-subtitle">احصل على كود فوري وادخل للبوت</span>
-            </div>
-        </div>
-    </button>
-    
-    <!-- نتيجة الكود المبسطة -->
-    <div class="telegram-code-result" id="telegramCodeResult" style="display: none;">
-        <div class="code-container">
-            <div class="code-header">
-                <i class="fas fa-key"></i>
-                <span>كود الربط التلقائي</span>
-            </div>
-            
-            <!-- الكود المخفي للنظام -->
-            <div class="generated-code" id="generatedCode" style="display: none;"></div>
-            
-            <!-- زر واحد فقط -->
-            <div class="telegram-actions">
-                <button type="button" class="telegram-open-btn" id="telegramOpenBtn" onclick="openTelegramApp()">
-                    <i class="fab fa-telegram"></i>
-                    فتح التليجرام والربط
-                </button>
-            </div>
-            
-            <!-- تعليمات مبسطة -->
-            <div class="telegram-instructions">
-                <div class="single-step">
-                    ⚡ اضغط "فتح التليجرام" وسيتم الربط التلقائي!
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-            <button type="submit" class="submit-btn" id="submitBtn" disabled>
-                💾 حفظ التغييرات
-            </button>
-
-            <div class="message success-message" id="successMessage">
-                ✅ تم حفظ بياناتك بنجاح! مرحباً بك في عالم FC 26
-            </div>
-
-            <div class="message error-message" id="errorMessage">
-                ❌ حدث خطأ، يرجى التحقق من البيانات والمحاولة مرة أخرى
-            </div>
-        </form>
-
-        <div class="security-notice">
-            🔒 بياناتك محمية بأعلى معايير الأمان والتشفير العالمي
-        </div>
-    </div>
-
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-</body>
-</html>
