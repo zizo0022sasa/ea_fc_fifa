@@ -20,3 +20,6 @@
 2025-09-01 02:26:32,991 INFO supervisord started with pid 1332
 2025-09-01 02:26:33,994 INFO spawned: 'simple_bot' with pid 1357
 2025-09-01 02:26:35,361 INFO success: simple_bot entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-09-01 02:28:35,589 INFO waiting for simple_bot to die
+2025-09-01 02:28:38,595 INFO waiting for simple_bot to die
+2025-09-01 02:28:39,214 INFO stopped: simple_bot (exit status 0)
