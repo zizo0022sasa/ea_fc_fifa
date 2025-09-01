@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-🔥 بوت التليجرام المصري - نظام الطابور المتعدد
+🔥 بوت التليجرام المصري - نظام الطابور المتعدد المحدث
 👨‍💻 Developer: @zizo0022sasa
 🇪🇬 صُنع في مصر
 """
@@ -17,6 +17,7 @@ import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 from collections import deque
+from colorama import init, Fore, Back, Style
 
 import requests
 from telegram import Update
@@ -28,6 +29,9 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+
+# Initialize colorama for Windows compatibility
+init(autoreset=True)
 
 # ==============================================================================
 # 🔐 الإعدادات
@@ -51,60 +55,103 @@ MAX_WAIT_SECONDS = 10
 MAX_ACCOUNT_CREATION_ATTEMPTS = 3
 
 # ==============================================================================
-# إعداد السجلات
+# إعداد السجلات الملونة
 # ==============================================================================
+class ColoredFormatter(logging.Formatter):
+    """Formatter with colors for terminal output"""
+    
+    COLORS = {
+        'DEBUG': Fore.CYAN,
+        'INFO': Fore.GREEN,
+        'WARNING': Fore.YELLOW,
+        'ERROR': Fore.RED,
+        'CRITICAL': Fore.RED + Back.WHITE,
+        'SUCCESS': Fore.GREEN + Style.BRIGHT,
+    }
+    
+    def format(self, record):
+        # Add custom SUCCESS level
+        if record.levelno == 25:  # Custom SUCCESS level
+            record.levelname = 'SUCCESS'
+        
+        # Format the timestamp
+        timestamp = datetime.fromtimestamp(record.created).strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Get color for the level
+        color = self.COLORS.get(record.levelname, '')
+        reset = Style.RESET_ALL
+        
+        # Build the formatted message
+        formatted = f"{Fore.WHITE}[{record.levelname:<7}] {Fore.BLUE}{timestamp} {color}-> {record.getMessage()}{reset}"
+        return formatted
+
+# Add custom SUCCESS level
+logging.addLevelName(25, 'SUCCESS')
+
+# Configure logging with colored output
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(ColoredFormatter())
+
+file_handler = logging.FileHandler("bot.log", encoding="utf-8")
+file_handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
-    handlers=[
-        logging.FileHandler("bot.log", encoding="utf-8"),
-        logging.StreamHandler(),
-    ],
+    handlers=[console_handler, file_handler]
 )
 logger = logging.getLogger(__name__)
+
+# Add success method to logger
+def success(self, message, *args, **kwargs):
+    if self.isEnabledFor(25):
+        self._log(25, message, args, **kwargs)
+logging.Logger.success = success
 
 # ==============================================================================
 # 🛠️ مولد الحسابات
 # ==============================================================================
-
 def generate_ultimate_human_credentials():
     """توليد بيانات حساب بشرية واقعية"""
     vowels = "aeiou"
     consonants = "bcdfghjklmnprstvwxyz"
-    name_part1 = "".join(random.choices(consonants, k=2)) + random.choice(vowels)
+    
+    # Generate parts
+    name_part1 = "".join(random.choices(consonants, k=1)) + random.choice(vowels)
     name_part2 = random.choice(consonants) + random.choice(vowels)
-    base_name = (name_part1 + name_part2).capitalize()
-
-    birth_year = random.randint(1988, 2005)
-    username_style = random.choice(["year", "suffix_number"])
-    if username_style == "year":
-        username = f"{base_name.lower()}{birth_year}"
-    else:
-        username = f"{base_name.lower()}_{random.randint(10, 99)}"
-
-    email_domains = ["gmail.com", "outlook.com", "yahoo.com", "hotmail.com", "icloud.com"]
+    name_part3 = random.choice(consonants) + random.choice(vowels)
+    
+    # Create username variations
+    username_styles = [
+        lambda: f"{name_part1}{name_part2}{name_part3}{random.randint(1990, 2005)}",
+        lambda: f"{name_part1}{name_part2}{name_part3}_{random.randint(10, 99)}",
+        lambda: f"{name_part1}{name_part2}_{random.randint(70, 99)}"
+    ]
+    
+    username = random.choice(username_styles)()
+    
+    # Generate email
+    email_domains = ["gmail.com", "outlook.com", "yahoo.com"]
     email = f"{username}@{random.choice(email_domains)}"
-
-    pass_part = "".join(random.choices(string.ascii_lowercase, k=5))
-    password_base = pass_part.capitalize()
-    password_symbol = random.choice("!@#$*")
-    password = f"{password_base}{birth_year}{password_symbol}"
-
-    logger.info(f"تم إنشاء بيانات: Username='{username}', Email='{email}'")
+    
+    # Generate password
+    pass_letters = ''.join(random.choices(string.ascii_letters, k=5))
+    password = f"{pass_letters.capitalize()}{random.randint(1990, 2005)}{random.choice('!@#$*')}"
+    
+    logger.debug(f"تم إنشاء بيانات مدمجة: Username='{username}', Password='{password}', Email='{email}'")
     return username, email, password
 
 # ==============================================================================
-# 📋 نظام الطابور المتعدد
+# 📋 نظام الطابور المتعدد المحسن
 # ==============================================================================
-
 class QueueManager:
-    """مدير الطابور للعملاء المتعددين"""
-    
+    """مدير الطابور للعملاء المتعددين مع أرقام الطلبات"""
+
     def __init__(self):
         self.queues = {}  # طابور لكل عميل
         self.active_orders = []  # الطلبات النشطة
+        self.order_counter = {}  # عداد رقم الطلب لكل عميل
         self.load_queue()
-    
+
     def load_queue(self):
         """تحميل الطابور من الملف"""
         try:
@@ -113,26 +160,39 @@ class QueueManager:
                     data = json.load(f)
                     self.queues = data.get("queues", {})
                     self.active_orders = data.get("active_orders", [])
+                    self.order_counter = data.get("order_counter", {})
         except Exception as e:
             logger.error(f"خطأ في تحميل الطابور: {e}")
-    
+
     def save_queue(self):
         """حفظ الطابور"""
         try:
             with open(QUEUE_FILE, "w") as f:
-                json.dump({
-                    "queues": self.queues,
-                    "active_orders": self.active_orders
-                }, f, ensure_ascii=False)
+                json.dump(
+                    {
+                        "queues": self.queues,
+                        "active_orders": self.active_orders,
+                        "order_counter": self.order_counter
+                    },
+                    f,
+                    ensure_ascii=False,
+                    indent=2
+                )
         except Exception as e:
             logger.error(f"خطأ في حفظ الطابور: {e}")
-    
+
     def add_order(self, user_id: str, link: str, total_followers: int) -> str:
-        """إضافة طلب جديد للطابور"""
-        order_id = f"order_{user_id}_{int(time.time())}"
+        """إضافة طلب جديد للطابور مع رقم الطلب"""
+        # زيادة عداد الطلبات للعميل
+        if user_id not in self.order_counter:
+            self.order_counter[user_id] = 0
+        self.order_counter[user_id] += 1
+        order_number = self.order_counter[user_id]
         
+        order_id = f"order_{user_id}_{int(time.time())}"
         order = {
             "order_id": order_id,
+            "order_number": order_number,  # رقم الطلب للعميل
             "user_id": user_id,
             "link": link,
             "total_requested": total_followers,
@@ -145,18 +205,18 @@ class QueueManager:
         
         if user_id not in self.queues:
             self.queues[user_id] = []
-        
         self.queues[user_id].append(order)
         self.active_orders.append(order_id)
         self.save_queue()
         
+        logger.info(f"📝 طلب جديد #{order_number} للعميل {user_id}")
         return order_id
-    
+
     def get_next_order(self) -> Optional[Dict]:
         """الحصول على الطلب التالي بنظام الدوران"""
         if not self.active_orders:
             return None
-        
+
         # نظام الدوران - كل عميل ياخد دوره
         for order_id in self.active_orders[:]:  # نسخة من القائمة
             for user_id, orders in self.queues.items():
@@ -167,9 +227,8 @@ class QueueManager:
                             self.active_orders.remove(order_id)
                             self.active_orders.append(order_id)
                             return order
-        
         return None
-    
+
     def update_order_progress(self, order_id: str, success: bool):
         """تحديث تقدم الطلب"""
         for user_id, orders in self.queues.items():
@@ -177,18 +236,18 @@ class QueueManager:
                 if order["order_id"] == order_id:
                     if success:
                         order["completed"] += 1
-                        
+                        logger.success(f"✅ التقدم: {order['completed']}/{order['accounts_needed']} للطلب #{order['order_number']}")
                         # التحقق من اكتمال الطلب
                         if order["completed"] >= order["accounts_needed"]:
                             order["status"] = "completed"
                             if order_id in self.active_orders:
                                 self.active_orders.remove(order_id)
-                    
+                            logger.success(f"🎉 اكتمل الطلب #{order['order_number']} للعميل {user_id}")
                     self.save_queue()
                     return
-    
+
     def get_queue_status(self) -> str:
-        """الحصول على حالة الطابور"""
+        """الحصول على حالة الطابور مع أرقام الطلبات"""
         total_orders = sum(len(orders) for orders in self.queues.values())
         active = len([o for orders in self.queues.values() for o in orders if o["status"] == "pending"])
         completed = len([o for orders in self.queues.values() for o in orders if o["status"] == "completed"])
@@ -203,14 +262,12 @@ class QueueManager:
             if orders:
                 status += f"**العميل {user_id}:**\n"
                 for order in orders[-3:]:  # آخر 3 طلبات
-                    status += f"  • {order['completed']}/{order['accounts_needed']} - {order['status']}\n"
-        
+                    status += f"  • {order['completed']}/{order['accounts_needed']} - {order['status']} - طلب #{order['order_number']}\n"
         return status
 
 # ==============================================================================
 # 🔑 مدير الحسابات الموحد
 # ==============================================================================
-
 class AccountManager:
     """مدير الحسابات والتوكنات في ملف واحد"""
 
@@ -223,26 +280,24 @@ class AccountManager:
         try:
             if os.path.exists(ACCOUNTS_FILE):
                 with open(ACCOUNTS_FILE, "r") as f:
-                    data = json.load(f)
-                    if isinstance(data, list):
-                        return data
-                    return []
+                    content = f.read().strip()
+                    if content:
+                        data = json.loads(content)
+                        if isinstance(data, list):
+                            logger.info(f"📂 تم تحميل {len(data)} حساب من accounts.json")
+                            return data
+            logger.warning("📂 لم يتم العثور على حسابات محفوظة")
+            return []
         except Exception as e:
             logger.error(f"خطأ في تحميل الحسابات: {e}")
-        return []
+            return []
 
     def save_accounts(self):
         """حفظ الحسابات في سطر واحد لكل حساب"""
         try:
             with open(ACCOUNTS_FILE, "w") as f:
-                f.write("[\n")
-                for i, account in enumerate(self.accounts):
-                    json_str = json.dumps(account, ensure_ascii=False)
-                    if i < len(self.accounts) - 1:
-                        f.write(f"  {json_str},\n")
-                    else:
-                        f.write(f"  {json_str}\n")
-                f.write("]")
+                json.dump(self.accounts, f, ensure_ascii=False, indent=2)
+            logger.debug(f"💾 تم حفظ {len(self.accounts)} حساب")
         except Exception as e:
             logger.error(f"خطأ في حفظ الحسابات: {e}")
 
@@ -256,10 +311,8 @@ class AccountManager:
 
     def create_new_account(self) -> Optional[Dict]:
         """إنشاء حساب جديد تلقائياً"""
-        
         for attempt in range(MAX_ACCOUNT_CREATION_ATTEMPTS):
-            logger.info(f"🔄 محاولة إنشاء حساب رقم {attempt + 1}/{MAX_ACCOUNT_CREATION_ATTEMPTS}...")
-            
+            logger.info(f"بدء عملية إنشاء حساب جديد...")
             username, email, password = generate_ultimate_human_credentials()
             
             payload = {
@@ -267,10 +320,9 @@ class AccountManager:
                 "email": email,
                 "password": password
             }
-
+            
             try:
                 time.sleep(random.uniform(2, 5))
-                
                 response = requests.post(
                     f"{API_BASE_URL}/register",
                     json=payload,
@@ -282,35 +334,46 @@ class AccountManager:
                     }
                 )
                 
-                logger.info(f"إرسال طلب التسجيل... Status: {response.status_code}")
-
+                logger.debug(f"إرسال طلب التسجيل... Status: {response.status_code}")
+                
                 if response.status_code == 201:
                     data = response.json()
                     api_token = data.get("api_token")
+                    
                     if api_token:
-                        logger.info(f"✅ نجاح! تم إنشاء الحساب '{username}'.")
+                        logger.success(f"نجاح! تم إنشاء الحساب '{username}'.")
                         
-                        # حفظ الحساب مع التوكن في سطر واحد
-                        new_account = {"token": api_token, "username": username, "email": email, "password": password, "created_at": datetime.now().isoformat(), "last_used": None, "use_count": 0, "auto_created": True}
-                        
+                        # حفظ الحساب مع التوكن
+                        new_account = {
+                            "token": api_token,
+                            "username": username,
+                            "email": email,
+                            "password": password,
+                            "created_at": datetime.now().isoformat(),
+                            "last_used": None,
+                            "use_count": 0,
+                            "auto_created": True
+                        }
                         self.accounts.append(new_account)
                         self.save_accounts()
-                        
                         return new_account
-                
+                        
                 elif response.status_code == 429:
                     error_data = response.json()
                     if "need_captcha" in str(error_data):
-                        logger.warning(f"⚠️ الموقع يطلب كابتشا")
+                        logger.error(f"فشل إنشاء الحساب. الرد: {error_data}")
                         wait_time = random.uniform(10, 20)
                         time.sleep(wait_time)
                     else:
                         time.sleep(30)
-                    
-            except Exception as e:
-                logger.error(f"خطأ: {e}")
+                        
+            except requests.exceptions.RequestException as e:
+                logger.error(f"خطأ في الشبكة أثناء إنشاء الحساب: {e}")
                 time.sleep(5)
-        
+            except Exception as e:
+                logger.error(f"خطأ غير متوقع: {e}")
+                time.sleep(5)
+                
         return None
 
     def add_account(self, account_data: str) -> str:
@@ -337,13 +400,19 @@ class AccountManager:
                     return "⚠️ التوكن موجود بالفعل!"
 
             # إضافة الحساب
-            new_account = {"token": token, "username": username, "email": email, "password": password, "created_at": datetime.now().isoformat(), "last_used": None, "use_count": 0, "auto_created": False}
-
+            new_account = {
+                "token": token,
+                "username": username,
+                "email": email,
+                "password": password,
+                "created_at": datetime.now().isoformat(),
+                "last_used": None,
+                "use_count": 0,
+                "auto_created": False
+            }
             self.accounts.append(new_account)
             self.save_accounts()
-
             return f"✅ تم إضافة الحساب بنجاح!\n👤 المستخدم: {username}\n📊 إجمالي الحسابات: {len(self.accounts)}"
-
         except Exception as e:
             return f"❌ خطأ: {str(e)}"
 
@@ -357,7 +426,7 @@ class AccountManager:
             if last_used is None:
                 logger.info(f"✅ استخدام حساب جديد: {account.get('username')}")
                 return account
-            
+                
             try:
                 last_used_time = datetime.fromisoformat(last_used)
                 time_diff = now - last_used_time
@@ -367,9 +436,9 @@ class AccountManager:
                     return account
             except:
                 continue
-        
+                
         # محاولة إنشاء حساب جديد
-        logger.info("⚠️ لا توجد حسابات متاحة، جاري إنشاء حساب جديد...")
+        logger.warning("⚠️ لا توجد حسابات متاحة، جاري إنشاء حساب جديد...")
         return self.create_new_account()
 
     def mark_used(self, token: str):
@@ -378,14 +447,14 @@ class AccountManager:
             if account["token"] == token:
                 account["last_used"] = datetime.now().isoformat()
                 account["use_count"] = account.get("use_count", 0) + 1
-        self.save_accounts()
+                self.save_accounts()
 
     def get_stats(self) -> Dict:
         """إحصائيات الحسابات"""
         total = len(self.accounts)
         now = datetime.now()
-        
         available = 0
+        
         for account in self.accounts:
             last_used = account.get("last_used")
             if last_used is None:
@@ -397,7 +466,7 @@ class AccountManager:
                         available += 1
                 except:
                     pass
-        
+                    
         auto_created = sum(1 for a in self.accounts if a.get("auto_created", False))
         
         return {
@@ -410,7 +479,6 @@ class AccountManager:
 # ==============================================================================
 # 🚀 معالج الطلبات بنظام الطابور
 # ==============================================================================
-
 class OrderProcessor:
     """معالج الطلبات مع نظام الطابور المتعدد"""
 
@@ -419,6 +487,7 @@ class OrderProcessor:
         self.queue_manager = queue_manager
         self.stats = self.load_stats()
         self.processing = False
+        self.auto_processing_task = None
 
     def load_stats(self) -> Dict:
         """تحميل الإحصائيات"""
@@ -451,9 +520,9 @@ class OrderProcessor:
                 return True
         return False
 
-    def place_order_v2(self, api_token: str, link: str, quantity: int = 10) -> bool:
+    def place_order_v2(self, api_token: str, link: str, quantity: int = 10) -> Tuple[bool, Optional[str]]:
         """إرسال طلب واحد"""
-        logger.info(f"📤 إرسال طلب...")
+        logger.info(f"بدء إرسال طلب المتابعين...")
         
         payload = {
             "key": api_token,
@@ -462,7 +531,7 @@ class OrderProcessor:
             "link": link,
             "quantity": quantity,
         }
-
+        
         try:
             response = requests.post(
                 f"{API_BASE_URL}/v2",
@@ -471,67 +540,66 @@ class OrderProcessor:
                 headers={"User-Agent": "Mozilla/5.0"},
             )
             
+            logger.debug(f"إرسال طلب الخدمة... Status: {response.status_code}")
+            
             if response.status_code == 200:
                 data = response.json()
                 if "order" in data:
-                    logger.info(f"✅ نجاح! Order ID: {data['order']}")
-                    return True
+                    order_id = data['order']
+                    logger.success(f"نجاح! تم إرسال الطلب بنجاح. Order ID: {order_id}")
+                    return True, order_id
                 elif "error" in data:
-                    logger.error(f"❌ فشل: {data['error']}")
-            return False
-            
+                    logger.error(f"فشل الطلب: {data['error']}")
+                    return False, None
         except Exception as e:
-            logger.error(f"❌ خطأ: {e}")
-            return False
+            logger.error(f"خطأ في إرسال الطلب: {e}")
+        return False, None
 
-    async def process_queue(self, update_callback=None):
-        """معالجة الطابور بنظام الدوران"""
-        if self.processing:
-            logger.warning("⚠️ المعالج يعمل بالفعل")
-            return
+    async def process_queue_continuously(self, update_callback=None):
+        """معالجة الطابور بشكل مستمر"""
+        logger.info("🚀 بدء المعالجة التلقائية للطابور...")
         
-        self.processing = True
-        
-        try:
-            while True:
+        while True:
+            try:
                 # الحصول على الطلب التالي من الطابور
                 order = self.queue_manager.get_next_order()
                 
                 if not order:
-                    logger.info("📭 الطابور فارغ")
-                    break
-                
-                logger.info(f"📋 معالجة طلب: {order['order_id']} - العميل: {order['user_id']}")
-                
+                    logger.info("📭 الطابور فارغ، انتظار طلبات جديدة...")
+                    await asyncio.sleep(10)  # انتظار 10 ثواني وإعادة الفحص
+                    continue
+
+                logger.info(f"بدء دورة جديدة...")
+                logger.info(f"📋 معالجة طلب #{order['order_number']} - العميل: {order['user_id']}")
+
                 # الحصول على حساب متاح
                 account = self.account_manager.get_available_account()
                 
                 if not account:
                     logger.warning("❌ لا توجد حسابات متاحة")
-                    
                     if update_callback:
                         await update_callback(
                             f"⚠️ الطابور: العميل {order['user_id']}\n"
                             f"❌ لا توجد حسابات متاحة\n"
-                            f"📊 التقدم: {order['completed']}/{order['accounts_needed']}"
+                            f"📊 التقدم: {order['completed']}/{order['accounts_needed']} - طلب #{order['order_number']}"
                         )
-                    
-                    # الانتظار قبل المحاولة التالية
-                    await asyncio.sleep(random.uniform(MIN_WAIT_SECONDS, MAX_WAIT_SECONDS))
+                    wait_time = random.uniform(MIN_WAIT_SECONDS, MAX_WAIT_SECONDS)
+                    logger.info(f"اكتملت الدورة، سيتم الانتظار لمدة {wait_time:.2f} ثانية...")
+                    await asyncio.sleep(wait_time)
                     continue
-                
+
                 # إرسال تحديث
                 if update_callback:
                     await update_callback(
                         f"🔄 **نظام الطابور**\n\n"
                         f"👤 العميل: {order['user_id']}\n"
-                        f"📊 التقدم: {order['completed']}/{order['accounts_needed']}\n"
+                        f"📊 التقدم: {order['completed']}/{order['accounts_needed']} - طلب #{order['order_number']}\n"
                         f"🔑 الحساب: {account.get('username')}\n"
                         f"⏳ جاري الإرسال..."
                     )
-                
+
                 # إرسال الطلب
-                success = self.place_order_v2(account["token"], order["link"], 10)
+                success, service_order_id = self.place_order_v2(account["token"], order["link"], 10)
                 
                 if success:
                     # تحديث التقدم
@@ -543,43 +611,49 @@ class OrderProcessor:
                         await update_callback(
                             f"✅ **نجح الطلب!**\n\n"
                             f"👤 العميل: {order['user_id']}\n"
-                            f"📊 التقدم: {order['completed'] + 1}/{order['accounts_needed']}\n"
-                            f"👥 متابعين مرسلين: {(order['completed'] + 1) * 10}"
+                            f"📊 التقدم: {order['completed'] + 1}/{order['accounts_needed']} - طلب #{order['order_number']}\n"
+                            f"👥 متابعين مرسلين: {(order['completed'] + 1) * 10}\n"
+                            f"🆔 Order ID: {service_order_id}"
                         )
                 else:
                     self.stats["failed"] += 1
-                    
                     if update_callback:
                         await update_callback(
                             f"❌ **فشل الطلب**\n\n"
                             f"👤 العميل: {order['user_id']}\n"
-                            f"📊 التقدم: {order['completed']}/{order['accounts_needed']} (لم يتغير)"
+                            f"📊 التقدم: {order['completed']}/{order['accounts_needed']} (لم يتغير) - طلب #{order['order_number']}"
                         )
-                
+
                 self.stats["total_orders"] += 1
                 self.save_stats()
-                
+
                 # الانتظار بين الطلبات
                 wait_time = random.uniform(MIN_WAIT_SECONDS, MAX_WAIT_SECONDS)
-                logger.info(f"⏰ انتظار {wait_time:.1f} ثانية...")
+                logger.info(f"اكتملت الدورة، سيتم الانتظار لمدة {wait_time:.2f} ثانية...")
                 
                 if update_callback:
                     await update_callback(
                         f"⏰ انتظار {wait_time:.1f} ثانية قبل الطلب التالي...\n"
                         f"{self.queue_manager.get_queue_status()}"
                     )
-                
+                    
                 await asyncio.sleep(wait_time)
-        
-        finally:
-            self.processing = False
+                
+            except Exception as e:
+                logger.error(f"خطأ في معالجة الطابور: {e}")
+                await asyncio.sleep(5)
+
+    def start_auto_processing(self):
+        """بدء المعالجة التلقائية في الخلفية"""
+        if not self.auto_processing_task or self.auto_processing_task.done():
+            self.auto_processing_task = asyncio.create_task(self.process_queue_continuously())
+            logger.info("✅ تم تفعيل المعالجة التلقائية للطابور")
 
 # ==============================================================================
 # 🤖 البوت الرئيسي
 # ==============================================================================
-
 class TelegramBot:
-    """البوت الرئيسي مع نظام الطابور"""
+    """البوت الرئيسي مع نظام الطابور التلقائي"""
 
     def __init__(self):
         self.account_manager = AccountManager()
@@ -589,22 +663,24 @@ class TelegramBot:
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """أمر البداية"""
         user = update.effective_user
-
+        
+        # بدء المعالجة التلقائية عند تشغيل البوت
+        self.order_processor.start_auto_processing()
+        
         message = (
-            "🔥 **بوت الطابور المتعدد**\n\n"
+            "🔥 **بوت الطابور المتعدد - تلقائي**\n\n"
             "**الأوامر:**\n"
             "`/follow [لينك] [عدد]` - إضافة طلب للطابور\n"
             "`/queue` - عرض حالة الطابور\n"
-            "`/process` - بدء معالجة الطابور\n"
-            "`/token [توكن]` - إضافة حساب\n"
+            "`/add_token [توكن]` - إضافة حساب\n"
             "`/stats` - الإحصائيات\n\n"
             "**نظام الطابور:**\n"
+            "✅ معالجة تلقائية فورية\n"
             "✅ كل عميل ياخد دوره\n"
             "✅ دوران عادل بين العملاء\n"
             "✅ 5-10 ثواني بين الطلبات\n\n"
             "🇪🇬 صُنع في مصر"
         )
-
         await update.message.reply_text(message, parse_mode=ParseMode.MARKDOWN)
 
     async def follow_order(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -617,7 +693,6 @@ class TelegramBot:
             return
 
         link = context.args[0]
-        
         try:
             quantity = int(context.args[1])
         except ValueError:
@@ -635,16 +710,19 @@ class TelegramBot:
         # إضافة الطلب للطابور
         user_id = str(update.effective_user.id)
         order_id = self.queue_manager.add_order(user_id, link, quantity)
-        
         accounts_needed = (quantity // 10) + (1 if quantity % 10 > 0 else 0)
+        order_number = self.queue_manager.order_counter.get(user_id, 0)
+        
+        # بدء المعالجة التلقائية إذا لم تكن شغالة
+        self.order_processor.start_auto_processing()
         
         await update.message.reply_text(
             f"✅ **تم إضافة الطلب للطابور!**\n\n"
-            f"🆔 رقم الطلب: `{order_id}`\n"
+            f"🆔 رقم الطلب: #{order_number}\n"
             f"📱 اللينك: {link}\n"
             f"👥 المتابعين: {quantity}\n"
             f"📊 الحسابات المطلوبة: {accounts_needed}\n\n"
-            f"استخدم `/process` لبدء المعالجة\n"
+            f"🚀 **المعالجة تلقائية وفورية**\n"
             f"استخدم `/queue` لعرض حالة الطابور",
             parse_mode=ParseMode.MARKDOWN
         )
@@ -654,40 +732,16 @@ class TelegramBot:
         status = self.queue_manager.get_queue_status()
         await update.message.reply_text(status, parse_mode=ParseMode.MARKDOWN)
 
-    async def process_queue_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """بدء معالجة الطابور"""
-        if self.order_processor.processing:
-            await update.message.reply_text("⚠️ المعالج يعمل بالفعل!")
-            return
-        
-        start_msg = await update.message.reply_text(
-            "🚀 **بدء معالجة الطابور**\n\n"
-            "⏳ جاري المعالجة بنظام الدوران...",
-            parse_mode=ParseMode.MARKDOWN
-        )
-        
-        # دالة التحديث
-        async def send_update(msg: str):
-            try:
-                await start_msg.edit_text(msg, parse_mode=ParseMode.MARKDOWN)
-            except:
-                pass
-        
-        # بدء المعالجة
-        await self.order_processor.process_queue(update_callback=send_update)
-        
-        await start_msg.edit_text(
-            "✅ **انتهت معالجة الطابور!**\n\n"
-            f"{self.queue_manager.get_queue_status()}",
-            parse_mode=ParseMode.MARKDOWN
-        )
-
     async def add_token(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """إضافة حساب جديد"""
+        if update.effective_user.id != ADMIN_ID:
+            await update.message.reply_text("❌ هذا الأمر للأدمن فقط!")
+            return
+            
         if not context.args:
             await update.message.reply_text(
                 "📝 **إضافة حساب:**\n"
-                '`/token {"token":"TOKEN","username":"user","email":"email","password":"pass"}`',
+                '`/add_token {"token":"TOKEN","username":"user","email":"email","password":"pass"}`',
                 parse_mode=ParseMode.MARKDOWN
             )
             return
@@ -700,31 +754,31 @@ class TelegramBot:
         """عرض الإحصائيات"""
         account_stats = self.account_manager.get_stats()
         order_stats = self.order_processor.stats
-
+        
         message = (
             f"📊 **الإحصائيات**\n"
             f"{'='*25}\n\n"
             f"**👤 الحسابات:**\n"
             f"• الإجمالي: {account_stats['total']}\n"
             f"• المتاح: {account_stats['available']}\n"
-            f"• في الانتظار: {account_stats['on_cooldown']}\n\n"
+            f"• في الانتظار: {account_stats['on_cooldown']}\n"
+            f"• تم إنشاؤها تلقائياً: {account_stats['auto_created']}\n\n"
             f"**📦 الطلبات:**\n"
             f"• الإجمالي: {order_stats['total_orders']}\n"
             f"• الناجح: {order_stats['successful']}\n"
             f"• الفاشل: {order_stats['failed']}\n\n"
             f"{self.queue_manager.get_queue_status()}"
         )
-
         await update.message.reply_text(message, parse_mode=ParseMode.MARKDOWN)
 
 # ==============================================================================
 # 🚀 التشغيل الرئيسي
 # ==============================================================================
-
 def main():
     """الدالة الرئيسية"""
-    logger.info("🚀 بدء تشغيل بوت الطابور المتعدد...")
+    logger.info("🚀 بدء تشغيل بوت الطابور المتعدد التلقائي...")
     logger.info("📋 نظام الدوران بين العملاء مفعّل")
+    logger.info("🤖 المعالجة التلقائية مفعّلة")
     logger.info("📁 ملف واحد فقط: accounts.json")
 
     bot = TelegramBot()
@@ -734,14 +788,14 @@ def main():
     application.add_handler(CommandHandler("start", bot.start))
     application.add_handler(CommandHandler("follow", bot.follow_order))
     application.add_handler(CommandHandler("queue", bot.show_queue))
-    application.add_handler(CommandHandler("process", bot.process_queue_command))
-    application.add_handler(CommandHandler("token", bot.add_token))
+    application.add_handler(CommandHandler("add_token", bot.add_token))
     application.add_handler(CommandHandler("stats", bot.show_stats))
 
     logger.info("✅ البوت جاهز!")
     logger.info("🇪🇬 صُنع بكل حب في مصر")
 
     application.run_polling(allowed_updates=Update.ALL_TYPES)
+
 
 if __name__ == "__main__":
     main()
