@@ -14,3 +14,9 @@
 2025-09-01 01:56:40,532 INFO spawned: 'webserver' with pid 3392
 2025-09-01 01:56:41,826 INFO success: telegram_bot entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
 2025-09-01 01:56:41,826 INFO success: webserver entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-09-01 02:26:32,987 INFO RPC interface 'supervisor' initialized
+2025-09-01 02:26:32,987 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2025-09-01 02:26:32,990 INFO daemonizing the supervisord process
+2025-09-01 02:26:32,991 INFO supervisord started with pid 1332
+2025-09-01 02:26:33,994 INFO spawned: 'simple_bot' with pid 1357
+2025-09-01 02:26:35,361 INFO success: simple_bot entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)

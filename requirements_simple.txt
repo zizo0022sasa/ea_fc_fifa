@@ -1,0 +1,4 @@
+# متطلبات البوت البسيط
+python-telegram-bot==21.0.1
+requests==2.31.0
+urllib3==2.1.0
