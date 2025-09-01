@@ -1,0 +1,11 @@
+2025-09-01 03:53:53,654 - __main__ - INFO - 🚀 بدء تشغيل البوت...
+2025-09-01 03:53:53,655 - __main__ - ERROR - خطأ في تحميل التوكنات: Expecting value: line 1 column 1 (char 0)
+2025-09-01 03:53:53,878 - __main__ - INFO - ✅ البوت جاهز! Token: 7958170099:AAHsSsdd4...
+2025-09-01 03:53:54,323 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot7958170099:AAHsSsdd4WiE1MkZMSUQlm0QpzDYDL-rN5Y/getMe "HTTP/1.1 200 OK"
+2025-09-01 03:53:54,465 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot7958170099:AAHsSsdd4WiE1MkZMSUQlm0QpzDYDL-rN5Y/deleteWebhook "HTTP/1.1 200 OK"
+2025-09-01 03:53:54,467 - telegram.ext.Application - INFO - Application started
+2025-09-01 03:54:04,894 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot7958170099:AAHsSsdd4WiE1MkZMSUQlm0QpzDYDL-rN5Y/getUpdates "HTTP/1.1 200 OK"
+2025-09-01 03:54:15,037 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot7958170099:AAHsSsdd4WiE1MkZMSUQlm0QpzDYDL-rN5Y/getUpdates "HTTP/1.1 200 OK"
+2025-09-01 03:54:25,180 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot7958170099:AAHsSsdd4WiE1MkZMSUQlm0QpzDYDL-rN5Y/getUpdates "HTTP/1.1 200 OK"
+2025-09-01 03:54:35,323 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot7958170099:AAHsSsdd4WiE1MkZMSUQlm0QpzDYDL-rN5Y/getUpdates "HTTP/1.1 200 OK"
+2025-09-01 03:54:45,468 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot7958170099:AAHsSsdd4WiE1MkZMSUQlm0QpzDYDL-rN5Y/getUpdates "HTTP/1.1 200 OK"

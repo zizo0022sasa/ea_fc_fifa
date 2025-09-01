@@ -1,0 +1,6 @@
+2025-09-01 03:53:51,886 INFO RPC interface 'supervisor' initialized
+2025-09-01 03:53:51,887 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2025-09-01 03:53:51,889 INFO daemonizing the supervisord process
+2025-09-01 03:53:51,890 INFO supervisord started with pid 1590
+2025-09-01 03:53:52,894 INFO spawned: 'telegram_bot' with pid 1606
+2025-09-01 03:53:54,324 INFO success: telegram_bot entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
