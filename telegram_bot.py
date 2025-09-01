@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-🔥 بوت التليجرام الاحترافي - النسخة النهائية المُصلحة
+🔥 بوت التليجرام البسيط - بدون أزرار
 👨‍💻 Developer: @zizo0022sasa
 🇪🇬 صُنع في مصر
 """
@@ -18,13 +18,12 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 import requests
-from telegram import KeyboardButton, ReplyKeyboardMarkup, Update
+from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import (
     Application,
     CommandHandler,
     ContextTypes,
-    ConversationHandler,
     MessageHandler,
     filters,
 )
@@ -32,7 +31,7 @@ from telegram.ext import (
 # ==============================================================================
 # 🔐 الإعدادات
 # ==============================================================================
-TELEGRAM_BOT_TOKEN = "7958170099:AAHsSsdd4WiE1MkZMSUQlm0QpzDYDL-rN5Y"
+TELEGRAM_BOT_TOKEN = "7958170099:AAG-aAVxqOTQmsvrP7viKIo0-KP0AzJUGDE"
 ADMIN_ID = 1124247595
 
 # API Settings
@@ -42,9 +41,6 @@ STATS_FILE = "stats.json"
 
 # Service Settings
 FREE_SERVICE_ID = 196
-
-# States للمحادثة
-WAITING_LINK, WAITING_QUANTITY = range(2)
 
 # ==============================================================================
 # إعداد السجلات
@@ -89,8 +85,17 @@ class TokenManager:
         except Exception as e:
             logger.error(f"خطأ في حفظ التوكنات: {e}")
 
+    def validate_token_format(self, token: str) -> bool:
+        """التحقق من صيغة التوكن - حوالي 60 حرف alphanumeric"""
+        # نتحقق من أن التوكن يحتوي على حروف وأرقام فقط وطوله بين 50-70 حرف
+        if not token:
+            return False
+        if not re.match(r"^[a-zA-Z0-9]{50,70}$", token):
+            return False
+        return True
+
     def add_token(self, token_data: str) -> str:
-        """إضافة توكن جديد مع التحقق من التكرار"""
+        """إضافة توكن جديد مع التحقق من التكرار والصيغة"""
         try:
             # محاولة تحليل JSON
             if token_data.startswith("{"):
@@ -103,6 +108,14 @@ class TokenManager:
                 token = token_data.strip()
                 username = "imported"
                 password = ""
+
+            # التحقق من صيغة التوكن
+            if not self.validate_token_format(token):
+                return (
+                    "❌ صيغة التوكن غير صحيحة!\n"
+                    "التوكن لازم يكون حوالي 60 حرف وأرقام بس\n"
+                    "مثال: ijYYfihH6RnfoT495c7ssQ8uhr4wtgzLcRgW99JKbwHyr25psTXX3HNYEtyb"
+                )
 
             # التحقق من التكرار
             for existing in self.tokens:
@@ -285,7 +298,6 @@ class TelegramBot:
     def __init__(self):
         self.token_manager = TokenManager()
         self.order_processor = OrderProcessor(self.token_manager)
-        self.user_data = {}
 
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """أمر البداية"""
@@ -295,145 +307,117 @@ class TelegramBot:
             await update.message.reply_text("❌ عذراً، هذا البوت خاص بالأدمن فقط!")
             return
 
-        keyboard = [
-            [KeyboardButton("/new - طلب جديد")],
-            [KeyboardButton("/token - إضافة توكنات")],
-            [KeyboardButton("/stats - الإحصائيات")],
-            [KeyboardButton("/help - المساعدة")],
-        ]
-        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-
         message = (
             "🔥 **أهلاً يا كبير!**\n"
-            "ده البوت المصري الاحترافي\n\n"
+            "ده البوت المصري البسيط\n\n"
             "**الأوامر المتاحة:**\n"
-            "/new - طلب جديد (ابعت لينك وعدد)\n"
-            "/token - إضافة توكنات متعددة\n"
-            "/stats - عرض الإحصائيات\n"
-            "/help - المساعدة\n\n"
+            "/follow [لينك] [عدد] - طلب متابعين\n"
+            "/token [توكن] - إضافة توكن\n"
+            "/stats - عرض الإحصائيات\n\n"
+            "**مثال:**\n"
+            "`/follow https://tiktok.com/@username 1000`\n\n"
             "🇪🇬 صُنع بكل حب في مصر"
         )
 
-        await update.message.reply_text(
-            message, reply_markup=reply_markup, parse_mode=ParseMode.MARKDOWN
-        )
+        await update.message.reply_text(message, parse_mode=ParseMode.MARKDOWN)
 
-    async def new_order(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """بدء طلب جديد"""
+    async def follow_order(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """معالجة طلب المتابعين - سطر واحد"""
         if update.effective_user.id != ADMIN_ID:
-            return ConversationHandler.END
+            return
 
-        await update.message.reply_text(
-            "📱 **طلب جديد**\n\n"
-            "ابعت لينك التيك توك:\n"
-            "مثال: https://www.tiktok.com/@username",
-            parse_mode=ParseMode.MARKDOWN,
-        )
+        # التحقق من وجود بارامترات
+        if not context.args or len(context.args) < 2:
+            await update.message.reply_text(
+                "❌ **صيغة غلط!**\n\n"
+                "الصيغة الصحيحة:\n"
+                "`/follow [لينك] [عدد]`\n\n"
+                "مثال:\n"
+                "`/follow https://tiktok.com/@username 1000`",
+                parse_mode=ParseMode.MARKDOWN,
+            )
+            return
 
-        return WAITING_LINK
+        # استخراج اللينك والعدد
+        link = context.args[0]
 
-    async def receive_link(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """استقبال اللينك"""
-        link = update.message.text.strip()
+        try:
+            quantity = int(context.args[1])
+        except ValueError:
+            await update.message.reply_text(
+                "❌ العدد لازم يكون رقم!\n"
+                "مثال: `/follow https://tiktok.com/@username 1000`",
+                parse_mode=ParseMode.MARKDOWN,
+            )
+            return
 
         # التحقق من اللينك
         if not self.order_processor.validate_tiktok_link(link):
             await update.message.reply_text(
                 "❌ اللينك غير صحيح!\n" "تأكد إنه لينك تيك توك صحيح"
             )
-            return WAITING_LINK
+            return
 
-        # حفظ اللينك
-        context.user_data["link"] = link
+        # التحقق من العدد
+        if quantity <= 0:
+            await update.message.reply_text("❌ العدد لازم يكون أكبر من صفر!")
+            return
 
+        accounts_needed = self.order_processor.calculate_accounts_needed(quantity)
+
+        # التحقق من التوكنات المتاحة
+        token_stats = self.token_manager.get_stats()
+
+        if token_stats["available"] < accounts_needed:
+            await update.message.reply_text(
+                f"⚠️ **مفيش توكنات كفاية!**\n\n"
+                f"محتاجين: {accounts_needed} حساب\n"
+                f"متاح: {token_stats['available']} حساب\n\n"
+                f"استخدم /token لإضافة توكنات جديدة",
+                parse_mode=ParseMode.MARKDOWN,
+            )
+            return
+
+        # رسالة البداية
         await update.message.reply_text(
-            "✅ تمام، اللينك صحيح!\n\n"
-            "دلوقتي ابعت عدد المتابعين:\n"
-            "مثال: 1000\n\n"
-            "📊 ملاحظة:\n"
-            "• 100 متابع = 10 حسابات\n"
-            "• 1000 متابع = 100 حساب",
+            f"⏳ **جاري المعالجة...**\n\n"
+            f"📱 اللينك: {link}\n"
+            f"👥 المتابعين: {quantity}\n"
+            f"📊 الحسابات المطلوبة: {accounts_needed}\n\n"
+            f"انتظر شوية...",
             parse_mode=ParseMode.MARKDOWN,
         )
 
-        return WAITING_QUANTITY
+        # معالجة الطلب
+        results = self.order_processor.process_bulk_order(link, quantity)
 
-    async def receive_quantity(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ):
-        """استقبال العدد ومعالجة الطلب"""
-        try:
-            quantity = int(update.message.text.strip())
+        # عرض النتائج
+        success_rate = (
+            (results["successful"] / accounts_needed * 100)
+            if accounts_needed > 0
+            else 0
+        )
 
-            if quantity <= 0:
-                await update.message.reply_text("❌ العدد لازم يكون أكبر من صفر!")
-                return WAITING_QUANTITY
+        message = (
+            f"📊 **نتيجة الطلب**\n"
+            f"{'='*20}\n"
+            f"✅ نجح: {results['successful']}/{accounts_needed}\n"
+            f"❌ فشل: {results['failed']}\n"
+            f"📈 معدل النجاح: {success_rate:.1f}%\n"
+            f"👥 متابعين تم إرسالهم: {results['successful'] * 10}\n\n"
+        )
 
-            link = context.user_data.get("link")
-            accounts_needed = self.order_processor.calculate_accounts_needed(quantity)
+        if results["tokens_used"]:
+            message += "**الحسابات المستخدمة:**\n"
+            for i, username in enumerate(results["tokens_used"][:10], 1):
+                message += f"{i}. {username}\n"
 
-            # التحقق من التوكنات المتاحة
-            token_stats = self.token_manager.get_stats()
+            tokens_count = len(results["tokens_used"])
+            if tokens_count > 10:
+                remaining = tokens_count - 10
+                message += f"... و {remaining} آخرين\n"
 
-            if token_stats["available"] < accounts_needed:
-                await update.message.reply_text(
-                    f"⚠️ **مفيش توكنات كفاية!**\n\n"
-                    f"محتاجين: {accounts_needed} حساب\n"
-                    f"متاح: {token_stats['available']} حساب\n\n"
-                    f"استخدم /token لإضافة توكنات جديدة",
-                    parse_mode=ParseMode.MARKDOWN,
-                )
-                return ConversationHandler.END
-
-            # رسالة البداية
-            await update.message.reply_text(
-                f"⏳ **جاري المعالجة...**\n\n"
-                f"📱 اللينك: {link}\n"
-                f"👥 المتابعين: {quantity}\n"
-                f"📊 الحسابات المطلوبة: {accounts_needed}\n\n"
-                f"انتظر شوية...",
-                parse_mode=ParseMode.MARKDOWN,
-            )
-
-            # معالجة الطلب
-            results = self.order_processor.process_bulk_order(link, quantity)
-
-            # عرض النتائج
-            success_rate = (
-                (results["successful"] / accounts_needed * 100)
-                if accounts_needed > 0
-                else 0
-            )
-
-            message = (
-                f"📊 **نتيجة الطلب**\n"
-                f"{'='*20}\n"
-                f"✅ نجح: {results['successful']}/{accounts_needed}\n"
-                f"❌ فشل: {results['failed']}\n"
-                f"📈 معدل النجاح: {success_rate:.1f}%\n"
-                f"👥 متابعين تم إرسالهم: {results['successful'] * 10}\n\n"
-            )
-
-            if results["tokens_used"]:
-                message += "**الحسابات المستخدمة:**\n"
-                for i, username in enumerate(results["tokens_used"][:10], 1):
-                    message += f"{i}. {username}\n"
-
-                tokens_count = len(results["tokens_used"])
-                if tokens_count > 10:
-                    remaining = tokens_count - 10
-                    message += f"... و {remaining} آخرين\n"
-
-            await update.message.reply_text(message, parse_mode=ParseMode.MARKDOWN)
-
-        except ValueError:
-            await update.message.reply_text("❌ ابعت رقم صحيح!")
-            return WAITING_QUANTITY
-        except Exception as e:
-            logger.error(f"خطأ في معالجة الطلب: {e}")
-            await update.message.reply_text(f"❌ حدث خطأ: {str(e)}")
-
-        return ConversationHandler.END
+        await update.message.reply_text(message, parse_mode=ParseMode.MARKDOWN)
 
     async def add_tokens(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """إضافة توكنات جديدة"""
@@ -443,12 +427,11 @@ class TelegramBot:
         if not context.args:
             await update.message.reply_text(
                 "📝 **طريقة إضافة التوكنات:**\n\n"
-                "**طريقة 1 - JSON:**\n"
-                '`/token {"token": "YOUR_TOKEN", "username": "user", "password": "pass"}`\n\n'
-                "**طريقة 2 - توكن مباشر:**\n"
+                "**طريقة 1 - توكن مباشر:**\n"
                 "`/token YOUR_TOKEN_HERE`\n\n"
-                "**طريقة 3 - عدة توكنات:**\n"
-                "ابعت كل توكن في سطر منفصل",
+                "**طريقة 2 - JSON:**\n"
+                '`/token {"token": "YOUR_TOKEN", "username": "user"}`\n\n'
+                "التوكن لازم يكون حوالي 60 حرف وأرقام",
                 parse_mode=ParseMode.MARKDOWN,
             )
             return
@@ -489,42 +472,10 @@ class TelegramBot:
 
         await update.message.reply_text(message, parse_mode=ParseMode.MARKDOWN)
 
-    async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """المساعدة"""
-        if update.effective_user.id != ADMIN_ID:
-            return
-
-        message = (
-            "📚 **دليل الاستخدام**\n"
-            f"{'='*25}\n\n"
-            "**1️⃣ طلب جديد:**\n"
-            "• اكتب /new\n"
-            "• ابعت لينك التيك توك\n"
-            "• ابعت عدد المتابعين\n"
-            "• البوت هيحسب الحسابات المطلوبة\n\n"
-            "**2️⃣ إضافة توكنات:**\n"
-            "• /token + التوكن أو JSON\n"
-            "• البوت بيتحقق من التكرار\n\n"
-            "**3️⃣ الإحصائيات:**\n"
-            "• /stats لعرض كل الأرقام\n\n"
-            "**📝 ملاحظات:**\n"
-            "• كل حساب = 10 متابعين\n"
-            "• 1000 متابع = 100 حساب\n"
-            "• البوت بيستنى 5-10 ثواني بين الطلبات\n\n"
-            "🔥 صُنع بكل حب في مصر 🇪🇬"
-        )
-
-        await update.message.reply_text(message, parse_mode=ParseMode.MARKDOWN)
-
-    async def cancel(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """إلغاء العملية الحالية"""
-        await update.message.reply_text("❌ تم الإلغاء")
-        return ConversationHandler.END
-
     async def handle_token_message(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ):
-        """معالج رسائل التوكنات"""
+        """معالج رسائل التوكنات المباشرة"""
         if update.effective_user.id != ADMIN_ID:
             return
 
@@ -534,9 +485,11 @@ class TelegramBot:
         if "{" in text and "token" in text:
             result = self.token_manager.add_token(text)
             await update.message.reply_text(result)
-        elif len(text) > 30:  # ربما يكون توكن
-            result = self.token_manager.add_token(text)
-            await update.message.reply_text(result)
+        elif len(text) >= 50 and len(text) <= 70:  # ربما يكون توكن
+            # نتحقق من أنه alphanumeric
+            if re.match(r"^[a-zA-Z0-9]+$", text.strip()):
+                result = self.token_manager.add_token(text)
+                await update.message.reply_text(result)
 
 
 # ==============================================================================
@@ -546,7 +499,7 @@ class TelegramBot:
 
 def main():
     """الدالة الرئيسية"""
-    logger.info("🚀 بدء تشغيل البوت...")
+    logger.info("🚀 بدء تشغيل البوت البسيط...")
 
     # إنشاء البوت
     bot = TelegramBot()
@@ -554,26 +507,13 @@ def main():
     # إنشاء التطبيق
     application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
-    # معالج المحادثة للطلبات
-    conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("new", bot.new_order)],
-        states={
-            WAITING_LINK: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, bot.receive_link)
-            ],
-            WAITING_QUANTITY: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, bot.receive_quantity)
-            ],
-        },
-        fallbacks=[CommandHandler("cancel", bot.cancel)],
-    )
-
-    # إضافة المعالجات
+    # إضافة المعالجات - بدون ConversationHandler
     application.add_handler(CommandHandler("start", bot.start))
-    application.add_handler(conv_handler)
+    application.add_handler(CommandHandler("follow", bot.follow_order))
     application.add_handler(CommandHandler("token", bot.add_tokens))
     application.add_handler(CommandHandler("stats", bot.show_stats))
-    application.add_handler(CommandHandler("help", bot.help_command))
+
+    # معالج الرسائل المباشرة للتوكنات
     application.add_handler(
         MessageHandler(
             filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_ID),
