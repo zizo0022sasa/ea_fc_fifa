@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-🔥 بوت التليجرام المصري النهائي - نسخة احترافية
+🔥 بوت التليجرام المصري النهائي - نسخة محسنة
 👨‍💻 Developer: @zizo0022sasa
 🇪🇬 صُنع في مصر
 """
@@ -31,7 +31,7 @@ from telegram.ext import (
 # ==============================================================================
 # 🔐 الإعدادات
 # ==============================================================================
-TELEGRAM_BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"  # ضع التوكن هنا
+TELEGRAM_BOT_TOKEN = "7958170099:AAG-aAVxqOTQmsvrP7viKIo0-KP0AzJUGDE"  # التوكن الجديد
 ADMIN_ID = 1124247595
 
 # API Settings
@@ -47,6 +47,7 @@ FREE_SERVICE_ID = 196
 TOKEN_COOLDOWN_HOURS = 25  # فترة الانتظار بين استخدامات التوكن
 MIN_WAIT_SECONDS = 5       # أقل وقت انتظار بين الطلبات
 MAX_WAIT_SECONDS = 10      # أكبر وقت انتظار بين الطلبات
+MAX_ACCOUNT_CREATION_ATTEMPTS = 3  # محاولات إنشاء الحساب قبل الاستسلام
 
 # ==============================================================================
 # إعداد السجلات
@@ -62,11 +63,11 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ==============================================================================
-# 🛠️ مولد الحسابات (من pro_bot.py)
+# 🛠️ مولد الحسابات (من pro_bot.py بالظبط)
 # ==============================================================================
 
 def generate_ultimate_human_credentials():
-    """توليد بيانات حساب بشرية واقعية"""
+    """توليد بيانات حساب بشرية واقعية - نفس الكود من pro_bot.py"""
     vowels = "aeiou"
     consonants = "bcdfghjklmnprstvwxyz"
     name_part1 = "".join(random.choices(consonants, k=2)) + random.choice(vowels)
@@ -89,7 +90,7 @@ def generate_ultimate_human_credentials():
     password = f"{password_base}{birth_year}{password_symbol}"
 
     logger.info(
-        f"تم إنشاء بيانات: Username='{username}', Email='{email}'"
+        f"تم إنشاء بيانات: Username='{username}', Password='{password}', Email='{email}'"
     )
     return username, email, password
 
@@ -98,11 +99,12 @@ def generate_ultimate_human_credentials():
 # ==============================================================================
 
 class TokenManager:
-    """مدير التوكنات مع إنشاء حسابات تلقائي"""
+    """مدير التوكنات مع إنشاء حسابات تلقائي وإدارة الكابتشا"""
 
     def __init__(self):
         self.tokens = self.load_tokens()
         self.accounts = self.load_accounts()
+        self.captcha_cooldown = {}  # تتبع محاولات الكابتشا
 
     def load_tokens(self) -> List[Dict]:
         """تحميل التوكنات من الملف"""
@@ -110,7 +112,6 @@ class TokenManager:
             if os.path.exists(TOKENS_FILE):
                 with open(TOKENS_FILE, "r") as f:
                     data = json.load(f)
-                    # التأكد من أن البيانات list
                     if isinstance(data, list):
                         return data
                     return []
@@ -155,68 +156,119 @@ class TokenManager:
             return False
         return True
 
-    def create_new_account(self) -> Optional[Dict]:
-        """إنشاء حساب جديد تلقائياً (من pro_bot.py)"""
-        logger.info("🔄 بدء عملية إنشاء حساب جديد...")
-        username, email, password = generate_ultimate_human_credentials()
+    def should_retry_account_creation(self) -> bool:
+        """التحقق من إمكانية إعادة محاولة إنشاء الحساب"""
+        now = datetime.now()
         
-        payload = {
-            "login": username,
-            "email": email,
-            "password": password
-        }
-
-        try:
-            response = requests.post(
-                f"{API_BASE_URL}/register",
-                json=payload,
-                timeout=20,
-                headers={"User-Agent": "Mozilla/5.0"}
-            )
+        # التحقق من آخر محاولة فاشلة
+        last_captcha = self.captcha_cooldown.get("last_captcha_error")
+        if last_captcha:
+            last_captcha_time = datetime.fromisoformat(last_captcha)
+            time_diff = (now - last_captcha_time).total_seconds()
             
-            logger.info(f"إرسال طلب التسجيل... Status: {response.status_code}")
+            # الانتظار 60 ثانية بعد كل خطأ كابتشا
+            if time_diff < 60:
+                return False
+        
+        return True
 
-            if response.status_code == 201:
-                data = response.json()
-                api_token = data.get("api_token")
-                if api_token:
-                    logger.info(f"✅ نجاح! تم إنشاء الحساب '{username}'.")
-                    
-                    # حفظ التوكن
-                    new_token = {
-                        "token": api_token,
-                        "username": username,
-                        "email": email,
-                        "password": password,
-                        "created_at": datetime.now().isoformat(),
-                        "last_used": None,
-                        "use_count": 0,
-                        "auto_created": True
-                    }
-                    
-                    self.tokens.append(new_token)
-                    self.save_tokens()
-                    
-                    # حفظ معلومات الحساب
-                    account_info = {
-                        "token": api_token,
-                        "username": username,
-                        "email": email,
-                        "password": password,
-                        "created_at": datetime.now().isoformat()
-                    }
-                    
-                    self.accounts.append(account_info)
-                    self.save_accounts()
-                    
-                    return new_token
-
-            logger.error(f"فشل إنشاء الحساب. الرد: {response.text}")
+    def create_new_account(self) -> Optional[Dict]:
+        """إنشاء حساب جديد تلقائياً مع التعامل مع الكابتشا"""
+        
+        # التحقق من إمكانية المحاولة
+        if not self.should_retry_account_creation():
+            logger.warning("⏰ الانتظار قبل محاولة إنشاء حساب جديد...")
             return None
+        
+        for attempt in range(MAX_ACCOUNT_CREATION_ATTEMPTS):
+            logger.info(f"🔄 محاولة إنشاء حساب رقم {attempt + 1}/{MAX_ACCOUNT_CREATION_ATTEMPTS}...")
             
-        except requests.exceptions.RequestException as e:
-            logger.error(f"خطأ في الشبكة أثناء إنشاء الحساب: {e}")
-            return None
+            username, email, password = generate_ultimate_human_credentials()
+            
+            payload = {
+                "login": username,
+                "email": email,
+                "password": password
+            }
+
+            try:
+                # إضافة تأخير عشوائي قبل الطلب
+                time.sleep(random.uniform(2, 5))
+                
+                response = requests.post(
+                    f"{API_BASE_URL}/register",
+                    json=payload,
+                    timeout=20,
+                    headers={
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    }
+                )
+                
+                logger.info(f"إرسال طلب التسجيل... Status: {response.status_code}")
+
+                if response.status_code == 201:
+                    data = response.json()
+                    api_token = data.get("api_token")
+                    if api_token:
+                        logger.info(f"✅ نجاح! تم إنشاء الحساب '{username}'.")
+                        
+                        # حفظ التوكن
+                        new_token = {
+                            "token": api_token,
+                            "username": username,
+                            "email": email,
+                            "password": password,
+                            "created_at": datetime.now().isoformat(),
+                            "last_used": None,
+                            "use_count": 0,
+                            "auto_created": True
+                        }
+                        
+                        self.tokens.append(new_token)
+                        self.save_tokens()
+                        
+                        # حفظ معلومات الحساب
+                        account_info = {
+                            "token": api_token,
+                            "username": username,
+                            "email": email,
+                            "password": password,
+                            "created_at": datetime.now().isoformat()
+                        }
+                        
+                        self.accounts.append(account_info)
+                        self.save_accounts()
+                        
+                        # مسح سجل الكابتشا عند النجاح
+                        self.captcha_cooldown = {}
+                        
+                        return new_token
+                
+                elif response.status_code == 429:
+                    # خطأ كابتشا أو rate limit
+                    error_data = response.json()
+                    if "need_captcha" in str(error_data):
+                        logger.warning(f"⚠️ الموقع يطلب كابتشا - محاولة {attempt + 1}")
+                        self.captcha_cooldown["last_captcha_error"] = datetime.now().isoformat()
+                        
+                        # الانتظار قبل المحاولة التالية
+                        wait_time = random.uniform(10, 20)
+                        logger.info(f"⏰ الانتظار {wait_time:.1f} ثانية...")
+                        time.sleep(wait_time)
+                    else:
+                        logger.error(f"❌ Rate limit: {error_data}")
+                        time.sleep(30)
+                else:
+                    logger.error(f"فشل إنشاء الحساب. الرد: {response.text}")
+                    
+            except requests.exceptions.RequestException as e:
+                logger.error(f"خطأ في الشبكة: {e}")
+                time.sleep(5)
+        
+        logger.error("❌ فشلت جميع محاولات إنشاء الحساب")
+        return None
 
     def add_token(self, token_data: str) -> str:
         """إضافة توكن جديد"""
@@ -291,6 +343,7 @@ class TokenManager:
             
             if last_used is None:
                 # توكن جديد لم يستخدم بعد
+                logger.info(f"✅ استخدام توكن جديد: {token_data.get('username')}")
                 return token_data
             
             try:
@@ -299,13 +352,21 @@ class TokenManager:
                 
                 if time_diff.total_seconds() >= (TOKEN_COOLDOWN_HOURS * 3600):
                     # التوكن متاح للاستخدام
+                    logger.info(f"✅ استخدام توكن متاح: {token_data.get('username')}")
                     return token_data
             except:
                 continue
         
         # لا يوجد توكن متاح، نحاول إنشاء حساب جديد
-        logger.info("⚠️ لا توجد توكنات متاحة، جاري إنشاء حساب جديد...")
-        return self.create_new_account()
+        logger.info("⚠️ لا توجد توكنات متاحة، جاري محاولة إنشاء حساب جديد...")
+        
+        # المحاولة مع تأخير للتغلب على الكابتشا
+        new_token = self.create_new_account()
+        
+        if not new_token:
+            logger.warning("⚠️ تعذر إنشاء حساب جديد - قد يكون بسبب الكابتشا")
+        
+        return new_token
 
     def mark_used(self, token: str):
         """تحديد التوكن كمستخدم"""
@@ -344,11 +405,11 @@ class TokenManager:
         }
 
 # ==============================================================================
-# 🚀 معالج الطلبات
+# 🚀 معالج الطلبات (نفس نظام pro_bot.py)
 # ==============================================================================
 
 class OrderProcessor:
-    """معالج الطلبات مع نظام الانتظار الذكي"""
+    """معالج الطلبات مع نظام الانتظار الذكي من pro_bot.py"""
 
     def __init__(self, token_manager: TokenManager):
         self.token_manager = token_manager
@@ -398,12 +459,12 @@ class OrderProcessor:
             accounts += 1
         return accounts
 
-    def send_order(self, token: str, link: str, quantity: int = 10) -> bool:
-        """إرسال طلب واحد (من pro_bot.py)"""
+    def place_order_v2(self, api_token: str, link: str, quantity: int = 10) -> bool:
+        """إرسال طلب واحد - نفس الكود من pro_bot.py"""
         logger.info(f"📤 بدء إرسال طلب المتابعين...")
         
         payload = {
-            "key": token,
+            "key": api_token,
             "action": "add",
             "service": FREE_SERVICE_ID,
             "link": link,
@@ -437,7 +498,7 @@ class OrderProcessor:
             return False
 
     async def process_bulk_order_async(self, link: str, total_followers: int, update_callback=None) -> Dict:
-        """معالجة طلب كبير بتوكنات متعددة مع تحديثات مباشرة"""
+        """معالجة طلب كبير - واحد واحد مع انتظار 5-10 ثواني"""
         accounts_needed = self.calculate_accounts_needed(total_followers)
 
         results = {
@@ -446,22 +507,31 @@ class OrderProcessor:
             "successful": 0,
             "failed": 0,
             "tokens_used": [],
-            "auto_accounts_created": 0
+            "auto_accounts_created": 0,
+            "no_tokens_available": 0
         }
 
         for i in range(accounts_needed):
+            logger.info(f"🔄 بدء دورة رقم {i+1}/{accounts_needed}...")
+            
             # الحصول على توكن أو إنشاء حساب جديد
             token_data = self.token_manager.get_available_token()
 
             if not token_data:
                 results["failed"] += 1
-                logger.warning("❌ لا توجد توكنات متاحة ولم نتمكن من إنشاء حساب جديد!")
+                results["no_tokens_available"] += 1
+                logger.warning("❌ لا توجد توكنات متاحة!")
                 
                 if update_callback:
                     await update_callback(
-                        f"⚠️ فشل الطلب {i+1}/{accounts_needed}\n"
-                        f"لا توجد توكنات متاحة"
+                        f"⚠️ الطلب {i+1}/{accounts_needed}\n"
+                        f"❌ لا توجد توكنات متاحة\n"
+                        f"جاري المحاولة مرة أخرى..."
                     )
+                
+                # الانتظار قبل المحاولة التالية
+                wait_time = random.uniform(MIN_WAIT_SECONDS, MAX_WAIT_SECONDS)
+                await asyncio.sleep(wait_time)
                 continue
 
             # تتبع الحسابات المُنشأة تلقائياً
@@ -477,11 +547,12 @@ class OrderProcessor:
                 await update_callback(
                     f"⏳ معالجة الطلب {i+1}/{accounts_needed}\n"
                     f"👤 الحساب: {username}\n"
-                    f"{'🆕 حساب جديد' if token_data.get('auto_created') else '📱 حساب موجود'}"
+                    f"{'🆕 حساب جديد' if token_data.get('auto_created') else '📱 حساب موجود'}\n"
+                    f"⏰ جاري الإرسال..."
                 )
             
             # إرسال الطلب
-            success = self.send_order(token, link, 10)
+            success = self.place_order_v2(token, link, 10)
 
             if success:
                 results["successful"] += 1
@@ -493,7 +564,7 @@ class OrderProcessor:
                     await update_callback(
                         f"✅ نجح الطلب {i+1}/{accounts_needed}\n"
                         f"👤 الحساب: {username}\n"
-                        f"📊 المتابعين المرسلين: {(i+1) * 10}"
+                        f"📊 المتابعين المرسلين حتى الآن: {results['successful'] * 10}"
                     )
             else:
                 results["failed"] += 1
@@ -502,19 +573,21 @@ class OrderProcessor:
                 if update_callback:
                     await update_callback(
                         f"❌ فشل الطلب {i+1}/{accounts_needed}\n"
-                        f"👤 الحساب: {username}"
+                        f"👤 الحساب: {username}\n"
+                        f"📊 سيتم المحاولة مع حساب آخر..."
                     )
 
             self.stats["total_orders"] += 1
 
-            # انتظار عشوائي بين الطلبات (من pro_bot.py)
+            # الانتظار العشوائي بين الطلبات (من pro_bot.py)
             if i < accounts_needed - 1:
                 wait_time = random.uniform(MIN_WAIT_SECONDS, MAX_WAIT_SECONDS)
                 logger.info(f"⏰ انتظار {wait_time:.1f} ثانية...")
                 
                 if update_callback:
                     await update_callback(
-                        f"⏰ انتظار {wait_time:.1f} ثانية قبل الطلب التالي..."
+                        f"⏰ انتظار {wait_time:.1f} ثانية قبل الطلب التالي...\n"
+                        f"📊 التقدم: {i+1}/{accounts_needed}"
                     )
                 
                 await asyncio.sleep(wait_time)
@@ -549,10 +622,11 @@ class TelegramBot:
             "`/token [توكن]` - إضافة توكن\n"
             "`/stats` - عرض الإحصائيات\n\n"
             "**الميزات:**\n"
-            "✅ إنشاء حسابات تلقائياً عند الحاجة\n"
-            "✅ انتظار 25 ساعة بين استخدامات التوكن\n"
+            "✅ إنشاء حسابات تلقائياً\n"
+            "✅ التعامل مع الكابتشا\n"
             "✅ انتظار 5-10 ثواني بين الطلبات\n"
-            "✅ تحديثات مباشرة لكل طلب\n\n"
+            "✅ تحديثات مباشرة لكل طلب\n"
+            "✅ نظام ذكي للتوكنات\n\n"
             "**مثال:**\n"
             "`/follow https://tiktok.com/@username 1000`\n\n"
             "🇪🇬 صُنع بكل حب في مصر"
@@ -605,7 +679,7 @@ class TelegramBot:
             f"👥 المتابعين المطلوبين: {quantity}\n"
             f"📊 الحسابات المطلوبة: {accounts_needed}\n"
             f"🎫 التوكنات المتاحة: {token_stats['available']}\n\n"
-            f"⏳ جاري المعالجة...",
+            f"⏳ جاري المعالجة واحد واحد...",
             parse_mode=ParseMode.MARKDOWN,
         )
 
@@ -645,6 +719,9 @@ class TelegramBot:
 
         if results["auto_accounts_created"] > 0:
             final_message += f"• حسابات جديدة: {results['auto_accounts_created']}\n"
+        
+        if results.get("no_tokens_available", 0) > 0:
+            final_message += f"• طلبات بدون توكنات: {results['no_tokens_available']}\n"
 
         final_message += "\n"
 
@@ -741,6 +818,9 @@ class TelegramBot:
 def main():
     """الدالة الرئيسية"""
     logger.info("🚀 بدء تشغيل البوت المصري النهائي...")
+    logger.info("📍 نظام pro_bot.py مفعّل")
+    logger.info("⏰ انتظار 5-10 ثواني بين الطلبات")
+    logger.info("🔄 إنشاء حسابات تلقائي عند الحاجة")
 
     # إنشاء البوت
     bot = TelegramBot()
