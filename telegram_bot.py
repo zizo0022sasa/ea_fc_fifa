@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-🔥 بوت التليجرام المصري - نظام الطابور المتعدد المحدث
-👨‍💻 Developer: @zizo0022sasa
+🔥 بوت التليجرام المصري - نظام الطابور المتعدد المحدث والمصلح
+👨‍💻 Developer: @zizo0022sasa  
 🇪🇬 صُنع في مصر
 """
 
@@ -141,7 +141,7 @@ def generate_ultimate_human_credentials():
     return username, email, password
 
 # ==============================================================================
-# 📋 نظام الطابور المتعدد المحسن
+# 📋 نظام الطابور المتعدد المحسن مع أرقام الطلبات
 # ==============================================================================
 class QueueManager:
     """مدير الطابور للعملاء المتعددين مع أرقام الطلبات"""
@@ -161,8 +161,12 @@ class QueueManager:
                     self.queues = data.get("queues", {})
                     self.active_orders = data.get("active_orders", [])
                     self.order_counter = data.get("order_counter", {})
+                    logger.info(f"📂 تم تحميل الطابور: {len(self.active_orders)} طلب نشط")
         except Exception as e:
             logger.error(f"خطأ في تحميل الطابور: {e}")
+            self.queues = {}
+            self.active_orders = []
+            self.order_counter = {}
 
     def save_queue(self):
         """حفظ الطابور"""
@@ -181,7 +185,7 @@ class QueueManager:
         except Exception as e:
             logger.error(f"خطأ في حفظ الطابور: {e}")
 
-    def add_order(self, user_id: str, link: str, total_followers: int) -> str:
+    def add_order(self, user_id: str, link: str, total_followers: int) -> Tuple[str, int]:
         """إضافة طلب جديد للطابور مع رقم الطلب"""
         # زيادة عداد الطلبات للعميل
         if user_id not in self.order_counter:
@@ -210,7 +214,7 @@ class QueueManager:
         self.save_queue()
         
         logger.info(f"📝 طلب جديد #{order_number} للعميل {user_id}")
-        return order_id
+        return order_id, order_number
 
     def get_next_order(self) -> Optional[Dict]:
         """الحصول على الطلب التالي بنظام الدوران"""
@@ -236,13 +240,14 @@ class QueueManager:
                 if order["order_id"] == order_id:
                     if success:
                         order["completed"] += 1
-                        logger.success(f"✅ التقدم: {order['completed']}/{order['accounts_needed']} للطلب #{order['order_number']}")
+                        order_num = order.get('order_number', 'N/A')
+                        logger.success(f"✅ التقدم: {order['completed']}/{order['accounts_needed']} للطلب #{order_num}")
                         # التحقق من اكتمال الطلب
                         if order["completed"] >= order["accounts_needed"]:
                             order["status"] = "completed"
                             if order_id in self.active_orders:
                                 self.active_orders.remove(order_id)
-                            logger.success(f"🎉 اكتمل الطلب #{order['order_number']} للعميل {user_id}")
+                            logger.success(f"🎉 اكتمل الطلب #{order_num} للعميل {user_id}")
                     self.save_queue()
                     return
 
@@ -262,7 +267,8 @@ class QueueManager:
             if orders:
                 status += f"**العميل {user_id}:**\n"
                 for order in orders[-3:]:  # آخر 3 طلبات
-                    status += f"  • {order['completed']}/{order['accounts_needed']} - {order['status']} - طلب #{order['order_number']}\n"
+                    order_num = order.get('order_number', 'N/A')
+                    status += f"  • {order['completed']}/{order['accounts_needed']} - {order['status']} - طلب #{order_num}\n"
         return status
 
 # ==============================================================================
@@ -488,6 +494,7 @@ class OrderProcessor:
         self.stats = self.load_stats()
         self.processing = False
         self.auto_processing_task = None
+        self.update_callbacks = {}  # Store update callbacks for each user
 
     def load_stats(self) -> Dict:
         """تحميل الإحصائيات"""
@@ -555,7 +562,17 @@ class OrderProcessor:
             logger.error(f"خطأ في إرسال الطلب: {e}")
         return False, None
 
-    async def process_queue_continuously(self, update_callback=None):
+    async def send_update_to_user(self, user_id: str, message: str):
+        """Send update to specific user if they have a callback"""
+        if user_id in self.update_callbacks:
+            callback = self.update_callbacks[user_id]
+            try:
+                await callback(message)
+            except:
+                # Remove callback if it fails
+                del self.update_callbacks[user_id]
+
+    async def process_queue_continuously(self):
         """معالجة الطابور بشكل مستمر"""
         logger.info("🚀 بدء المعالجة التلقائية للطابور...")
         
@@ -569,34 +586,35 @@ class OrderProcessor:
                     await asyncio.sleep(10)  # انتظار 10 ثواني وإعادة الفحص
                     continue
 
+                order_num = order.get('order_number', 'N/A')
+                user_id = order['user_id']
+                
                 logger.info(f"بدء دورة جديدة...")
-                logger.info(f"📋 معالجة طلب #{order['order_number']} - العميل: {order['user_id']}")
+                logger.info(f"📋 معالجة طلب #{order_num} - العميل: {user_id}")
 
                 # الحصول على حساب متاح
                 account = self.account_manager.get_available_account()
                 
                 if not account:
                     logger.warning("❌ لا توجد حسابات متاحة")
-                    if update_callback:
-                        await update_callback(
-                            f"⚠️ الطابور: العميل {order['user_id']}\n"
-                            f"❌ لا توجد حسابات متاحة\n"
-                            f"📊 التقدم: {order['completed']}/{order['accounts_needed']} - طلب #{order['order_number']}"
-                        )
+                    await self.send_update_to_user(user_id,
+                        f"⚠️ الطابور: العميل {user_id}\n"
+                        f"❌ لا توجد حسابات متاحة\n"
+                        f"📊 التقدم: {order['completed']}/{order['accounts_needed']} - طلب #{order_num}"
+                    )
                     wait_time = random.uniform(MIN_WAIT_SECONDS, MAX_WAIT_SECONDS)
                     logger.info(f"اكتملت الدورة، سيتم الانتظار لمدة {wait_time:.2f} ثانية...")
                     await asyncio.sleep(wait_time)
                     continue
 
                 # إرسال تحديث
-                if update_callback:
-                    await update_callback(
-                        f"🔄 **نظام الطابور**\n\n"
-                        f"👤 العميل: {order['user_id']}\n"
-                        f"📊 التقدم: {order['completed']}/{order['accounts_needed']} - طلب #{order['order_number']}\n"
-                        f"🔑 الحساب: {account.get('username')}\n"
-                        f"⏳ جاري الإرسال..."
-                    )
+                await self.send_update_to_user(user_id,
+                    f"🔄 **نظام الطابور**\n\n"
+                    f"👤 العميل: {user_id}\n"
+                    f"📊 التقدم: {order['completed']}/{order['accounts_needed']} - طلب #{order_num}\n"
+                    f"🔑 الحساب: {account.get('username')}\n"
+                    f"⏳ جاري الإرسال..."
+                )
 
                 # إرسال الطلب
                 success, service_order_id = self.place_order_v2(account["token"], order["link"], 10)
@@ -607,22 +625,20 @@ class OrderProcessor:
                     self.account_manager.mark_used(account["token"])
                     self.stats["successful"] += 1
                     
-                    if update_callback:
-                        await update_callback(
-                            f"✅ **نجح الطلب!**\n\n"
-                            f"👤 العميل: {order['user_id']}\n"
-                            f"📊 التقدم: {order['completed'] + 1}/{order['accounts_needed']} - طلب #{order['order_number']}\n"
-                            f"👥 متابعين مرسلين: {(order['completed'] + 1) * 10}\n"
-                            f"🆔 Order ID: {service_order_id}"
-                        )
+                    await self.send_update_to_user(user_id,
+                        f"✅ **نجح الطلب!**\n\n"
+                        f"👤 العميل: {user_id}\n"
+                        f"📊 التقدم: {order['completed'] + 1}/{order['accounts_needed']} - طلب #{order_num}\n"
+                        f"👥 متابعين مرسلين: {(order['completed'] + 1) * 10}\n"
+                        f"🆔 Order ID: {service_order_id}"
+                    )
                 else:
                     self.stats["failed"] += 1
-                    if update_callback:
-                        await update_callback(
-                            f"❌ **فشل الطلب**\n\n"
-                            f"👤 العميل: {order['user_id']}\n"
-                            f"📊 التقدم: {order['completed']}/{order['accounts_needed']} (لم يتغير) - طلب #{order['order_number']}"
-                        )
+                    await self.send_update_to_user(user_id,
+                        f"❌ **فشل الطلب**\n\n"
+                        f"👤 العميل: {user_id}\n"
+                        f"📊 التقدم: {order['completed']}/{order['accounts_needed']} (لم يتغير) - طلب #{order_num}"
+                    )
 
                 self.stats["total_orders"] += 1
                 self.save_stats()
@@ -631,11 +647,12 @@ class OrderProcessor:
                 wait_time = random.uniform(MIN_WAIT_SECONDS, MAX_WAIT_SECONDS)
                 logger.info(f"اكتملت الدورة، سيتم الانتظار لمدة {wait_time:.2f} ثانية...")
                 
-                if update_callback:
-                    await update_callback(
-                        f"⏰ انتظار {wait_time:.1f} ثانية قبل الطلب التالي...\n"
-                        f"{self.queue_manager.get_queue_status()}"
-                    )
+                # Send queue status to all users
+                queue_status = self.queue_manager.get_queue_status()
+                await self.send_update_to_user(user_id,
+                    f"⏰ انتظار {wait_time:.1f} ثانية قبل الطلب التالي...\n"
+                    f"{queue_status}"
+                )
                     
                 await asyncio.sleep(wait_time)
                 
@@ -659,6 +676,7 @@ class TelegramBot:
         self.account_manager = AccountManager()
         self.queue_manager = QueueManager()
         self.order_processor = OrderProcessor(self.account_manager, self.queue_manager)
+        self.user_messages = {}  # Store user message for updates
 
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """أمر البداية"""
@@ -672,13 +690,14 @@ class TelegramBot:
             "**الأوامر:**\n"
             "`/follow [لينك] [عدد]` - إضافة طلب للطابور\n"
             "`/queue` - عرض حالة الطابور\n"
-            "`/add_token [توكن]` - إضافة حساب\n"
+            "`/add_token [توكن]` - إضافة حساب (للأدمن فقط)\n"
             "`/stats` - الإحصائيات\n\n"
             "**نظام الطابور:**\n"
             "✅ معالجة تلقائية فورية\n"
             "✅ كل عميل ياخد دوره\n"
             "✅ دوران عادل بين العملاء\n"
-            "✅ 5-10 ثواني بين الطلبات\n\n"
+            "✅ 5-10 ثواني بين الطلبات\n"
+            "✅ الأوامر تشتغل حتى أثناء المعالجة\n\n"
             "🇪🇬 صُنع في مصر"
         )
         await update.message.reply_text(message, parse_mode=ParseMode.MARKDOWN)
@@ -709,23 +728,33 @@ class TelegramBot:
 
         # إضافة الطلب للطابور
         user_id = str(update.effective_user.id)
-        order_id = self.queue_manager.add_order(user_id, link, quantity)
+        order_id, order_number = self.queue_manager.add_order(user_id, link, quantity)
         accounts_needed = (quantity // 10) + (1 if quantity % 10 > 0 else 0)
-        order_number = self.queue_manager.order_counter.get(user_id, 0)
         
-        # بدء المعالجة التلقائية إذا لم تكن شغالة
-        self.order_processor.start_auto_processing()
-        
-        await update.message.reply_text(
+        # Create update callback for this user
+        msg = await update.message.reply_text(
             f"✅ **تم إضافة الطلب للطابور!**\n\n"
             f"🆔 رقم الطلب: #{order_number}\n"
             f"📱 اللينك: {link}\n"
             f"👥 المتابعين: {quantity}\n"
             f"📊 الحسابات المطلوبة: {accounts_needed}\n\n"
             f"🚀 **المعالجة تلقائية وفورية**\n"
-            f"استخدم `/queue` لعرض حالة الطابور",
+            f"📌 سيتم إرسال التحديثات هنا",
             parse_mode=ParseMode.MARKDOWN
         )
+        
+        # Store callback for updates
+        async def update_callback(text):
+            try:
+                await msg.edit_text(text, parse_mode=ParseMode.MARKDOWN)
+            except:
+                # If edit fails, send new message
+                await update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
+        
+        self.order_processor.update_callbacks[user_id] = update_callback
+        
+        # بدء المعالجة التلقائية إذا لم تكن شغالة
+        self.order_processor.start_auto_processing()
 
     async def show_queue(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """عرض حالة الطابور"""
@@ -779,6 +808,7 @@ def main():
     logger.info("🚀 بدء تشغيل بوت الطابور المتعدد التلقائي...")
     logger.info("📋 نظام الدوران بين العملاء مفعّل")
     logger.info("🤖 المعالجة التلقائية مفعّلة")
+    logger.info("✅ الأوامر تعمل أثناء المعالجة")
     logger.info("📁 ملف واحد فقط: accounts.json")
 
     bot = TelegramBot()
@@ -794,6 +824,9 @@ def main():
     logger.info("✅ البوت جاهز!")
     logger.info("🇪🇬 صُنع بكل حب في مصر")
 
+    # Start auto processing
+    asyncio.get_event_loop().run_until_complete(bot.order_processor.start_auto_processing())
+    
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
