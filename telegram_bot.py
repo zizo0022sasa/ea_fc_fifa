@@ -15,6 +15,8 @@ import os
 import random
 import re
 import string
+import subprocess
+import sys
 import threading
 import time
 from dataclasses import dataclass, field
@@ -160,6 +162,71 @@ def success(self, message, *args, **kwargs):
         self._log(25, message, args, **kwargs)
 
 logging.Logger.success = success
+
+# ==============================================================================
+# 🚀 تشغيل مدير البروكسيات تلقائياً
+# ==============================================================================
+class ProxyManagerLauncher:
+    """مشغل مدير البروكسيات كعملية منفصلة"""
+    
+    def __init__(self):
+        self.proxy_process = None
+        self.proxy_manager_file = "proxy_manager.py"
+        
+    def start_proxy_manager(self):
+        """تشغيل مدير البروكسيات في الخلفية"""
+        try:
+            # التحقق من وجود الملف
+            if not os.path.exists(self.proxy_manager_file):
+                logger.warning(f"⚠️ ملف {self.proxy_manager_file} غير موجود!")
+                return False
+                
+            # إيقاف العملية القديمة إن وجدت
+            self.stop_proxy_manager()
+            
+            # تشغيل العملية الجديدة
+            logger.info("🚀 بدء تشغيل مدير البروكسيات...")
+            self.proxy_process = subprocess.Popen(
+                [sys.executable, self.proxy_manager_file],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            
+            # انتظار قليل للتأكد من بدء التشغيل
+            time.sleep(2)
+            
+            # التحقق من حالة العملية
+            if self.proxy_process.poll() is None:
+                logger.success(f"✅ مدير البروكسيات شغال! PID: {self.proxy_process.pid}")
+                return True
+            else:
+                logger.error("❌ فشل تشغيل مدير البروكسيات!")
+                return False
+                
+        except Exception as e:
+            logger.error(f"❌ خطأ في تشغيل مدير البروكسيات: {e}")
+            return False
+            
+    def stop_proxy_manager(self):
+        """إيقاف مدير البروكسيات"""
+        if self.proxy_process and self.proxy_process.poll() is None:
+            logger.info("🛑 إيقاف مدير البروكسيات...")
+            self.proxy_process.terminate()
+            try:
+                self.proxy_process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                self.proxy_process.kill()
+            logger.info("✅ تم إيقاف مدير البروكسيات")
+            
+    def check_proxy_manager_status(self):
+        """التحقق من حالة مدير البروكسيات"""
+        if self.proxy_process and self.proxy_process.poll() is None:
+            return True
+        return False
+
+# تشغيل مدير البروكسيات عند بدء البوت
+proxy_launcher = ProxyManagerLauncher()
 
 # ==============================================================================
 # 🌐 نظام البروكسيات المتقدم المدمج
@@ -1859,6 +1926,54 @@ class TelegramBot:
             f"• فاشل: {stats['failed']}",
             parse_mode=ParseMode.MARKDOWN
         )
+    
+    async def proxy_status_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """أمر التحقق من حالة مدير البروكسيات"""
+        if ADMIN_ID and update.effective_user.id != ADMIN_ID:
+            await update.message.reply_text("❌ هذا الأمر للأدمن فقط!")
+            return
+        
+        status = proxy_launcher.check_proxy_manager_status()
+        
+        if status:
+            msg = "✅ **مدير البروكسيات شغال**\n\n"
+            msg += f"🔧 PID: {proxy_launcher.proxy_process.pid}\n"
+            msg += "🌐 العملية: proxy_manager.py\n"
+            msg += "⚡ الحالة: نشط ويجمع البروكسيات\n\n"
+            msg += "📝 **ملاحظة:** البروكسيات بتتحدث تلقائياً كل ساعة"
+        else:
+            msg = "❌ **مدير البروكسيات مش شغال**\n\n"
+            msg += "لتشغيله، أعد تشغيل البوت\n"
+            msg += "أو استخدم: `/restart_proxy`"
+        
+        await update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN)
+    
+    async def restart_proxy_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """أمر إعادة تشغيل مدير البروكسيات"""
+        if ADMIN_ID and update.effective_user.id != ADMIN_ID:
+            await update.message.reply_text("❌ هذا الأمر للأدمن فقط!")
+            return
+        
+        msg = await update.message.reply_text("🔄 جاري إعادة تشغيل مدير البروكسيات...")
+        
+        # إيقاف العملية القديمة
+        proxy_launcher.stop_proxy_manager()
+        await asyncio.sleep(2)
+        
+        # تشغيل عملية جديدة
+        if proxy_launcher.start_proxy_manager():
+            await msg.edit_text(
+                "✅ **تم إعادة تشغيل مدير البروكسيات بنجاح!**\n\n"
+                f"🔧 PID الجديد: {proxy_launcher.proxy_process.pid}\n"
+                "🌐 العملية شغالة وبتجمع البروكسيات",
+                parse_mode=ParseMode.MARKDOWN
+            )
+        else:
+            await msg.edit_text(
+                "❌ **فشل إعادة تشغيل مدير البروكسيات**\n\n"
+                "تأكد من وجود ملف proxy_manager.py",
+                parse_mode=ParseMode.MARKDOWN
+            )
 
     async def cancel_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """أمر إلغاء الطلبات مع تأكيد"""
@@ -2252,6 +2367,8 @@ class TelegramBot:
         app.add_handler(CommandHandler("stats", self.stats_cmd))
         app.add_handler(CommandHandler("proxy", self.proxy_cmd))
         app.add_handler(CommandHandler("refresh_proxy", self.refresh_proxy_cmd))
+        app.add_handler(CommandHandler("proxy_status", self.proxy_status_cmd))
+        app.add_handler(CommandHandler("restart_proxy", self.restart_proxy_cmd))
 
         app.add_handler(CallbackQueryHandler(self.handle_cancel_callback, pattern='^cancel_'))
 
@@ -2308,6 +2425,15 @@ async def main():
     print("👨‍💻 Developer: @zizo0022sasa")
     print("🇪🇬 Made with ❤️ in Egypt")
     print("="*70 + "\n")
+    
+    # تشغيل مدير البروكسيات تلقائياً
+    if proxy_launcher.start_proxy_manager():
+        print("✅ مدير البروكسيات شغال في الخلفية!")
+        print("🌐 هيجمع البروكسيات ويختبرها أوتوماتيك")
+        print("-"*70 + "\n")
+    else:
+        print("⚠️ مدير البروكسيات مش شغال - البوت هيشتغل عادي")
+        print("-"*70 + "\n")
 
     bot = TelegramBot()
     await bot.run()
@@ -2317,3 +2443,5 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         logger.info("👋 تم إيقاف البوت بنجاح")
+        # إيقاف مدير البروكسيات عند إغلاق البوت
+        proxy_launcher.stop_proxy_manager()
