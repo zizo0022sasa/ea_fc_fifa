@@ -25,15 +25,15 @@ import warnings
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Set
+from typing import Dict, List, Optional, Set, Tuple
 from urllib.parse import quote, urlparse
-
 
 # تعطيل تحذيرات SSL والمكتبات
 warnings.filterwarnings("ignore")
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+
 requests.packages.urllib3.disable_warnings()
 
 # استيراد مكتبات Telegram
@@ -45,6 +45,7 @@ from telegram.ext import Application, CallbackQueryHandler, CommandHandler, Cont
 # ==============================================================================
 # 🌐 نظام البروكسيات المدمج بالكامل (خيط منفصل)
 # ==============================================================================
+
 
 class ProxyTester:
     """فئة اختبار البروكسيات"""
@@ -78,7 +79,7 @@ class ProxyTester:
 
         try:
             session = requests.Session()
-            
+
             # إعداد retry strategy
             retry_strategy = Retry(
                 total=2,
@@ -142,7 +143,7 @@ class IntegratedProxyManager:
         self.tester = ProxyTester()
         self.running = False
         self.thread = None
-        
+
         # ملفات التخزين
         self.working_file = "working_proxies_freefollower.json"
         self.failed_file = "failed_proxies.json"
@@ -196,7 +197,7 @@ class IntegratedProxyManager:
             save_data = {
                 "proxies": self.working_proxies,
                 "last_updated": datetime.now().isoformat(),
-                "total_count": len(self.working_proxies)
+                "total_count": len(self.working_proxies),
             }
             with open(self.working_file, "w", encoding="utf-8") as f:
                 json.dump(save_data, f, ensure_ascii=False, indent=2)
@@ -216,125 +217,129 @@ class IntegratedProxyManager:
     def fetch_from_source(self, url: str) -> List[str]:
         """جلب بروكسيات من مصدر واحد"""
         proxies = []
-        
+
         try:
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
             }
-            
+
             response = requests.get(url, headers=headers, timeout=15, verify=False)
-            
+
             if response.status_code == 200:
                 content = response.text
-                lines = content.split('\n')
-                
+                lines = content.split("\n")
+
                 for line in lines:
                     line = line.strip()
-                    
+
                     # تجاهل الأسطر الفارغة والتعليقات
-                    if not line or line.startswith('#') or line.startswith('//'):
+                    if not line or line.startswith("#") or line.startswith("//"):
                         continue
-                    
+
                     # تنظيف السطر
-                    line = line.replace('http://', '').replace('https://', '')
-                    
+                    line = line.replace("http://", "").replace("https://", "")
+
                     # البحث عن نمط IP:Port
-                    if ':' in line:
+                    if ":" in line:
                         parts = line.split()
                         proxy_part = parts[0]
-                        
+
                         try:
-                            if '@' in proxy_part:
-                                proxy_part = proxy_part.split('@')[-1]
-                            
-                            ip, port = proxy_part.rsplit(':', 1)
+                            if "@" in proxy_part:
+                                proxy_part = proxy_part.split("@")[-1]
+
+                            ip, port = proxy_part.rsplit(":", 1)
                             port_num = int(port)
-                            
+
                             if 1 <= port_num <= 65535:
                                 proxies.append(f"{ip}:{port}")
-                                
+
                         except:
                             continue
-                
+
                 print(f"✓ جلب {len(proxies)} من {url.split('/')[2]}")
-                
+
         except Exception as e:
             print(f"خطأ في جلب من {url.split('/')[2]}: {e}")
-        
+
         return proxies
 
     def test_proxy(self, proxy: str) -> bool:
         """اختبار بروكسي واحد"""
         try:
-            ip, port = proxy.split(':')
+            ip, port = proxy.split(":")
             port = int(port)
-            
+
             # اختبار سريع للمنفذ
             if not self.tester.quick_test(ip, port, timeout=2):
                 return False
-            
+
             # اختبار HTTP
             proxy_url = f"http://{proxy}"
             result = self.tester.test_http_proxy(proxy_url, timeout=8)
-            
+
             return result["working"]
-            
+
         except:
             return False
 
     def run_cycle(self):
         """دورة واحدة لجمع واختبار البروكسيات"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("🌐 بدء دورة جديدة لجمع البروكسيات...")
-        print("="*60)
-        
+        print("=" * 60)
+
         # جمع بروكسيات جديدة
         all_proxies = set()
-        
+
         for source in self.sources:
             try:
                 proxies = self.fetch_from_source(source)
                 all_proxies.update(proxies)
             except:
                 continue
-        
+
         # إزالة الفاشلة والموجودة
         all_proxies = all_proxies - self.failed_proxies
-        existing = set([f"{p.get('ip', '')}:{p.get('port', '')}" if isinstance(p, dict) else p 
-                       for p in self.working_proxies])
+        existing = set(
+            [
+                f"{p.get('ip', '')}:{p.get('port', '')}" if isinstance(p, dict) else p
+                for p in self.working_proxies
+            ]
+        )
         new_proxies = list(all_proxies - existing)
-        
+
         print(f"\n🔍 عدد البروكسيات الجديدة للاختبار: {len(new_proxies)}")
-        
+
         if new_proxies:
             # اختبار عينة عشوائية
             sample_size = min(100, len(new_proxies))
             sample = random.sample(new_proxies, sample_size)
-            
+
             print(f"🧪 اختبار {sample_size} بروكسي...")
-            
+
             with ThreadPoolExecutor(max_workers=20) as executor:
                 results = list(executor.map(self.test_proxy, sample))
-            
+
             # إضافة الناجحة
             for proxy, success in zip(sample, results):
                 if success:
                     with self.lock:
                         # تحويل للفورمات المطلوب
-                        ip, port = proxy.split(':')
+                        ip, port = proxy.split(":")
                         proxy_data = {
                             "ip": ip,
                             "port": int(port),
                             "working": True,
-                            "last_check": datetime.now().isoformat()
+                            "last_check": datetime.now().isoformat(),
                         }
                         self.working_proxies.append(proxy_data)
                 else:
                     self.failed_proxies.add(proxy)
-            
+
             # حفظ النتائج
             self.save_data()
-            
+
             successful = sum(results)
             print(f"\n✅ نجح {successful} بروكسي من {sample_size}")
             print(f"📦 إجمالي البروكسيات الشغالة: {len(self.working_proxies)}")
@@ -362,13 +367,13 @@ class IntegratedProxyManager:
             try:
                 self.run_cycle()
                 print("\n😴 راحة لمدة 10 دقائق...\n")
-                
+
                 # راحة مع فحص إيقاف كل 30 ثانية
                 for _ in range(20):  # 20 * 30 = 600 ثانية = 10 دقائق
                     if not self.running:
                         break
                     time.sleep(30)
-                    
+
             except Exception as e:
                 print(f"خطأ في مدير البروكسيات: {e}")
                 time.sleep(60)  # راحة دقيقة عند الخطأ
@@ -386,8 +391,9 @@ class IntegratedProxyManager:
             "running": self.running,
             "total_working": len(self.working_proxies),
             "total_failed": len(self.failed_proxies),
-            "thread_alive": self.thread.is_alive() if self.thread else False
+            "thread_alive": self.thread.is_alive() if self.thread else False,
         }
+
 
 # ==============================================================================
 # الكود الأصلي للبوت مع إصلاح الأخطاء
@@ -434,7 +440,7 @@ except Exception:
 # ==============================================================================
 # 🔐 الإعدادات المباشرة
 # ==============================================================================
-TELEGRAM_BOT_TOKEN = "7958170099:AAGmgK-AMlx1VyymR3yfUuvtOdnaj1POs_M"
+TELEGRAM_BOT_TOKEN = "7958170099:AAFN_UJFPIqRgeOTrwgJKfTzLe6sXhJb2R8"
 ADMIN_ID = 1124247595
 GROUP_ID = -4872486359  # جروب الإشعارات
 
@@ -2396,14 +2402,14 @@ class TelegramBot:
     def __init__(self):
         # إنشاء مدير البروكسيات المدمج
         self.integrated_proxy = IntegratedProxyManager()
-        
+
         # إنشاء ProxyManager العادي للتوافق مع باقي الكود
         self.proxy_mgr = ProxyManager()
-        
+
         # ربط البيانات بين المديرين
         self.proxy_mgr.proxies = self.integrated_proxy.working_proxies
         self.proxy_mgr.working_proxies = self.integrated_proxy.working_proxies
-        
+
         self.acc_mgr = AccountManager(self.proxy_mgr)
         self.queue_mgr = QueueManager()
         self.proc = OrderProcessor(self.acc_mgr, self.queue_mgr, self.proxy_mgr)
@@ -2482,7 +2488,7 @@ class TelegramBot:
         try:
             # تشغيل دورة يدوية للبروكسيات المدمجة
             self.integrated_proxy.run_cycle()
-            
+
             # تحديث البيانات
             self.proxy_mgr.proxies = self.integrated_proxy.working_proxies
             self.proxy_mgr.working_proxies = self.integrated_proxy.working_proxies
@@ -2494,69 +2500,85 @@ class TelegramBot:
             result_msg += f"📊 النتيجة:\n"
             result_msg += f"• إجمالي شغال: {status['total_working']}\n"
             result_msg += f"• إجمالي فاشل: {status['total_failed']}\n\n"
-            result_msg += f"🌐 مدير البروكسيات: {'\u0634\u063a\u0627\u0644' if status['running'] else '\u0645\u062a\u0648\u0642\u0641'}"
-            
+            running_text = "\u0634\u063a\u0627\u0644"  # شغال
+            stopped_text = "\u0645\u062a\u0648\u0642\u0641"  # متوقف
+            result_msg += f"🌐 مدير البروكسيات: {running_text if status['running'] else stopped_text}"
+
             await msg.edit_text(result_msg, parse_mode=ParseMode.MARKDOWN)
-            
+
         except Exception as e:
-            await msg.edit_text(f"❌ خطأ في تحديث البروكسيات: {str(e)}", parse_mode=ParseMode.MARKDOWN)
-    
-    async def proxy_thread_status_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+            await msg.edit_text(
+                f"❌ خطأ في تحديث البروكسيات: {str(e)}", parse_mode=ParseMode.MARKDOWN
+            )
+
+    async def proxy_thread_status_cmd(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ):
         """أمر عرض حالة خيط البروكسيات"""
         if ADMIN_ID and update.effective_user.id != ADMIN_ID:
             await update.message.reply_text("❌ هذا الأمر للأدمن فقط!")
             return
-        
+
         status = self.integrated_proxy.get_status()
-        
+
         msg = "🧵 **حالة خيط البروكسيات المدمج**\n\n"
-        msg += f"⚡ الحالة: {'**\u0634\u063a\u0627\u0644** ✅' if status['running'] else '**\u0645\u062a\u0648\u0642\u0641** ❌'}\n"
-        msg += f"🧵 الخيط: {'**\u062d\u064a** ✅' if status['thread_alive'] else '**\u0645\u064a\u062a** ❌'}\n\n"
+        running_status = "**\u0634\u063a\u0627\u0644** ✅"  # شغال
+        stopped_status = "**\u0645\u062a\u0648\u0642\u0641** ❌"  # متوقف
+        msg += f"⚡ الحالة: {running_status if status['running'] else stopped_status}\n"
+        alive_status = "**\u062d\u064a** ✅"  # حي
+        dead_status = "**\u0645\u064a\u062a** ❌"  # ميت
+        msg += (
+            f"🧵 الخيط: {alive_status if status['thread_alive'] else dead_status}\n\n"
+        )
         msg += f"📦 **البروكسيات:**\n"
         msg += f"• شغالة: {status['total_working']}\n"
         msg += f"• فاشلة: {status['total_failed']}\n\n"
-        
-        if not status['running']:
+
+        if not status["running"]:
             msg += "📝 **لبدء الخيط:**\n"
             msg += "استخدم الأمر `/start_proxy_thread`"
         else:
             msg += "📝 **لإيقاف الخيط:**\n"
             msg += "استخدم الأمر `/stop_proxy_thread`"
-        
+
         await update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN)
-    
-    async def start_proxy_thread_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    async def start_proxy_thread_cmd(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ):
         """أمر بدء خيط البروكسيات"""
         if ADMIN_ID and update.effective_user.id != ADMIN_ID:
             await update.message.reply_text("❌ هذا الأمر للأدمن فقط!")
             return
-        
+
         if self.integrated_proxy.running:
             await update.message.reply_text("⚠️ خيط البروكسيات شغال بالفعل!")
             return
-        
+
         self.integrated_proxy.start()
         await update.message.reply_text(
             "✅ **تم بدء خيط البروكسيات!**\n\n"
             "🌐 سيعمل في الخلفية ويجمع البروكسيات كل 10 دقائق",
-            parse_mode=ParseMode.MARKDOWN
+            parse_mode=ParseMode.MARKDOWN,
         )
-    
-    async def stop_proxy_thread_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    async def stop_proxy_thread_cmd(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ):
         """أمر إيقاف خيط البروكسيات"""
         if ADMIN_ID and update.effective_user.id != ADMIN_ID:
             await update.message.reply_text("❌ هذا الأمر للأدمن فقط!")
             return
-        
+
         if not self.integrated_proxy.running:
             await update.message.reply_text("⚠️ خيط البروكسيات متوقف بالفعل!")
             return
-        
+
         self.integrated_proxy.stop()
         await update.message.reply_text(
             "🛑 **تم إيقاف خيط البروكسيات!**\n\n"
             "💾 البروكسيات المحفوظة ما زالت متاحة",
-            parse_mode=ParseMode.MARKDOWN
+            parse_mode=ParseMode.MARKDOWN,
         )
 
     async def cancel_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -2968,7 +2990,7 @@ class TelegramBot:
 
         async def after_start(_):
             self.proc.start()
-            
+
             # بدء خيط مدير البروكسيات المدمج
             if not self.integrated_proxy.running:
                 self.integrated_proxy.start()
@@ -3041,4 +3063,3 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         logger.info("👋 تم إيقاف البوت بنجاح")
-
