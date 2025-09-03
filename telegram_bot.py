@@ -147,6 +147,7 @@ class IntegratedProxyManager:
         # ملفات التخزين
         self.working_file = "working_proxies_freefollower.json"
         self.failed_file = "failed_proxies.json"
+        self.manual_file = "manual_proxies.txt"  # ملف البروكسيات اليدوية
 
         # مصادر البروكسيات - تم اختيار الأفضل فقط
         self.sources = [
@@ -179,6 +180,31 @@ class IntegratedProxyManager:
                     print(f"✅ تم تحميل {len(self.working_proxies)} بروكسي شغال")
         except:
             self.working_proxies = []
+        
+        # تحميل البروكسيات اليدوية إذا لم توجد بروكسيات
+        if len(self.working_proxies) == 0 and os.path.exists(self.manual_file):
+            try:
+                manual_proxies = []
+                with open(self.manual_file, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith('#') and ':' in line:
+                            parts = line.split(':')
+                            if len(parts) == 2:
+                                ip, port = parts
+                                manual_proxies.append({
+                                    "ip": ip,
+                                    "port": int(port),
+                                    "working": True,
+                                    "protocol": "http",
+                                    "last_check": datetime.now().isoformat()
+                                })
+                if manual_proxies:
+                    self.working_proxies = manual_proxies
+                    print(f"📝 تم تحميل {len(manual_proxies)} بروكسي يدوي")
+                    self.save_data()  # حفظ البروكسيات اليدوية
+            except Exception as e:
+                print(f"خطأ في تحميل البروكسيات اليدوية: {e}")
 
         # تحميل البروكسيات الفاشلة
         try:
@@ -271,15 +297,36 @@ class IntegratedProxyManager:
             port = int(port)
 
             # اختبار سريع للمنفذ
-            if not self.tester.quick_test(ip, port, timeout=2):
+            if not self.tester.quick_test(ip, port, timeout=3):
                 return False
 
-            # اختبار HTTP
-            proxy_url = f"http://{proxy}"
-            result = self.tester.test_http_proxy(proxy_url, timeout=8)
-
-            return result["working"]
-
+            # اختبار HTTP بسيط وسريع
+            try:
+                proxy_url = f"http://{proxy}"
+                proxies = {"http": proxy_url, "https": proxy_url}
+                
+                # اختبار على موقع بسيط
+                response = requests.get(
+                    "http://httpbin.org/ip",
+                    proxies=proxies,
+                    timeout=5,
+                    verify=False
+                )
+                
+                return response.status_code == 200
+            except:
+                # محاولة أخرى على Google
+                try:
+                    response = requests.get(
+                        "http://www.google.com/generate_204",
+                        proxies=proxies,
+                        timeout=5,
+                        verify=False
+                    )
+                    return response.status_code == 204
+                except:
+                    return False
+                
         except:
             return False
 
@@ -312,13 +359,13 @@ class IntegratedProxyManager:
         print(f"\n🔍 عدد البروكسيات الجديدة للاختبار: {len(new_proxies)}")
 
         if new_proxies:
-            # اختبار عينة عشوائية
-            sample_size = min(100, len(new_proxies))
+            # اختبار عينة عشوائية أصغر للسرعة
+            sample_size = min(50, len(new_proxies))  # تقليل العدد ل 50 فقط
             sample = random.sample(new_proxies, sample_size)
 
             print(f"🧪 اختبار {sample_size} بروكسي...")
 
-            with ThreadPoolExecutor(max_workers=20) as executor:
+            with ThreadPoolExecutor(max_workers=10) as executor:  # تقليل الthreads
                 results = list(executor.map(self.test_proxy, sample))
 
             # إضافة الناجحة
@@ -393,6 +440,34 @@ class IntegratedProxyManager:
             "total_failed": len(self.failed_proxies),
             "thread_alive": self.thread.is_alive() if self.thread else False,
         }
+    
+    def load_manual_proxies_now(self):
+        """تحميل البروكسيات اليدوية فوراً"""
+        if os.path.exists(self.manual_file):
+            try:
+                manual_proxies = []
+                with open(self.manual_file, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith('#') and ':' in line:
+                            parts = line.split(':')
+                            if len(parts) == 2:
+                                ip, port = parts
+                                manual_proxies.append({
+                                    "ip": ip,
+                                    "port": int(port),
+                                    "working": True,
+                                    "protocol": "http",
+                                    "last_check": datetime.now().isoformat()
+                                })
+                if manual_proxies:
+                    self.working_proxies = manual_proxies
+                    self.save_data()
+                    print(f"✅ تم تحميل {len(manual_proxies)} بروكسي يدوي")
+                    return True
+            except Exception as e:
+                print(f"خطأ: {e}")
+        return False
 
 
 # ==============================================================================
@@ -2402,6 +2477,10 @@ class TelegramBot:
     def __init__(self):
         # إنشاء مدير البروكسيات المدمج
         self.integrated_proxy = IntegratedProxyManager()
+        
+        # تحميل البروكسيات اليدوية إذا لم توجد بروكسيات
+        if len(self.integrated_proxy.working_proxies) == 0:
+            self.integrated_proxy.load_manual_proxies_now()
 
         # إنشاء ProxyManager العادي للتوافق مع باقي الكود
         self.proxy_mgr = ProxyManager()
@@ -2580,6 +2659,36 @@ class TelegramBot:
             "💾 البروكسيات المحفوظة ما زالت متاحة",
             parse_mode=ParseMode.MARKDOWN,
         )
+    
+    async def load_manual_proxies_cmd(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ):
+        """أمر تحميل البروكسيات اليدوية"""
+        if ADMIN_ID and update.effective_user.id != ADMIN_ID:
+            await update.message.reply_text("❌ هذا الأمر للأدمن فقط!")
+            return
+        
+        msg = await update.message.reply_text("📝 جاري تحميل البروكسيات اليدوية...")
+        
+        if self.integrated_proxy.load_manual_proxies_now():
+            # تحديث الربط مع ProxyManager
+            self.proxy_mgr.proxies = self.integrated_proxy.working_proxies
+            self.proxy_mgr.working_proxies = self.integrated_proxy.working_proxies
+            
+            count = len(self.integrated_proxy.working_proxies)
+            await msg.edit_text(
+                f"✅ **تم تحميل البروكسيات اليدوية!**\n\n"
+                f"📦 عدد البروكسيات: {count}\n"
+                f"📝 الملف: manual_proxies.txt\n\n"
+                f"✨ البوت جاهز للعمل بالبروكسيات!",
+                parse_mode=ParseMode.MARKDOWN
+            )
+        else:
+            await msg.edit_text(
+                "❌ **فشل تحميل البروكسيات اليدوية**\n\n"
+                "تأكد من وجود ملف manual_proxies.txt",
+                parse_mode=ParseMode.MARKDOWN
+            )
 
     async def cancel_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """أمر إلغاء الطلبات مع تأكيد"""
@@ -2983,6 +3092,7 @@ class TelegramBot:
         app.add_handler(CommandHandler("proxy_status", self.proxy_thread_status_cmd))
         app.add_handler(CommandHandler("start_proxy", self.start_proxy_thread_cmd))
         app.add_handler(CommandHandler("stop_proxy", self.stop_proxy_thread_cmd))
+        app.add_handler(CommandHandler("load_manual", self.load_manual_proxies_cmd))
 
         app.add_handler(
             CallbackQueryHandler(self.handle_cancel_callback, pattern="^cancel_")
