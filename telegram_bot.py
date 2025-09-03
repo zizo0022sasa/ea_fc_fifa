@@ -404,9 +404,19 @@ class ProxyManager:
             self.working_proxies = [p for p in loaded_proxies if p.working]
 
         if len(self.proxies) == 0:
-            logger.warning("⚠️ لا توجد بروكسيات محملة! سيعمل البوت بدون بروكسي")
+            logger.warning("⚠️ لا توجد بروكسيات محملة! بدء تحديث أوتوماتيكي...")
+            # بدء تحديث أوتوماتيكي في الخلفية
+            asyncio.create_task(self._auto_refresh_on_startup())
         else:
             logger.info(f"✅ إجمالي البروكسيات المحملة: {len(self.proxies)}")
+
+    async def _auto_refresh_on_startup(self):
+        """تحديث أوتوماتيكي عند بدء التشغيل"""
+        try:
+            await asyncio.sleep(2)  # انتظار بسيط للتشغيل
+            await self.refresh_proxies()
+        except Exception as e:
+            logger.error(f"❌ خطأ في التحديث الأوتوماتيكي: {e}")
 
     def save_proxies(self):
         """حفظ البروكسيات للملف"""
@@ -426,35 +436,50 @@ class ProxyManager:
             logger.error(f"❌ خطأ في حفظ البروكسيات: {e}")
 
     async def test_proxy(
-        self, proxy: ProxyData, target_url: str = "https://freefollower.net/"
+        self, proxy: ProxyData, target_url: str = "http://httpbin.org/ip"
     ) -> bool:
         """اختبار البروكسي"""
         try:
             start_time = time.time()
 
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    target_url,
-                    proxy=(
-                        proxy.proxy_url
-                        if proxy.protocol != "http"
-                        else f"http://{proxy.ip}:{proxy.port}"
-                    ),
-                    timeout=aiohttp.ClientTimeout(total=PROXY_TIMEOUT),
-                    ssl=False,
-                ) as response:
-                    if response.status == 200:
-                        proxy.response_time = time.time() - start_time
-                        proxy.working = True
-                        proxy.last_check = datetime.now()
-                        proxy.success_count += 1
-                        if target_url not in proxy.success_targets:
-                            proxy.success_targets.append(target_url)
-                        return True
-        except Exception:
-            proxy.fail_count += 1
-            proxy.working = False
+            # استخدام URL بسيط وسريع للاختبار
+            test_urls = [
+                "http://httpbin.org/ip",
+                "http://ip-api.com/json",
+                "https://freefollower.net/",
+            ]
 
+            for test_url in test_urls:
+                try:
+                    timeout = aiohttp.ClientTimeout(total=8)  # وقت أقل
+
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get(
+                            test_url,
+                            proxy=(
+                                proxy.proxy_url
+                                if proxy.protocol != "http"
+                                else f"http://{proxy.ip}:{proxy.port}"
+                            ),
+                            timeout=timeout,
+                            ssl=False,
+                        ) as response:
+                            if response.status == 200:
+                                proxy.response_time = time.time() - start_time
+                                proxy.working = True
+                                proxy.last_check = datetime.now()
+                                proxy.success_count += 1
+                                if test_url not in proxy.success_targets:
+                                    proxy.success_targets.append(test_url)
+                                return True
+                except Exception:
+                    continue  # جرب ال URL التالي
+
+        except Exception:
+            pass
+
+        proxy.fail_count += 1
+        proxy.working = False
         return False
 
     async def refresh_proxies(self):
@@ -465,15 +490,16 @@ class ProxyManager:
         async with aiohttp.ClientSession() as session:
             for source in self.proxy_sources:
                 try:
-                    async with session.get(source, timeout=10) as response:
+                    timeout = aiohttp.ClientTimeout(total=15)
+                    async with session.get(source, timeout=timeout) as response:
                         if response.status == 200:
                             text = await response.text()
                             lines = text.strip().split("\n")
 
                             for line in lines:
-                                if ":" in line:
+                                if ":" in line and not line.startswith("#"):
                                     parts = line.strip().split(":")
-                                    if len(parts) == 2:
+                                    if len(parts) == 2 and parts[1].isdigit():
                                         try:
                                             proxy = ProxyData(
                                                 ip=parts[0],
@@ -483,30 +509,58 @@ class ProxyManager:
                                             new_proxies.append(proxy)
                                         except:
                                             pass
-                except Exception:
+
+                    logger.info(
+                        f"📥 تم جلب {len([p for p in new_proxies if self._detect_protocol(source) in p.protocol])} بروكسي من {source[:50]}..."
+                    )
+                except Exception as e:
+                    logger.debug(f"⚠️ فشل جلب البروكسيات من {source[:50]}...: {e}")
                     continue
 
-        # اختبار البروكسيات الجديدة
-        logger.info(f"🔍 اختبار {len(new_proxies)} بروكسي جديد...")
+        # إزالة المكررات
+        unique_proxies = []
+        seen = set()
+        for proxy in new_proxies:
+            proxy_key = f"{proxy.ip}:{proxy.port}"
+            if proxy_key not in seen:
+                seen.add(proxy_key)
+                unique_proxies.append(proxy)
+
+        logger.info(f"🔍 اختبار {len(unique_proxies)} بروكسي فريد...")
         working = []
 
-        for proxy in new_proxies[:100]:  # اختبر أول 100 فقط
-            if await self.test_proxy(proxy):
-                working.append(proxy)
+        # اختبار البروكسيات بشكل متوازي (مجموعات صغيرة)
+        batch_size = 20
+        for i in range(
+            0, min(len(unique_proxies), 200), batch_size
+        ):  # اختبر أول 200 فقط
+            batch = unique_proxies[i : i + batch_size]
+            tasks = [self.test_proxy(proxy) for proxy in batch]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+
+            for proxy, result in zip(batch, results):
+                if result is True:
+                    working.append(proxy)
+
+            logger.info(
+                f"✅ اكتمل اختبار {min(i+batch_size, 200)}/{min(len(unique_proxies), 200)} - شغال: {len(working)}"
+            )
 
         with self.lock:
             # دمج البروكسيات الجديدة مع القديمة
             existing = {(p.ip, p.port) for p in self.proxies}
+            added_count = 0
             for proxy in working:
                 if (proxy.ip, proxy.port) not in existing:
                     self.proxies.append(proxy)
+                    added_count += 1
 
             self.working_proxies = [p for p in self.proxies if p.working]
             self.last_refresh = datetime.now()
 
         self.save_proxies()
-        logger.info(
-            f"✅ تم تحديث البروكسيات: {len(self.working_proxies)} شغال من {len(self.proxies)}"
+        logger.success(
+            f"✅ تحديث البروكسيات مكتمل: {len(working)} جديد شغال، {added_count} مضاف، المجموع: {len(self.working_proxies)}"
         )
 
     def _detect_protocol(self, source: str) -> str:
@@ -2104,18 +2158,33 @@ class TelegramBot:
 
         msg = await update.message.reply_text("🔄 جاري تحديث البروكسيات...")
 
-        await self.proxy_mgr.refresh_proxies()
+        try:
+            # تحديث البروكسيات
+            await self.proxy_mgr.refresh_proxies()
 
-        stats = self.proxy_mgr.get_statistics()
+            # الإحصائيات
+            stats = self.proxy_mgr.get_statistics()
 
-        await msg.edit_text(
-            f"✅ **تم تحديث البروكسيات!**\n\n"
-            f"📊 النتيجة:\n"
-            f"• إجمالي: {stats['total']}\n"
-            f"• شغال: {stats['working']}\n"
-            f"• فاشل: {stats['failed']}",
-            parse_mode=ParseMode.MARKDOWN,
-        )
+            result_msg = f"✅ **تم تحديث البروكسيات!**\n\n"
+            result_msg += f"📊 النتيجة:\n"
+            result_msg += f"• إجمالي: {stats['total']}\n"
+            result_msg += f"• شغال: {stats['working']}\n"
+            result_msg += f"• فاشل: {stats['failed']}\n\n"
+
+            if stats.get("protocols"):
+                result_msg += f"🔗 **البروتوكولات:**\n"
+                for proto, count in stats["protocols"].items():
+                    result_msg += f"• {proto}: {count}\n"
+
+            if stats["working"] == 0:
+                result_msg += (
+                    "\n⚠️ لم يتم العثور على بروكسيات شغالة! جرب مرة أخرى لاحقاً."
+                )
+
+            await msg.edit_text(result_msg, parse_mode=ParseMode.MARKDOWN)
+
+        except Exception as e:
+            await msg.edit_text(f"❌ خطأ في تحديث البروكسيات: {e}")
 
     async def cancel_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """أمر إلغاء الطلبات مع تأكيد"""
@@ -2589,3 +2658,4 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         logger.info("👋 تم إيقاف البوت بنجاح")
+
