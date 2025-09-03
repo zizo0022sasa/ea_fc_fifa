@@ -389,35 +389,6 @@ class IntegratedProxyManager:
             "thread_alive": self.thread.is_alive() if self.thread else False
         }
 
-            # انتظار قليل للتأكد من بدء العملية
-            time.sleep(2)
-
-            # التحقق من أن العملية تعمل
-            if process.poll() is None:
-                print(f"✅ مدير البروكسيات يعمل! PID: {process.pid}")
-                return process
-            else:
-                print("❌ فشل تشغيل مدير البروكسيات - سيعمل البوت بدون بروكسي خارجي")
-                return None
-
-        except Exception as e:
-            print(f"⚠️ لا يمكن تشغيل مدير البروكسيات تلقائياً: {e}")
-            print("📝 يمكنك تشغيله يدوياً في نافذة أخرى: python proxy_manager.py")
-            return None
-
-    except Exception as e:
-        print(f"⚠️ خطأ في تشغيل مدير البروكسيات: {e}")
-        return None
-
-
-# تشغيل مدير البروكسيات عند بدء البوت
-proxy_manager_process = start_proxy_manager()
-
-# انتظار 3 ثواني حتى يبدأ مدير البروكسيات في جمع البروكسيات
-if proxy_manager_process:
-    print("⏳ انتظار 3 ثواني لبدء جمع البروكسيات...")
-    time.sleep(3)
-
 # ==============================================================================
 # الكود الأصلي للبوت مع إصلاح الأخطاء
 # ==============================================================================
@@ -2587,24 +2558,6 @@ class TelegramBot:
             "💾 البروكسيات المحفوظة ما زالت متاحة",
             parse_mode=ParseMode.MARKDOWN
         )
-            result_msg += f"• إجمالي: {stats['total']}\n"
-            result_msg += f"• شغال: {stats['working']}\n"
-            result_msg += f"• فاشل: {stats['failed']}\n\n"
-
-            if stats.get("protocols"):
-                result_msg += f"🔗 **البروتوكولات:**\n"
-                for proto, count in stats["protocols"].items():
-                    result_msg += f"• {proto}: {count}\n"
-
-            if stats["working"] == 0:
-                result_msg += (
-                    "\n⚠️ لم يتم العثور على بروكسيات شغالة! جرب مرة أخرى لاحقاً."
-                )
-
-            await msg.edit_text(result_msg, parse_mode=ParseMode.MARKDOWN)
-
-        except Exception as e:
-            await msg.edit_text(f"❌ خطأ في تحديث البروكسيات: {e}")
 
     async def cancel_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """أمر إلغاء الطلبات مع تأكيد"""
